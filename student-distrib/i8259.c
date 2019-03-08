@@ -12,32 +12,34 @@ uint8_t slave_mask;  /* IRQs 8-15 */
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
     unsigned long flags;
-    i8259_auto_eoi = auto_eoi;
+    // i8259_auto_eoi = auto_eoi;
+    short saved_21 =  in(0x21);
+    short saved_A1 =  in(0xA1);
     
     /* mask interrupts on all PICS */
     CLI();
-    outb(0xff, 0x21);
-    outb(0xff, 0x60);
+    outb(0xff, MASTER_8259_PORT + 1);
+    outb(0xff, SLAVE_8259_PORT + 1);
     
     /* initialize 4 ICWs for master PIC */
-    outb(0x11, 0x20);       /* ICW1: select 8259A-1 init */
-    outb(0x20 + 0, 0x21);   /* ICW2: 8259A-1 IR0-7 mapped to 0x20-0x27 */
-    outb(0x04, 0x21);       /* ICW3: 8259A-1 (master) has slave on IR1 (keyboard) */
+    outb(ICW1, MASTER_8259_PORT);               /* ICW1: select 8259A-1 init */
+    outb(ICW2_MASTER, MASTER_8259_PORT + 1);    /* ICW2: 8259A-1 IR0-7 mapped to 0x20-0x27 */
+    outb(ICW3_MASTER, MASTER_8259_PORT + 1);    /* ICW3: 8259A-1 (master) has slave on IR1 (keyboard) */
     if (auto_eoi) {
-        outb(0x03, 0x21);   /* master does auto EOI */
+        outb(0x03, MASTER_8259_PORT + 1);       /* master does auto EOI */
     } else {
-        outb(0x01, 0x21);   /* master expects normal EOI */
+        outb(ICW4, MASTER_8259_PORT + 1);       /* master expects normal EOI */
     }
     
-
     /* initialize 4 ICWs for slave PIC */
-    outb(0x11, 0xA0);       /* ICW1: select 8259A-2 init */
-    outb(0x20 + 8, 0xA1);   /* ICW2: 8259A-2 IR0-7 mapped to 0x28-0x2F */
-    outb(0x01, 0xA1);       /* ICW3: 8259A-2 is slave on master'sn IR1 */
-    outb(0x01, 0xA1);       /* ICW4: normal EOI */
+    outb(ICW1, SLAVE_8259_PORT);                /* ICW1: select 8259A-2 init */
+    outb(ICW2_SLAVE, SLAVE_8259_PORT + 1);      /* ICW2: 8259A-2 IR0-7 mapped to 0x28-0x2F */
+    outb(ICW3_SLAVE, SLAVE_8259_PORT + 1);      /* ICW3: 8259A-2 is slave on master's IR2 */
+    outb(ICW4, SLAVE_8259_PORT + 1);            /* ICW4: normal EOI */
 
-    // outb(cached_21, 0x21)   /* restore master IRQ mask */
-    // outb(cached_A1, 0xA1)   /* restore slave IRQ mask */
+
+    outb(saved_21, MASTER_8259_PORT + 1)        /* restore master IRQ mask */
+    outb(saved_A1, SLAVE_8259_PORT + 1)         /* restore slave IRQ mask */
     STI();
 }
 
