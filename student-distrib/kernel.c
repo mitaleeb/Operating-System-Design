@@ -136,6 +136,11 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
+    /* Construct the IDT */
+    {
+        lidt(idt_desc_ptr);
+    }
+
     /* Init the PIC */
     i8259_init();
 
