@@ -4,7 +4,7 @@
 
 keyboard_linkage:
     cld
-	pushf							// Save all Registers
+	pushf							/* save registers on stack */
 	pushl %ds
 	pushl %es
 	pushl %fs
@@ -19,7 +19,7 @@ keyboard_linkage:
 	
 	call handle_keyboard_interrupt			
 	
-	popl %ebx		 				// Restore all Registers
+	popl %ebx		 				/* restore registers from stack */
 	popl %ecx
 	popl %edx
 	popl %ebp
@@ -35,7 +35,7 @@ keyboard_linkage:
 	iret
 
 rtc_linkage:
-	cld 							// Save all Registers
+	cld 							/* save registers on stack */
 	pushf			
 	pushl %ds
 	pushl %es
@@ -51,7 +51,7 @@ rtc_linkage:
 	
 	call handle_rtc_interrupt
 	
-	popl %ebx						// Restore all Registers
+	popl %ebx						/* restore registers from stack */
 	popl %ecx		 
 	popl %edx
 	popl %ebp
