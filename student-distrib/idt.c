@@ -9,3 +9,7 @@
 void populate_idt(idt_desc_t* idt) {
 
 }
+
+void handle_keyboard_interrupt() {
+    
+}
