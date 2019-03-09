@@ -69,3 +69,6 @@ extern void idt_mc();
 
 /* idt_xf() - SIMD float exception. Vector 19 (0x13). */
 extern void idt_xf();
+
+/* General Exception */
+extern void idt_general_exception();

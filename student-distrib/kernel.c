@@ -8,8 +8,9 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+#include "idt.h"
 
-// #define RUN_TESTS
+#define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -138,7 +139,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Construct the IDT */
     {
-        lidt(idt_desc_ptr);
+        populate_idt(&idt_desc_ptr);
     }
 
     /* Init the PIC */

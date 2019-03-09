@@ -9,15 +9,14 @@
 #include "lib.h"
 #include "idt.h"
 #include "devices.h"
-#include <stdio.h>
 
 // static uint8_t key_state = 0x00;
-static unsigned char keyboard_output[128] = {
-	{'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
+static uint8_t keyboard_output[128] = {
+	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
 	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',
 	 '\0', '\0', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
 	 '\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '*',
-	 '\0', ' ', '\0'},
+	 '\0', ' ', '\0'
 };
 
 
@@ -40,13 +39,13 @@ unsigned char handle_keyboard_interrupt() {
     // cli();
     
     /* read from 0x60 = data port from keyboard controller */
-    unsigned char c = 0x00;
+    uint8_t c = 0x00;
     while (c != 0x00) {
         c = inb(0x60);
     }
     
     /* print character to screen */
-    putchar(keyboard_output[c]);
+    putc(keyboard_output[c]);
     
     /* send end of interrupt */
     unsigned int irq_keyboard = 1;

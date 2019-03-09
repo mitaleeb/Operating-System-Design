@@ -180,7 +180,7 @@ do {                                                             \
     str.reserved2 = 1; \
     str.size = 1; \
     str.reserved3 = 0; \
-}; while (0)
+} while (0)
 
 /* Load task register.  This macro takes a 16-bit index into the GDT,
  * which points to the TSS entry.  x86 then reads the GDT's TSS

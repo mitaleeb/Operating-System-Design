@@ -14,8 +14,8 @@ uint8_t slave_mask = 0xff;  /* IRQs 8-15 */
 void i8259_init(void) {
     unsigned long flags;
     // i8259_auto_eoi = auto_eoi;
-    short saved_21 =  in(0x21);
-    short saved_A1 =  in(0xA1);
+    short saved_21 =  inb(0x21);
+    short saved_A1 =  inb(0xA1);
     
     /* mask interrupts on all PICS */
     // cli();
@@ -35,8 +35,8 @@ void i8259_init(void) {
     outb(ICW4, SLAVE_8259_PORT + 1);            /* ICW4: normal EOI */
 
 
-    outb(saved_21, MASTER_8259_PORT + 1)        /* restore master IRQ mask */
-    outb(saved_A1, SLAVE_8259_PORT + 1)         /* restore slave IRQ mask */
+    outb(saved_21, MASTER_8259_PORT + 1);        /* restore master IRQ mask */
+    outb(saved_A1, SLAVE_8259_PORT + 1);         /* restore slave IRQ mask */
 }
 
 /* Enable (unmask) the specified IRQ */
