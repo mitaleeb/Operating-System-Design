@@ -5,6 +5,8 @@
  * and handle interrupts from the keyboard.
  */
 
+#include "i8259.h"
+#include "lib.h"
 #include "idt.h"
 #include "keyboard.h"
 
