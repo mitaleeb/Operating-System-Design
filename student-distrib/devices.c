@@ -34,11 +34,6 @@ void handle_keyboard_interrupt() {
 /* Function to initialize rtc */
 extern void init_rtc() {
     
-}
-
-/* Function to handle rtc interrupt */
-extern void handle_rtc_interrupt() {
-    
     // cli();
     
     /* 0x70, 0x71 - I/O ports
@@ -53,4 +48,9 @@ extern void handle_rtc_interrupt() {
     outb(0x71, c | 0x40);       /* turn on 6th bit of status register */
     
     // sti();
+}
+
+/* Function to handle rtc interrupt */
+extern void handle_rtc_interrupt() {
+    
 }
