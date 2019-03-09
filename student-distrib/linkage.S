@@ -4,12 +4,12 @@
 
 keyboard_linkage:
     cld
-	pushf							/* save registers on stack */
+	pushf              /* save registers on stack */
 	pushl %gs
 	pushl %fs
 	pushl %es
 	pushl %ds
-	pushl %esi
+	pushl %esi         /* save callee saved regs too, since callee func does not */
 	pushl %edi
 	pushl %ebp
 	pushl %edx 		
@@ -19,7 +19,7 @@ keyboard_linkage:
 	
 	call handle_keyboard_interrupt			
 	
-	popl %eax						/* restore registers from stack */
+	popl %eax          /* restore registers from stack */
 	popl %ebx
 	popl %ecx
 	popl %edx
@@ -35,13 +35,13 @@ keyboard_linkage:
 	iret
 
 rtc_linkage:
-	cld 							/* save registers on stack */
+	cld                /* save registers on stack */
 	pushf			
 	pushl %gs
 	pushl %fs
 	pushl %es
 	pushl %ds
-	pushl %esi
+	pushl %esi         /* save callee saved regs too, since callee func does not */
 	pushl %edi
 	pushl %ebp
 	pushl %edx 		
@@ -51,7 +51,7 @@ rtc_linkage:
 	
 	call handle_rtc_interrupt
 	
-	popl %eax						/* restore registers from stack */
+	popl %eax          /* restore registers from stack */
 	popl %ebx
 	popl %ecx
 	popl %edx
