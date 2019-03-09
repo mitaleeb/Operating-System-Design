@@ -6,7 +6,7 @@
 
 #include "idt.h"
 #include "devices.h"
-#include "linkage.S"
+#include "linkage.h"
 
 void populate_idt(idt_desc_t* idt) {
 
