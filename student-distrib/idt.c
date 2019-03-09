@@ -6,6 +6,7 @@
 
 #include "idt.h"
 #include "devices.h"
+#include "linkage.S"
 
 void populate_idt(idt_desc_t* idt) {
 
@@ -70,8 +71,8 @@ void populate_idt(idt_desc_t* idt) {
 
 	
 	/* vector for keyboard interrupt */
-	SET_IDT_ENTRY(idt[0x21], handle_keyboard_interrupt);
-	SET_IDT_ENTRY(idt[0x28], handle_rtc_interrupt);
+	SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
+	SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 	// i think theres supposed to be one for system call too?
 }
 
