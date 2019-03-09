@@ -1,8 +1,8 @@
 /**
- * keyboard.h
+ * devices.h
  *
  * h file that holds a lot of definitions of functions, including all the
- * functions in keyboard.c
+ * functions in devices.c
  */
 
 #include "x86_desc.h"
@@ -17,3 +17,9 @@ extern void init_keyboard();
 
 /* Function to handle keyboard interrupt */
 extern void handle_keyboard_interrupt();
+
+/* Function to initialize rtc */
+extern void init_rtc();
+
+/* Function to handle rtc interrupt */
+extern void handle_rtc_interrupt();
