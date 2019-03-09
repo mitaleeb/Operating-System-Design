@@ -65,6 +65,7 @@ unsigned char handle_keyboard_interrupt() {
         // based on which character was input
     }
     
+    /* send end of interrupt */
     unsigned int irq_keyboard = 1;
     send_eoi(irq_keyboard);
 }
