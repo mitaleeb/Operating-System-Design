@@ -46,7 +46,8 @@ extern void init_rtc() {
     
 
     /* RTC is IR0 on slave PIC - irq num is 8 */
-    enable_irq(8);
+    unsigned int irq_rtc = 8;
+    enable_irq(irq_rtc);
 
     /* set interrupts */
     // sti();
@@ -56,7 +57,8 @@ extern void init_rtc() {
 extern void handle_rtc_interrupt() {
     
     /* send end of interrupt */
-	send_eoi(8);
+    unsigned int irq_rtc = 8;
+	send_eoi(irq_rtc);
 	
     /* clear interrupts */
     // cli();
