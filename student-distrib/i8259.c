@@ -12,7 +12,7 @@ uint8_t slave_mask = 0xff;  /* IRQs 8-15 */
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
-    unsigned long flags;
+    // unsigned long flags;
     // i8259_auto_eoi = auto_eoi;
     short saved_21 =  inb(0x21);
     short saved_A1 =  inb(0xA1);

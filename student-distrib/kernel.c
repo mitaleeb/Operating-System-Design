@@ -140,7 +140,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Construct the IDT */
     {
-        populate_idt(&idt_desc_ptr);
+        populate_idt();
     }
 
     /* Init the PIC */

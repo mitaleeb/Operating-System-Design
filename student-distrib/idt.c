@@ -9,7 +9,7 @@
 #include "linkage.h"
 #include "lib.h"
 
-void populate_idt(idt_desc_t* idt) {
+void populate_idt() {
 
 	/* load IDT */
 	lidt(idt_desc_ptr);
@@ -44,32 +44,35 @@ void populate_idt(idt_desc_t* idt) {
 		
 		/* if vector > 32 interrupt, general exception */
 		if(i >= 32) {
-			SET_IDT_ENTRY(idt[i], idt_general_exception);
+			SET_IDT_ENTRY(idt[i], &idt_general_exception);
 		}
 	}
 
 	/* set IDT entries with corresponding handler */
-	SET_IDT_ENTRY(idt[0x00], idt_de);
-	SET_IDT_ENTRY(idt[0x01], idt_db);
-	SET_IDT_ENTRY(idt[0x02], idt_nmi);
-	SET_IDT_ENTRY(idt[0x03], idt_bp);
-	SET_IDT_ENTRY(idt[0x04], idt_of);
-	SET_IDT_ENTRY(idt[0x05], idt_br);
-	SET_IDT_ENTRY(idt[0x06], idt_ud);
-	SET_IDT_ENTRY(idt[0x07], idt_nm);
-	SET_IDT_ENTRY(idt[0x08], idt_df);
-	// SET_IDT_ENTRY(idt[0x09], );
-	SET_IDT_ENTRY(idt[0x0A], idt_ts);
-	SET_IDT_ENTRY(idt[0x0B], idt_np);
-	SET_IDT_ENTRY(idt[0x0C], idt_ss);
-	SET_IDT_ENTRY(idt[0x0D], idt_gp);
-	SET_IDT_ENTRY(idt[0x0E], idt_pf);
-	// SET_IDT_ENTRY(idt[0x0F], );
-	SET_IDT_ENTRY(idt[0x10], idt_mf);
-	SET_IDT_ENTRY(idt[0x11], idt_ac);
-	SET_IDT_ENTRY(idt[0x12], idt_mc);
-	SET_IDT_ENTRY(idt[0x13], idt_xf);
+	SET_IDT_ENTRY(idt[0x00], &idt_de);
+	SET_IDT_ENTRY(idt[0x01], &idt_db);
+	SET_IDT_ENTRY(idt[0x02], &idt_nmi);
+	SET_IDT_ENTRY(idt[0x03], &idt_bp);
+	SET_IDT_ENTRY(idt[0x04], &idt_of);
+	SET_IDT_ENTRY(idt[0x05], &idt_br);
+	SET_IDT_ENTRY(idt[0x06], &idt_ud);
+	SET_IDT_ENTRY(idt[0x07], &idt_nm);
+	SET_IDT_ENTRY(idt[0x08], &idt_df);
+	SET_IDT_ENTRY(idt[0x09], &idt_general_exception);
+	SET_IDT_ENTRY(idt[0x0A], &idt_ts);
+	SET_IDT_ENTRY(idt[0x0B], &idt_np);
+	SET_IDT_ENTRY(idt[0x0C], &idt_ss);
+	SET_IDT_ENTRY(idt[0x0D], &idt_gp);
+	SET_IDT_ENTRY(idt[0x0E], &idt_pf);
+	SET_IDT_ENTRY(idt[0x0F], &idt_general_exception);
+	SET_IDT_ENTRY(idt[0x10], &idt_mf);
+	SET_IDT_ENTRY(idt[0x11], &idt_ac);
+	SET_IDT_ENTRY(idt[0x12], &idt_mc);
+	SET_IDT_ENTRY(idt[0x13], &idt_xf);
 
+	for (i = 20; i < 32; i++) {
+		SET_IDT_ENTRY(idt[i], &idt_general_exception);
+	}
 	
 	/* vector for keyboard interrupt */
 	SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
