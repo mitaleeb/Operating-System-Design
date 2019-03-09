@@ -40,14 +40,18 @@ extern void init_rtc() {
     /* 0x70, 0x71 - I/O ports
      * 0x8B - RTC status register */
      
-    outb(0x8B, 0x70);		    /* write to status register, disable non-maskable interrupts */
+    outb(0x8A, 0x70);		    /* write to status register A, disable non-maskable interrupts */
+    char a = inb(0x71);	        /* read from status register A */
     
-    char c;
-    c = inb(0x71);	            /* read from register */
+    outb(0x8B, 0x70);		    /* write to status register B */
+    char b = inb(0x71);	        /* read from status register B */
     
-    outb(0x8B, 0x70);		    /* rewrite to status register, since read resets it */
-    outb(c | 0x40, 0x71);       /* turn on 6th bit of status register */
+    outb(0x8A, 0x70);		    /* rewrite to status register, since read resets it */
+    outb(a | 0x40, 0x71);       /* turn on 6th bit of status register */
     
+    outb(0x8A, 0x70);		    /* rewrite to status register, since read resets it */
+    outb(b | 0x20, 0x71);
+
     /* set interrupts */
     // sti();
 }
