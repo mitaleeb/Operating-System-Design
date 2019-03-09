@@ -1,6 +1,6 @@
 .text
 
-.global keyboard_linkage, rtc_linkage, pit_linkage
+.global keyboard_linkage, rtc_linkage
 
 keyboard_linkage:
     cld
