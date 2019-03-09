@@ -1,3 +1,4 @@
+/* Function to initialize keyboard device */
 void init_keyboard() {
     /* keyboard is on IR1 of master PIC */
     unsigned int irq_keyboard = 1;
@@ -5,6 +6,7 @@ void init_keyboard() {
     enable_irq(irq_keyboard);
 }
 
+/* Function to handle keyboard interrupt */
 void handle_keyboard_interrupt() {
     char c = 0x00;
     
