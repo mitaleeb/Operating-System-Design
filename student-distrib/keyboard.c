@@ -20,6 +20,9 @@ void init_keyboard() {
 
 /* Function to handle keyboard interrupt */
 void handle_keyboard_interrupt() {
+    /* first, need to set 0x28 vector in the IDT to
+     * handle_keyboard_interrupt */
+    
     char c = 0x00;
     
     while (c != 0x00) {
