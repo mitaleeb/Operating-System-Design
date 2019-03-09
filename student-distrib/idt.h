@@ -9,7 +9,7 @@
 #include "x86_desc.h"
 
 /* Declare functions that we use to set up to the idt */
-void populate_idt(idt_desc_t* idt);
+extern void populate_idt(idt_desc_t* idt);
 
 
 /* The following block of code declares functions for all the handlers of the
