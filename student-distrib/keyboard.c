@@ -1,5 +1,12 @@
+/**
+ * keyboard.c
+ * 
+ * A file that holds functions that help initialize
+ * and handle interrupts from the keyboard.
+ */
 
-
+#include "idt.h"
+#include "keyboard.h"
 
 /* Function to initialize keyboard device */
 void init_keyboard() {
