@@ -6,8 +6,9 @@
 #include "lib.h"
 
 /* Interrupt masks to determine which interrupts are enabled and disabled */
-uint8_t master_mask; /* IRQs 0-7  */
-uint8_t slave_mask;  /* IRQs 8-15 */
+uint8_t master_mask = 0xff; /* IRQs 0-7  */
+uint8_t slave_mask = 0xff;  /* IRQs 8-15 */
+
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
@@ -41,20 +42,26 @@ void i8259_init(void) {
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-    // enable port to enable interrupts
-    unsigned int mask, irq = irq_num - I8259A_IRQ_BASE;
-	unsigned long flags;
-
-	mask = ~(1 << irq);
+    /* decrement to bits 0-7 if on slave pic */
+    if (irq_num > 7)
+        irq_num -= 8;
+    
+    unsigned int mask;
+	mask = 1 << irq_num;
 	
 	/* clear interrupts */
 	cli();
 	
-	cached_irq_mask &= mask;
-	if (irq & 8)
-		outb(cached_slave_mask, PIC_SLAVE_IMR);
-	else
-		outb(cached_master_mask, PIC_MASTER_IMR);
+	/* determine if PIC is master or slave */
+	if (irq_num > 7) {
+	    slave_mask = ~(slave_mask);
+	    slave_mask &= mask;
+		outb(slave_mask, SLAVE_8259_PORT + 1);
+	} else {
+	    master_mask = ~(master_mask);
+		master_mask &= mask;
+		outb(master_mask, MASTER_8259_PORT + 1);
+	}
 		
 	/* set interrupts */
 	sti();
@@ -62,19 +69,25 @@ void enable_irq(uint32_t irq_num) {
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
-    unsigned int mask, irq = irq_num - I8259A_IRQ_BASE;
-	unsigned long flags;
-
-	mask = 1 << irq;
+    /* decrement to bits 0-7 if on slave pic */
+    if (irq_num > 7)
+        irq_num -= 8;
+    
+    unsigned int mask;
+	mask = 1 << irq_num;
 	
 	/* clear interrupts */
 	cli();
 	
-	cached_irq_mask |= mask;
-	if (irq & 8)
-		outb(cached_slave_mask, PIC_SLAVE_IMR);
-	else
-		outb(cached_master_mask, PIC_MASTER_IMR);
+	/* determine if PIC is master or slave */
+	if (irq_num > 7) {
+	    // OR if active low
+	    slave_mask |= mask;
+		outb(slave_mask, SLAVE_8259_PORT + 1);
+	} else {
+		master_mask |= mask;
+		outb(master_mask, MASTER_8259_PORT + 1);
+	}
 		
 	/* set interrupts */
 	sti();
@@ -82,6 +95,5 @@ void disable_irq(uint32_t irq_num) {
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    // OR if active low
-    // AND with 0 if active high
+
 }
