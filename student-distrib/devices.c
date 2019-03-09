@@ -64,36 +64,6 @@ unsigned char handle_keyboard_interrupt() {
     }
     
     
-	switch (c) {
-	    /* left shift is pressed */
-		case 0x2A:
-		    /* enable the shift key */
-		    key_state |= 1;
-			break;
-		/* right shift is pressed */
-		case 0x36:
-			/* enable the shift key */
-		    key_state |= 1;
-			break;
-		/* left shift is removed */
-		case 0xAA:
-	    	/* disable the shift key */
-		    key_state = ~(key_state);
-		    key_state &= 1;
-			break;
-		/* right shift is removed */
-		case 0xB6:
-			/* disable the shift key */
-		    key_state = ~(key_state);
-		    key_state &= 1;
-			break;
-		/* caps lock is pressed */
-		case 0x3A:
-		    /* enable caps lock */
-			key_mode ^= 1 << 1;
-			break;
-
-	}
 	
     
     /* send end of interrupt */
@@ -142,4 +112,7 @@ extern void handle_rtc_interrupt() {
 	
 	/* set interrupts */
     // sti();
+    
+    // test by setting to certain frequency adn wheneeve ryou get interrupt print stuff out
+    // get more than one interrupt
 }
