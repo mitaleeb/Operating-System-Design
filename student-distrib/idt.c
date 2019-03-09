@@ -75,8 +75,8 @@ void populate_idt() {
 	}
 	
 	/* vector for keyboard interrupt */
-	SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
-	SET_IDT_ENTRY(idt[0x28], rtc_linkage);
+	SET_IDT_ENTRY(idt[0x21], &keyboard_linkage);
+	SET_IDT_ENTRY(idt[0x28], &rtc_linkage);
 	// i think theres supposed to be one for system call too?
 }
 
