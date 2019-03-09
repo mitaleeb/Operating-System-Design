@@ -34,23 +34,38 @@ unsigned char handle_keyboard_interrupt() {
 /* Function to initialize rtc */
 extern void init_rtc() {
     
+    /* clear interrupts */
     // cli();
     
     /* 0x70, 0x71 - I/O ports
      * 0x8B - RTC status register */
      
-    outb(0x70, 0x8B);		    /* write to status register, disable non-maskable interrupts */
+    outb(0x8B, 0x70);		    /* write to status register, disable non-maskable interrupts */
     
     char c;
     c = inb(0x71);	            /* read from register */
     
-    outb(0x70, 0x8B);		    /* rewrite to status register, since read resets it */
-    outb(0x71, c | 0x40);       /* turn on 6th bit of status register */
+    outb(0x8B, 0x70);		    /* rewrite to status register, since read resets it */
+    outb(c | 0x40, 0x71);       /* turn on 6th bit of status register */
     
+    /* set interrupts */
     // sti();
 }
 
 /* Function to handle rtc interrupt */
 extern void handle_rtc_interrupt() {
     
+    /* clear interrupts */
+    // cli();
+
+	/* read from status register C */
+	outb(0x8C, 0x70);
+	
+	inb(0x71);
+
+	/* end of interrupt */
+	send_eoi(8);
+	
+	/* set interrupts */
+    // sti();
 }
