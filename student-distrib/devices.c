@@ -9,33 +9,15 @@
 #include "lib.h"
 #include "idt.h"
 #include "devices.h"
+#include <stdio.h>
 
-static uint8_t key_state = 0x00;
-static uint8_t keyboard_output[4][128] = {
-	/* regular */
+// static uint8_t key_state = 0x00;
+static unsigned char keyboard_output[128] = {
 	{'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
 	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',
 	 '\0', '\0', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
 	 '\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '*',
 	 '\0', ' ', '\0'},
-	/* caps lock */
-	{'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
-	 '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']',
-	 '\0', '\0', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L' , ';', '\'', '`',
-	 '\0', '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '\0', '*',
-	 '\0', ' ', '\0'},
-	/* shift */
-	{'\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
-	 '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',
-	 '\0', '\0', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L' , ':', '"', '~',
-	 '\0', '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', '\0', '*',
-	 '\0', ' ', '\0'},
-	/* caps lock and shift */
-	{'\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
-	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}',
-	 '\0', '\0', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l' , ':', '"', '~',
-	 '\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', '\0', '*',
-	 '\0', ' ', '\0'}
 };
 
 
@@ -63,8 +45,8 @@ unsigned char handle_keyboard_interrupt() {
         c = inb(0x60);
     }
     
-    
-	
+    /* print character to screen */
+    putchar(keyboard_output[c]);
     
     /* send end of interrupt */
     unsigned int irq_keyboard = 1;
@@ -113,6 +95,6 @@ extern void handle_rtc_interrupt() {
 	/* set interrupts */
     // sti();
     
-    // test by setting to certain frequency adn wheneeve ryou get interrupt print stuff out
+    // test by setting to certain frequency and whenever you get interrupt print stuff out
     // get more than one interrupt
 }
