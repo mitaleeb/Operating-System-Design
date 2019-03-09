@@ -26,6 +26,7 @@ void handle_keyboard_interrupt() {
     char c = 0x00;
     
     while (c != 0x00) {
+        /* read from 0x60 = data port from keyboard controller */
         c = inb(0x60);
     }
 }
