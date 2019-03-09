@@ -10,7 +10,7 @@
 #include "idt.h"
 #include "devices.h"
 
-
+static uint8_t key_state = 0x00;
 static uint8_t keyboard_output[4][128] = {
 	/* regular */
 	{'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
