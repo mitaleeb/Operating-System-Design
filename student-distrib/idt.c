@@ -5,6 +5,7 @@
  */
 
 #include "idt.h"
+#include "devices.h"
 
 void populate_idt(idt_desc_t* idt) {
 
