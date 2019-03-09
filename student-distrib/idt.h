@@ -36,3 +36,5 @@ extern void idt_br();
 extern void idt_ud();
 
 extern void idt_kk();
+
+extern void handle_keyboard_interrupt();
