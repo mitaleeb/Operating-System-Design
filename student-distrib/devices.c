@@ -1,14 +1,14 @@
 /**
- * keyboard.c
+ * devices.c
  * 
  * A file that holds functions that help initialize
- * and handle interrupts from the keyboard.
+ * and handle interrupts from the keyboard and RTC.
  */
 
 #include "i8259.h"
 #include "lib.h"
 #include "idt.h"
-#include "keyboard.h"
+#include "devices.h"
 
 /* Function to initialize keyboard device */
 void init_keyboard() {
