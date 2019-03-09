@@ -54,6 +54,9 @@ unsigned char handle_keyboard_interrupt() {
     
     /* set interrupts */
     // sti();
+    
+    /* do not return from handler in this checkpoint */
+    while(1);
 }
 
 /* Function to initialize rtc */
@@ -76,6 +79,7 @@ extern void init_rtc() {
 
     /* set interrupts */
     // sti();
+    
 }
 
 /* Function to handle rtc interrupt */
@@ -97,4 +101,7 @@ extern void handle_rtc_interrupt() {
     
     // test by setting to certain frequency and whenever you get interrupt print stuff out
     // get more than one interrupt
+    
+    /* do not return from handler in this checkpoint */
+    while(1);
 }
