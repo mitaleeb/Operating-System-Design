@@ -32,7 +32,7 @@ void init_keyboard() {
 /* Function to handle keyboard interrupt */
 unsigned char handle_keyboard_interrupt() {
     
-    /* 0x28 vector in the IDT was set to
+    /* 0x21 vector in the IDT was set to
      * handle_keyboard_interrupt */
      
     /* clear interrupts */
