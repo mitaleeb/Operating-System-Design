@@ -41,18 +41,17 @@ void i8259_init(void) {
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-    /* decrement to bits 0-7 if on slave pic */
-    if (irq_num > 7)
-        irq_num -= 8;
     
     unsigned int mask;
 	mask = 1 << irq_num;
 	
 	/* clear interrupts */
-	cli();
+	//cli();
 	
 	/* determine if PIC is master or slave */
 	if (irq_num > 7) {
+		irq_num -= 8; // Decrement to get the slave idx
+		mask = 1 << irq_num;
 	    slave_mask = ~(slave_mask);
 	    slave_mask &= mask;
 		outb(slave_mask, SLAVE_8259_PORT + 1);
@@ -63,7 +62,7 @@ void enable_irq(uint32_t irq_num) {
 	}
 		
 	/* set interrupts */
-	sti();
+	//sti();
 }
 
 /* Disable (mask) the specified IRQ */
