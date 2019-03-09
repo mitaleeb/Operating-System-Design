@@ -19,7 +19,7 @@ void i8259_init(void) {
     short saved_A1 =  in(0xA1);
     
     /* mask interrupts on all PICS */
-    cli();
+    // cli();
     outb(0xff, MASTER_8259_PORT + 1);
     outb(0xff, SLAVE_8259_PORT + 1);
     
@@ -38,7 +38,6 @@ void i8259_init(void) {
 
     outb(saved_21, MASTER_8259_PORT + 1)        /* restore master IRQ mask */
     outb(saved_A1, SLAVE_8259_PORT + 1)         /* restore slave IRQ mask */
-    sti();
 }
 
 /* Enable (unmask) the specified IRQ */
