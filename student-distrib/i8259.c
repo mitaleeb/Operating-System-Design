@@ -8,6 +8,7 @@
 /* Interrupt masks to determine which interrupts are enabled and disabled */
 uint8_t master_mask = 0xff; /* IRQs 0-7  */
 uint8_t slave_mask = 0xff;  /* IRQs 8-15 */
+# define EOI_COMMAND      0x20
 
 
 /* Initialize the 8259 PIC */
@@ -95,5 +96,10 @@ void disable_irq(uint32_t irq_num) {
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    // code
+    
+    /* determine if PIC is master or slave */
+    if(irq_num >= 8)
+		outb(SLAVE_8259_PORT, EOI_COMMAND);
+ 
+	outb(MASTER_8259_PORT, EOI_COMMAND);
 }
