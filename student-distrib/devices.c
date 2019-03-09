@@ -39,18 +39,14 @@ extern void init_rtc() {
     
     /* 0x70, 0x71 - I/O ports
      * 0x8B - RTC status register */
-     
     outb(0x8A, 0x70);		    /* write to status register A, disable non-maskable interrupts */
     char a = inb(0x71);	        /* read from status register A */
-    
     outb(0x8B, 0x70);		    /* write to status register B */
-    char b = inb(0x71);	        /* read from status register B */
-    
-    outb(0x8A, 0x70);		    /* rewrite to status register, since read resets it */
     outb(a | 0x40, 0x71);       /* turn on 6th bit of status register */
     
-    outb(0x8A, 0x70);		    /* rewrite to status register, since read resets it */
-    outb(b | 0x20, 0x71);
+
+    /* RTC is IR0 on slave PIC - irq num is 8 */
+    enable_irq(8);
 
     /* set interrupts */
     // sti();
@@ -59,16 +55,15 @@ extern void init_rtc() {
 /* Function to handle rtc interrupt */
 extern void handle_rtc_interrupt() {
     
+    /* send end of interrupt */
+	send_eoi(8);
+	
     /* clear interrupts */
     // cli();
 
 	/* read from status register C */
 	outb(0x8C, 0x70);
-	
 	inb(0x71);
-
-	/* end of interrupt */
-	send_eoi(8);
 	
 	/* set interrupts */
     // sti();
