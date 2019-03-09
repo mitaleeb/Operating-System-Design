@@ -5,31 +5,31 @@
 keyboard_linkage:
     cld
 	pushf							/* save registers on stack */
-	pushl %ds
-	pushl %es
-	pushl %fs
 	pushl %gs
-	pushl %eax
+	pushl %fs
+	pushl %es
+	pushl %ds
 	pushl %esi
 	pushl %edi
 	pushl %ebp
 	pushl %edx 		
 	pushl %ecx
 	pushl %ebx
+	pushl %eax
 	
 	call handle_keyboard_interrupt			
 	
-	popl %ebx		 				/* restore registers from stack */
+	popl %eax						/* restore registers from stack */
+	popl %ebx
 	popl %ecx
 	popl %edx
 	popl %ebp
 	popl %edi
 	popl %esi
-	popl %eax
-	popl %gs
-	popl %fs
-	popl %es
 	popl %ds
+	popl %es
+	popl %fs
+	popl %gs
 	popf
 	
 	iret
@@ -37,31 +37,31 @@ keyboard_linkage:
 rtc_linkage:
 	cld 							/* save registers on stack */
 	pushf			
-	pushl %ds
-	pushl %es
-	pushl %fs
 	pushl %gs
-	pushl %eax
+	pushl %fs
+	pushl %es
+	pushl %ds
 	pushl %esi
 	pushl %edi
 	pushl %ebp
 	pushl %edx 		
 	pushl %ecx
 	pushl %ebx
+	pushl %eax
 	
 	call handle_rtc_interrupt
 	
-	popl %ebx						/* restore registers from stack */
-	popl %ecx		 
+	popl %eax						/* restore registers from stack */
+	popl %ebx
+	popl %ecx
 	popl %edx
 	popl %ebp
 	popl %edi
 	popl %esi
-	popl %eax
-	popl %gs
-	popl %fs
-	popl %es
 	popl %ds
+	popl %es
+	popl %fs
+	popl %gs
 	popf
 	
 	iret
