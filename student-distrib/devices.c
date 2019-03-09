@@ -53,21 +53,55 @@ unsigned char handle_keyboard_interrupt() {
     
     /* 0x28 vector in the IDT was set to
      * handle_keyboard_interrupt */
+     
+    /* clear interrupts */
+    // cli();
     
+    /* read from 0x60 = data port from keyboard controller */
     unsigned char c = 0x00;
-    
     while (c != 0x00) {
-        /* read from 0x60 = data port from keyboard controller */
         c = inb(0x60);
     }
     
-    switch (c) {
-        // based on which character was input
-    }
+    
+	switch (c) {
+	    /* left shift is pressed */
+		case 0x2A:
+		    /* enable the shift key */
+		    key_state |= 1;
+			break;
+		/* right shift is pressed */
+		case 0x36:
+			/* enable the shift key */
+		    key_state |= 1;
+			break;
+		/* left shift is removed */
+		case 0xAA:
+	    	/* disable the shift key */
+		    key_state = ~(key_state);
+		    key_state &= 1;
+			break;
+		/* right shift is removed */
+		case 0xB6:
+			/* disable the shift key */
+		    key_state = ~(key_state);
+		    key_state &= 1;
+			break;
+		/* caps lock is pressed */
+		case 0x3A:
+		    /* enable caps lock */
+			key_mode ^= 1 << 1;
+			break;
+
+	}
+	
     
     /* send end of interrupt */
     unsigned int irq_keyboard = 1;
     send_eoi(irq_keyboard);
+    
+    /* set interrupts */
+    // sti();
 }
 
 /* Function to initialize rtc */
