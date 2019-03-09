@@ -1,3 +1,6 @@
+
+
+
 /* Function to initialize keyboard device */
 void init_keyboard() {
     /* keyboard is on IR1 of master PIC */
