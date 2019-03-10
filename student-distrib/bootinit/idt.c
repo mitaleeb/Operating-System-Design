@@ -5,9 +5,9 @@
  */
 
 #include "idt.h"
-#include "devices.h"
-#include "linkage.h"
-#include "lib.h"
+#include "../devices.h"
+#include "../linkage.h"
+#include "../lib.h"
 
 void populate_idt() {
 
