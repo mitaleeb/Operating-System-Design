@@ -37,13 +37,16 @@ void i8259_init(void) {
 
     outb(saved_21, MASTER_8259_PORT + 1);        /* restore master IRQ mask */
     outb(saved_A1, SLAVE_8259_PORT + 1);         /* restore slave IRQ mask */
+
+    enable_irq(2);								 /* enable slave irq 2 on PIC */
 }
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
     
-    unsigned int mask;
-	mask = 1 << irq_num;
+    unsigned int mask=0xFE; 		// Initializes mask as 1111 1110 to use bit zero as irq mask
+	int i;							// Variable used for bit shifting in loop
+	//mask = 1 << irq_num;
 	
 	/* clear interrupts */
 	//cli();
@@ -51,13 +54,16 @@ void enable_irq(uint32_t irq_num) {
 	/* determine if PIC is master or slave */
 	if (irq_num > 7) {
 		irq_num -= 8; // Decrement to get the slave idx
-		mask = 1 << irq_num;
-	    slave_mask = ~(slave_mask);
+		for (i = 0; i < irq_num; i++) {
+			mask = (mask << 1) + 1;
+		}
 	    slave_mask &= mask;
 		outb(slave_mask, SLAVE_8259_PORT + 1);
 	} else {
-	    master_mask = ~(master_mask);
-		master_mask &= mask;
+		for (i = 0; i < irq_num; i++) {
+			mask = (mask << 1) + 1;
+		}
+	    slave_mask &= mask;
 		outb(master_mask, MASTER_8259_PORT + 1);
 	}
 		
@@ -71,11 +77,11 @@ void disable_irq(uint32_t irq_num) {
     if (irq_num > 7)
         irq_num -= 8;
     
-    unsigned int mask;
+    unsigned int mask=0x00;				// Disable IRQ line mask with '1' bit
 	mask = 1 << irq_num;
 	
 	/* clear interrupts */
-	cli();
+	//cli();
 	
 	/* determine if PIC is master or slave */
 	if (irq_num > 7) {
@@ -88,7 +94,7 @@ void disable_irq(uint32_t irq_num) {
 	}
 		
 	/* set interrupts */
-	sti();
+	//sti();
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
@@ -98,7 +104,7 @@ void send_eoi(uint32_t irq_num) {
 	if(irq_num > 7) {
 		irq_num -= 8;
 		outb((EOI | irq_num), SLAVE_8259_PORT);     /* send EOI to slave */
-		outb((EOI | 2), MASTER_8259_PORT);          /* send EOI to master */
+		outb((EOI + 2), MASTER_8259_PORT);          /* send EOI to master */
 	} else {
 		outb((EOI | irq_num), MASTER_8259_PORT);    /* send EOI to master */
 	}
