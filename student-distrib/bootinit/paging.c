@@ -20,7 +20,7 @@
 
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
-#define PT_IDX(x) (x >> 12 & 0x03FF)
+#define PT_IDX(x) ((x >> 12) & 0x03FF)
 
 /* static variables to hold certain paging items */
 static page_directory_t page_directory __attribute__ ((aligned (PAGE_4KB)));
@@ -57,23 +57,24 @@ void page_init()
     /* add a page table entry for video memory into the page table */
     // TODO: NEEDS TO BE DONE STILL (Where is video memory?)
     flags = READ_WRITE | PRESENT;
-    // add_page_table_entry((void*)VIDEO_ADDR, (void*) , flags);
+    add_page_table_entry((void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags);
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
     /* 2. Enable PSE (4 MB Pages) */
     /* 3. Set the paging and protection bits of cr0 */
-    asm(
+    asm volatile (
         "movl %0, %%eax;"
         "movl %%eax, %%cr3;"
         "movl %%cr4, %%eax;"
         "orl $0x00000010, %%eax;"
         "movl %%eax, %%cr4;"
-        "movl %%cr0, %%eax"
+        "movl %%cr0, %%eax;"
         "orl $0x80000001, %%eax;"
         "movl %%eax, %%cr0;"
-        : : "r" (page_directory)
-        : "%eax"
+        : 
+        : "g" (&page_directory)
+        : "%eax", "memory"
     );
 }
 
@@ -98,7 +99,7 @@ static void add_page_dir_entry(void* phys_addr, void* virt_addr, uint32_t flags)
     int pd_idx = PD_IDX((uint32_t) virt_addr);
     
     // add the entry
-    page_directory.page_directory_entries[pd_idx] = ((int)virt_addr | flags);
+    page_directory.page_directory_entries[pd_idx] = ((int)phys_addr | flags);
 }
 
 /**
@@ -122,5 +123,5 @@ static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flag
     int pt_idx = PT_IDX((uint32_t) virt_addr);
 
     // add the entry
-    page_table_1.page_table_entries[pt_idx] = ((int) virt_addr | flags);
+    page_table_1.page_table_entries[pt_idx] = ((int)phys_addr | flags);
 }
