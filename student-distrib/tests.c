@@ -45,6 +45,18 @@ int idt_test(){
 	return result;
 }
 
+int interrupt_test(){
+	TEST_HEADER;
+	int result = PASS;
+	if((idt[0x21].offset_15_00 == NULL) && 
+			(idt[0x21].offset_31_16 == NULL)) {
+		result = FAIL;
+	}
+	return result;
+}
+
+
+
 // add more tests here
 
 /* Checkpoint 2 tests */
@@ -56,6 +68,8 @@ int idt_test(){
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
+	TEST_OUTPUT("interrupt_test", interrupt_test());
 	printf("Finished Test 1");
+	printf("Finished Test 2");
 	// launch your tests here
 }

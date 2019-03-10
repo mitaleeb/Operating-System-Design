@@ -14,8 +14,8 @@ uint8_t slave_mask = 0xff;  /* IRQs 8-15 */
 void i8259_init(void) {
     // unsigned long flags;
     // i8259_auto_eoi = auto_eoi;
-    short saved_21 =  inb(0x21);
-    short saved_A1 =  inb(0xA1);
+    //short saved_21 =  inb(0x21);
+    //short saved_A1 =  inb(0xA1);
     
     /* mask interrupts on all PICS */
     // cli();
@@ -35,10 +35,11 @@ void i8259_init(void) {
     outb(ICW4, SLAVE_8259_PORT + 1);            /* ICW4: normal EOI */
 
 
-    outb(saved_21, MASTER_8259_PORT + 1);        /* restore master IRQ mask */
-    outb(saved_A1, SLAVE_8259_PORT + 1);         /* restore slave IRQ mask */
+    outb(0xff, MASTER_8259_PORT + 1);        /* restore master IRQ mask */
+    outb(0xff, SLAVE_8259_PORT + 1);         /* restore slave IRQ mask */
 
     enable_irq(2);								 /* enable slave irq 2 on PIC */
+    
 }
 
 /* Enable (unmask) the specified IRQ */
@@ -63,10 +64,12 @@ void enable_irq(uint32_t irq_num) {
 		for (i = 0; i < irq_num; i++) {
 			mask = (mask << 1) + 1;
 		}
-	    slave_mask &= mask;
+	    master_mask &= mask;
+	    master_mask = ~master_mask;
 		outb(master_mask, MASTER_8259_PORT + 1);
 	}
-		
+	uint32_t a = inb(MASTER_8259_PORT + 1);
+	printf("mask is: %x\n",a);
 	/* set interrupts */
 	//sti();
 }
@@ -77,8 +80,8 @@ void disable_irq(uint32_t irq_num) {
     if (irq_num > 7)
         irq_num -= 8;
     
-    unsigned int mask=0x00;				// Disable IRQ line mask with '1' bit
-	mask = 1 << irq_num;
+    unsigned int mask=0x01;				// Disable IRQ line mask with '1' bit
+	//mask = 1 << irq_num;
 	
 	/* clear interrupts */
 	//cli();
@@ -99,7 +102,7 @@ void disable_irq(uint32_t irq_num) {
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    
+    //printf("end of interrupt %i\n", irq_num);
     /* determine if PIC is master or slave */
 	if(irq_num > 7) {
 		irq_num -= 8;

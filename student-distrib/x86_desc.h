@@ -174,7 +174,7 @@ do {                                                             \
     str.offset_15_00 = ((uint32_t)(handler) & 0xFFFF);           \
     str.present = 1;                                             \
     str.dpl = 0; \
-    str.seg_selector = KERNEL_CS; \
+    str.seg_selector = KERNEL_CS;                                \
     str.reserved0 = 0; \
     str.reserved1 = 1; \
     str.reserved2 = 1; \

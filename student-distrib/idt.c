@@ -24,7 +24,7 @@ void populate_idt() {
 		if (i == 0x80) {
 		    /* system call descriptor should have its
 		     * descriptor privilge level set to 3 */
-			idt[i].dpl = 0x03;
+			idt[i].dpl = 0x00;
 		} else {
 		    /* set descriptor privilege level to kernel */
 		    idt[i].dpl = 0x00;
@@ -76,6 +76,7 @@ void populate_idt() {
 	
 	/* vector for keyboard interrupt */
 	SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
+	//printf("SET IDT ENTRY FOR KEYBOARD INTERRUPTS");
 	SET_IDT_ENTRY(idt[0x28], rtc_linkage);
 	// i think theres supposed to be one for system call too?
 }

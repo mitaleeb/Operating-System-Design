@@ -3,7 +3,7 @@
 .global keyboard_linkage, rtc_linkage
 
 keyboard_linkage:
-    cld
+    #cld
 	pushf              /* save registers on stack */
 	pushl %gs
 	pushl %fs
@@ -35,7 +35,7 @@ keyboard_linkage:
 	iret
 
 rtc_linkage:
-	cld                /* save registers on stack */
+	#cld                /* save registers on stack */
 	pushf			
 	pushl %gs
 	pushl %fs

@@ -27,35 +27,47 @@ void init_keyboard() {
     /* keyboard is on IR1 of master PIC */
     unsigned int irq_keyboard = 1;
     enable_irq(irq_keyboard);
+    //printf("KEYboard initialized");
 }
 
 /* Function to handle keyboard interrupt */
-unsigned char handle_keyboard_interrupt() {
-    
+void handle_keyboard_interrupt() {
+    disable_irq(2);
+    printf("KEYBOARD OUTPUT");
     /* 0x21 vector in the IDT was set to
      * handle_keyboard_interrupt */
      
     /* clear interrupts */
-    // cli();
+    //cli();
     
     /* read from 0x60 = data port from keyboard controller */
     uint8_t c = 0x00;
-    while (c != 0x00) {
-        c = inb(0x60);
-    }
-    
+    /*while (c == 0x00) {
+        if(inb(0x60) != 0){
+            c = inb(0x60);
+        }
+    } */
+    do {
+        if (inb(0x60) != 0) {
+            c = inb(0x60);
+            if (c > 0) {
+                break;
+            }
+        }
+    } while(1);
     /* print character to screen */
     putc(keyboard_output[c]);
-    
     /* send end of interrupt */
     unsigned int irq_keyboard = 1;
     send_eoi(irq_keyboard);
     
+    enable_irq(2);
+
     /* set interrupts */
-    // sti();
+    //sti();
     
     /* do not return from handler in this checkpoint */
-    while(1);
+    //while(1);
 }
 
 /* Function to initialize rtc */
@@ -102,5 +114,5 @@ extern void handle_rtc_interrupt() {
     // get more than one interrupt
     
     /* do not return from handler in this checkpoint */
-    while(1);
+    //while(1);
 }

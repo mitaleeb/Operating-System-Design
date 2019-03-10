@@ -7,6 +7,7 @@
 
 #include "x86_desc.h"
 #include "idt.h"
+#include "linkage.h"
 
 /**
  * Function Declarations
@@ -16,7 +17,7 @@
 extern void init_keyboard();
 
 /* Function to handle keyboard interrupt */
-extern unsigned char handle_keyboard_interrupt();
+extern void handle_keyboard_interrupt();
 
 /* Function to initialize rtc */
 extern void init_rtc();
