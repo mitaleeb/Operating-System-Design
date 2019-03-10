@@ -55,7 +55,6 @@ void page_init()
     add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags);
 
     /* add a page table entry for video memory into the page table */
-    // TODO: NEEDS TO BE DONE STILL (Where is video memory?)
     flags = READ_WRITE | PRESENT;
     add_page_table_entry((void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags);
 
