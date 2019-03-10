@@ -6,7 +6,7 @@
  */
 
 #include "x86_desc.h"
-#include "idt.h"
+#include "bootinit/idt.h"
 
 /**
  * Function Declarations

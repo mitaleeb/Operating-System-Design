@@ -7,7 +7,7 @@
 
 #include "i8259.h"
 #include "lib.h"
-#include "idt.h"
+#include "bootinit/idt.h"
 #include "devices.h"
 
 // static uint8_t key_state = 0x00;

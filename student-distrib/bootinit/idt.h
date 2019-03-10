@@ -6,7 +6,7 @@
  * the first 32 IDT locations.
  */
 
-#include "x86_desc.h"
+#include "../x86_desc.h"
 
 /* Declare functions that we use to set up to the idt */
 extern void populate_idt();
