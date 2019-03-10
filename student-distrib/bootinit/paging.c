@@ -16,6 +16,7 @@
 
 /* definitions for the beginning of certain segments */
 #define KERNEL_ADDR 0x400000
+#define VIDEO_ADDR 0xB8000
 
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
@@ -55,6 +56,8 @@ void page_init()
 
     /* add a page table entry for video memory into the page table */
     // TODO: NEEDS TO BE DONE STILL (Where is video memory?)
+    flags = READ_WRITE | PRESENT;
+    // add_page_table_entry((void*)VIDEO_ADDR, (void*) , flags);
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
