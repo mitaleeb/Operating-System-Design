@@ -86,93 +86,112 @@ void populate_idt() {
 /* idt_de() - Divide Error. Vector 0x00. */
 extern void idt_de() {
     printf("Divide by zero error, (Vec 0x00) \n");
+		while(1);
 }
 
 /* idt_db() - RESERVED. Vector 0x01. */
 extern void idt_db() {
     printf("RESERVED, (Vec 0x01) \n");
+		while(1);
 }
 
 /* idt_nmi() - Nonmaskable External Interrupt. Vector 0x02. */
 extern void idt_nmi() {
     printf("Nonmaskable External Interrupt, (Vec 0x02) \n");
+		while(1);
 }
 
 /* idt_bp() - Breakpoint. Vector 0x03. */
 extern void idt_bp() {
     printf("Breakpoint, (Vec 0x03) \n");
+		while(1);
 }
 
 /* idt_of() - Overflow. Vector 0x04. */
 extern void idt_of() {
     printf("Overflow, (Vec 0x04) \n");
+		while(1);
 }
 
 /* idt_br() - BOUND range exceeded. Vector 0x05. */
 extern void idt_br() {
     printf("bound range exceeded, (Vec 0x05) \n");
+		while(1);
 }
 
 /* idt_ud() - Undefined Opcode. Vector 0x06. */
 extern void idt_ud() {
     printf("undefined opcode, (Vec 0x06) \n");
+		while(1);
 }
 
 /* idt_nm() - Device Not Available. Vector 0x07. */
 extern void idt_nm() {
     printf("Device not available, (Vec 0x07) \n");
+		while(1);
 }
 
 /* idt_df() - Double Fault. Vector 0x08. */
 extern void idt_df() {
     printf("Double Fault, (Vec 0x08) \n");
+		while(1);
 }
 
 /* idt_ts() - Invalid TSS. Vector 10 (0x0A). */
 extern void idt_ts() {
     printf("Invalid TSS, (Vec 0x0A) \n");
+		while(1);
 }
 
 /* idt_np() - Segment Not Present. Vector 11 (0x0B). */
 extern void idt_np() {
     printf("Segment Not Present, (Vec 0x0B) \n");
+		while(1);
 }
 
 /* idt_ss() - Stack Segment Fault. Vector 12 (0x0C). */
 extern void idt_ss() {
     printf("Stack Segment Fault (Vec 0x0C) \n");
+		while(1);
 }
 
 /* idt_gp() - General Protection. Vector 13 (0x0D). */
 extern void idt_gp() {
     printf("General Protection, (Vec 0x0D) \n");
+		while(1);
 }
 
 /* idt_pf() - Page Fault. Vector 14 (0x0E). */
 extern void idt_pf() {
     printf("Page Fault, (Vec 0x0E) \n");
+		while(1);
 }
 
 /* idt_mf() - Math Fault. Vector 16 (0x10). */
 extern void idt_mf() {
     printf("Math fault, (Vec 0x10) \n");
+		while(1);
 }
 
 /* idt_ac() - Alignment Check. Vector 17 (0x11). */
 extern void idt_ac() {
 	printf("Alignment Check, (Vec 0x11) \n");
+	while(1);
 }
 
 /* idt_mc() - Machine Check. Vector 18 (0x12). */
 extern void idt_mc() {
     printf("Machine Check, (Vec 0x12) \n");
+		while(1);
 }
 
 /* idt_xf() - SIMD float exception. Vector 19 (0x13). */
 extern void idt_xf() {
     printf("SIMD float exception, (Vec 0x13) \n");
+		while(1);
 }
 
 extern void idt_general_exception() {
 	printf("General Exception \n");
+	while(1);
 }
