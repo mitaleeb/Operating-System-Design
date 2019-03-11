@@ -10,6 +10,7 @@
 #include "tests.h"
 #include "bootinit/idt.h"
 #include "devices.h"
+#include "bootinit/paging.h"
 
 #define RUN_TESTS
 
@@ -142,6 +143,9 @@ void entry(unsigned long magic, unsigned long addr) {
     {
         populate_idt();
     }
+
+    // turn on paging
+    page_init();
 
     /* Init the PIC */
     i8259_init();
