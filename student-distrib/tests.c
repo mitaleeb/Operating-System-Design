@@ -71,9 +71,9 @@ int page_value_test() {
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
-	printf("Finished Test 1");
+	printf("Finished Test 1 \n");
 	
 	// launch your tests here
 	TEST_OUTPUT("page test", page_value_test());
-	printf("Finished Page Value Test");
+	printf("Finished Page Value Test \n");
 }

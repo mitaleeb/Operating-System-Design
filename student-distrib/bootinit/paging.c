@@ -9,7 +9,7 @@
 /* definitions for the flags for page table and directory entires */
 #define GLOBAL              0x00000100
 #define PAGE_4MB            0x00000080
-#define PAGE_CACHE_ENABLE   0x00000010
+#define PAGE_CACHE_DISABLE  0x00000010
 #define USER_LEVEL          0x00000004
 #define READ_WRITE          0x00000002
 #define PRESENT             0x00000001
@@ -51,11 +51,11 @@ void page_init()
     add_page_dir_entry(&(page_table_1), 0, flags);
 
     /* add the 4MB Kernel page to the page directory */
-    flags = GLOBAL | PAGE_4MB | PAGE_CACHE_ENABLE | READ_WRITE | PRESENT;
+    flags = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
     add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags);
 
     /* add a page table entry for video memory into the page table */
-    flags = READ_WRITE | PRESENT;
+    flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
     add_page_table_entry((void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags);
 
     /* Turn on Paging in assembly. This is done in the following steps: */
@@ -138,8 +138,8 @@ int paging_tester() {
 
     // define the flags expected for our directory/table values
     uint32_t dir_ent_0_flags = READ_WRITE | PRESENT;
-    uint32_t dir_ent_1_flags = GLOBAL | PAGE_4MB | PAGE_CACHE_ENABLE | READ_WRITE | PRESENT;
-    uint32_t tab_ent_vid_flags = READ_WRITE | PRESENT;
+    uint32_t dir_ent_1_flags = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
+    uint32_t tab_ent_vid_flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
 
     // check the directory and table values
     if (page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags) && 
