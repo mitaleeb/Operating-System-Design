@@ -263,17 +263,67 @@ asm volatile("int $0x80");
 return result;
 }
 
-
+/**
+ * page_value_test()
+ *
+ * DESCRIPTION: Tests whether the page directory and table entries are as
+ * expected.
+ */
 int page_value_test() {
 	TEST_HEADER;
 	int result = PASS;
 
-	// call the paging tester to see if it outputs 1
+	// call the paging tester to see if it outputs 0
 	if (paging_tester()) {
-		assertion_failure();
+		// assertion_failure();
 		result = FAIL;
 	}
 
+	return result;
+}
+
+
+/**
+ * page_deref_test()
+ *
+ * DESCRIPTION: Tests the dereference of certain areas in the page to see if our
+ * page table performs correctly.
+ */
+int page_deref_test() {
+	TEST_HEADER;
+	int result = PASS;
+
+	// Dereference some value in the kernel
+	int t = 0x400001;
+	int derefed = *((int*) t);
+
+	printf("Contents of address 0x400001 is: %x                  \n", derefed);
+
+	// This section should generate a page fault. Comment it out to boot the OS.
+	// t = 0x000003;
+	// derefed = *((int*) t);
+	// printf("This should have made a page fault! \n");
+	// End section
+
+	return result;
+}
+
+/**
+ * except_test()
+ *
+ * DESCRIPTION: purposefully "blue screen"s the os to test critical exceptions.
+ */
+int except_test() {
+	TEST_HEADER;
+	int result = PASS;
+
+	// Divide by Zero
+	int m = 5;
+	int n = 0;
+	int g = m/n;
+	printf("Should never get here! %d \n", g);
+	
+	result = FAIL;
 	return result;
 }
 
@@ -287,12 +337,20 @@ int page_value_test() {
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
-	printf("Finished Test 1 \n");
+	printf("Finished IDT Test 1                                      \n");
 	
 	// launch your tests here
 	TEST_OUTPUT("idt_test2", idt_test2());
-	printf("Finished IDT Test 2 \n");
+	printf("Finished IDT Test 2                                      \n");
 
 	TEST_OUTPUT("page test", page_value_test());
-	printf("Finished Page Value Test \n");
+	printf("Finished Page Value Test                                 \n");
+
+	TEST_OUTPUT("page deref test", page_deref_test());
+	printf("Finished Page Dereference Test                           \n");
+
+	// Test that purposefully puts the system into an unusable state by forcing
+	// one of the first 32 exceptions to happen. Comment it out to boot the OS.
+	// TEST_OUTPUT("Intentional Bluescreen Test", except_test());
+	// printf("We should never get to this line! \n");
 }
