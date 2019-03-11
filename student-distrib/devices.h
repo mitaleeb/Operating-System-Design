@@ -5,8 +5,8 @@
  * functions in devices.c
  */
 
-#include "x86_desc.h"
 #include "bootinit/idt.h"
+#include "x86_desc.h"
 
 /**
  * Function Declarations

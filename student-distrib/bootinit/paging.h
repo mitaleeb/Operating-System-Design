@@ -1,6 +1,6 @@
 /**
  * paging.h
- * 
+ *
  * Header file for the declarations for all things paging.
  */
 
@@ -15,25 +15,25 @@
 
 /**
  * page_directory_t
- * 
+ *
  * DESCRIPTION: a struct that holds entries of page tables.
  */
 typedef struct page_directory_struct {
-    int page_directory_entries[MAX_ENTRIES];
+  int page_directory_entries[MAX_ENTRIES];
 } page_directory_t;
 
 /**
  * page_table_t
- * 
+ *
  * DESCRIPTION: a struct that holds entries of pages.
  */
 typedef struct page_table_struct {
-    int page_table_entries[MAX_ENTRIES];
+  int page_table_entries[MAX_ENTRIES];
 } page_table_t;
 
 /**
  * page_init()
- * 
+ *
  * DESCRIPTION: Initializes our pages. See the c file for more details
  * INPUTS: none
  * OUTPUTS: none
