@@ -11,6 +11,7 @@
 /* Declare functions that we use to set up to the idt */
 extern void populate_idt();
 
+
 /* The following block of code declares functions for all the handlers of the
 reserved vectors. We can use an "&" to get the address of this when we use them
 to set IDT value */
