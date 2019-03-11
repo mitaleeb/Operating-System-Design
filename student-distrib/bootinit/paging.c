@@ -124,3 +124,44 @@ static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flag
     // add the entry
     page_table_1.page_table_entries[pt_idx] = ((int)phys_addr | flags);
 }
+
+/**
+ * paging_tester()
+ *
+ * DESCRIPTION: tests whether we have the correct values in our page descriptor
+ * and initial page table.
+ * INPUTS: none
+ * OUTPUTS: 0 if successful, > 0 otherwise
+ */
+int paging_tester() {
+    int result = 0;
+
+    // define the flags expected for our directory/table values
+    uint32_t dir_ent_0_flags = READ_WRITE | PRESENT;
+    uint32_t dir_ent_1_flags = GLOBAL | PAGE_4MB | PAGE_CACHE_ENABLE | READ_WRITE | PRESENT;
+    uint32_t tab_ent_vid_flags = READ_WRITE | PRESENT;
+
+    // check the directory and table values
+    if (page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags) && 
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x60) &&
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x40) &&
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x20)) {
+        result++;
+    }
+
+    if (page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags) && 
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x60) &&
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x40) &&
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x20)) {
+        result++;
+    }
+
+    if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x60) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x40) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x20)) {
+        result++;
+    }
+
+    return result;
+}

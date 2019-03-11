@@ -32,10 +32,20 @@ typedef struct page_table_struct {
 } page_table_t;
 
 /**
- * paging_init()
+ * page_init()
  * 
  * DESCRIPTION: Initializes our pages. See the c file for more details
  * INPUTS: none
  * OUTPUTS: none
  */
 void page_init();
+
+/**
+ * paging_tester()
+ *
+ * DESCRIPTION: tests whether we have the correct values in our page descriptor
+ * and initial page table.
+ * INPUTS: none
+ * OUTPUTS: 1 if successful, 0 otherwise
+ */
+int paging_tester();

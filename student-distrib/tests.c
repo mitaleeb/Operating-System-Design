@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "bootinit/paging.h"
 
 #define PASS 1
 #define FAIL 0
@@ -47,6 +48,20 @@ int idt_test(){
 
 // add more tests here
 
+int page_value_test() {
+	TEST_HEADER;
+	int result = PASS;
+
+	// call the paging tester to see if it outputs 1
+	if (paging_tester()) {
+		assertion_failure();
+		result = FAIL;
+	}
+
+	return result;
+}
+
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -57,5 +72,8 @@ int idt_test(){
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
 	printf("Finished Test 1");
+	
 	// launch your tests here
+	TEST_OUTPUT("page test", page_value_test());
+	printf("Finished Page Value Test");
 }
