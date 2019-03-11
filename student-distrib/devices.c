@@ -93,7 +93,7 @@ extern void init_rtc() {
 extern void handle_rtc_interrupt() {
   /* clear interrupts */
 	disable_irq(IRQ_RTC);
-	// uncomment this function call to do RTC TEST
+	/* UNCOMMENT THIS FUNCTION call to do RTC TEST */
 	//test_interrupts();
 	// send End of Interrupt Signal
 	send_eoi(IRQ_RTC);
@@ -103,9 +103,6 @@ extern void handle_rtc_interrupt() {
 	inb(0x71);
 	/* set interrupts */
   enable_irq(IRQ_RTC);
-
-  // test by setting to certain frequency and whenever you get interrupt print stuff out
-  // get more than one interrupt
   /* do not return from handler in this checkpoint */
   //while(1);
 }
