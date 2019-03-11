@@ -108,3 +108,13 @@ extern void handle_rtc_interrupt() {
   /* do not return from handler in this checkpoint */
   //while(1);
 }
+
+/* void handle_systemcall_interrupt()
+ * Inputs: none
+ * Return Value: none
+ * Function: Function to handle systemcall interrupt
+ */
+void handle_systemcall_interrupt() {
+	/* acknowledge systemcall interrupt() */
+	printf("System call successful! \n");
+}

@@ -1,6 +1,6 @@
 /**
  * idt.c
- * 
+ *
  * A file that holds functions that help populate the idt.
  */
 
@@ -13,24 +13,24 @@ void populate_idt() {
 
 	/* load IDT */
 	lidt(idt_desc_ptr);
-	
-    int i;								
+
+    int i;
 	for(i=0; i<NUM_VEC; i++) {
-		
+
 		idt[i].present = 0x01;      /* set present bit to 1 */
 		idt[i].size = 0x01;
 		idt[i].seg_selector = KERNEL_CS;
-		
+
 		if (i == 0x80) {
 		    /* system call descriptor should have its
 		     * descriptor privilge level set to 3 */
-			idt[i].dpl = 0x00;
+			idt[i].dpl = 0x03;
 		} else {
 		    /* set descriptor privilege level to kernel */
 		    idt[i].dpl = 0x00;
 		}
 
-		/* set reserved bits depending on vector number */				
+		/* set reserved bits depending on vector number */
 		idt[i].reserved0 = 0x00;
 		idt[i].reserved1 = 0x01;
 		idt[i].reserved2 = 0x01;
@@ -41,7 +41,7 @@ void populate_idt() {
 		}
 		idt[i].reserved4 = 0x00;
 
-		
+
 		/* if vector > 32 interrupt, general exception */
 		if(i >= 32) {
 			SET_IDT_ENTRY(idt[i], &idt_general_exception);
@@ -73,12 +73,13 @@ void populate_idt() {
 	for (i = 20; i < 32; i++) {
 		SET_IDT_ENTRY(idt[i], &idt_general_exception);
 	}
-	
+
 	/* vector for keyboard interrupt */
 	SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
-	//printf("SET IDT ENTRY FOR KEYBOARD INTERRUPTS");
+  /* vector for rtc interrupt */
 	SET_IDT_ENTRY(idt[0x28], rtc_linkage);
-	// i think theres supposed to be one for system call too?
+	/* vector for system call interrupt */
+	SET_IDT_ENTRY(idt[0x80], systemcall_linkage);
 }
 
 

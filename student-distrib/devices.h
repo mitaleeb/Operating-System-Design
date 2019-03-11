@@ -12,7 +12,7 @@
 /**
  * Function Declarations
  */
- 
+
 /* Function to initialize keyboard device */
 extern void init_keyboard();
 
@@ -25,4 +25,5 @@ extern void init_rtc();
 /* Function to handle rtc interrupt */
 extern void handle_rtc_interrupt();
 
-void pic_acknowledge(unsigned int interrupt);
+/* Function to handle systemcall interrupt */
+extern void handle_systemcall_interrupt();

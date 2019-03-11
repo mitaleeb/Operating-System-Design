@@ -254,6 +254,10 @@ for(i = 20; i < 32; i++)
 		return FAIL;
 	}
 }
+
+/* force system call interrupt */
+asm volatile("int $0x80");
+
 /* if all cases passed, return success */
 return result;
 }
