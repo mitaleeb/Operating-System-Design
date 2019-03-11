@@ -65,11 +65,11 @@ void enable_irq(uint32_t irq_num) {
 			mask = (mask << 1) + 1;
 		}
 	    master_mask &= mask;
-	    master_mask = ~master_mask;
+	    //master_mask = ~master_mask;
 		outb(master_mask, MASTER_8259_PORT + 1);
 	}
-	uint32_t a = inb(MASTER_8259_PORT + 1);
-	printf("mask is: %x\n",a);
+	// uint32_t a = inb(MASTER_8259_PORT + 1);
+	// printf("mask is: %x\n",a);
 	/* set interrupts */
 	//sti();
 }

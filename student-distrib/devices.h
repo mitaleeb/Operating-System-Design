@@ -24,3 +24,5 @@ extern void init_rtc();
 
 /* Function to handle rtc interrupt */
 extern void handle_rtc_interrupt();
+
+void pic_acknowledge(unsigned int interrupt);

@@ -10,6 +10,14 @@
 #include "idt.h"
 #include "devices.h"
 
+
+#define MASTER_PORT_A 0x20
+#define SLAVE_PORT_A 0xA0
+#define MASTER_START_INTERRUPT 0x20
+#define SLAVE_START_INTERRUPT 0x28
+#define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
+#define PIC_ACK     0x20
+
 // static uint8_t key_state = 0x00;
 static uint8_t keyboard_output[128] = {
 	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
@@ -33,7 +41,7 @@ void init_keyboard() {
 /* Function to handle keyboard interrupt */
 void handle_keyboard_interrupt() {
     disable_irq(2);
-    printf("KEYBOARD OUTPUT");
+    // printf("KEYBOARD OUTPUT");
     /* 0x21 vector in the IDT was set to
      * handle_keyboard_interrupt */
      
@@ -51,6 +59,7 @@ void handle_keyboard_interrupt() {
         if (inb(0x60) != 0) {
             c = inb(0x60);
             if (c > 0) {
+                pic_acknowledge(MASTER_PORT_A);
                 break;
             }
         }
@@ -69,6 +78,23 @@ void handle_keyboard_interrupt() {
     /* do not return from handler in this checkpoint */
     //while(1);
 }
+
+/* pic_acknowledge:
+*  Acknowledges an interrupt from PIC
+*  @param num The number of the interrupt
+*/
+void pic_acknowledge(unsigned int interrupt)
+{
+	if (interrupt < MASTER_START_INTERRUPT || interrupt > SLAVE_END_INTERRUPT) {
+		return;
+	}
+
+	if (interrupt < SLAVE_START_INTERRUPT) {
+		outb(MASTER_PORT_A, PIC_ACK);
+	} else {
+		outb(SLAVE_PORT_A, PIC_ACK);
+	}
+ }
 
 /* Function to initialize rtc */
 extern void init_rtc() {
