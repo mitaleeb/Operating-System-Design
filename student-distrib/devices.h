@@ -11,15 +11,18 @@
 /**
  * Function Declarations
  */
- 
+
 /* Function to initialize keyboard device */
 extern void init_keyboard();
 
 /* Function to handle keyboard interrupt */
-extern unsigned char handle_keyboard_interrupt();
+extern void handle_keyboard_interrupt();
 
 /* Function to initialize rtc */
 extern void init_rtc();
 
 /* Function to handle rtc interrupt */
 extern void handle_rtc_interrupt();
+
+/* Function to handle systemcall interrupt */
+extern void handle_systemcall_interrupt();
