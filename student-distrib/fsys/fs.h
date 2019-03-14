@@ -31,7 +31,7 @@
  * bit integers regardless of whether that is what an integer is defined as in
  * this system (though in mp3 it should be the same). 
  */
-typedef struct dentry_struct {
+typedef struct {
   uint8_t file_name[MAX_DIRNAME_LEN];
   int32_t file_type;
   int32_t inode_num;
@@ -47,7 +47,7 @@ typedef struct dentry_struct {
  *               reserved      - 52 B
  *               dentry_t's    - 63 of them
  */
-typedef struct bootblock_struct {
+typedef struct {
   int32_t num_dentries;
   int32_t num_inodes;
   int32_t num_data_blocks;
