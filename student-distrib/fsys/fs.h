@@ -5,7 +5,6 @@
  * definitions for structs used in the filesystem.
  */
 
-#include "../types.h"
 #include "../lib.h"
 
 /* Defines for certain maximums/constants in the filesystem */
@@ -13,11 +12,28 @@
 #define BLOCK_SIZE 4096 // 4 KB
 #define DENTRY_SIZE 64 // 64 B
 #define MAX_DENTRIES 63
+#define DBLOCKS_PER_INODE 1023
 
 /* Defines for file types */
 #define FT_RTC 0
 #define FT_DIR 1
 #define FT_REG 2
+
+/**
+ * inode_t - a struct that holds the data for an inode (4 KB).
+ * 
+ * This data is: length in bytes - 4 B
+ *               index of data blocks - 1023 B
+ * 
+ * Note: we use int32_t purposely here such that we can be sure we are using 32
+ * bit integers regardless of whether that is what an integer is defined as in
+ * this system (though in mp3 it should be the same). Same with the following
+ * declarations.
+ */
+typedef struct {
+  int32_t length;
+  int32_t dblocks[DBLOCKS_PER_INODE];
+} inode_t;
 
 /**
  * dentry_t - a struct that holds the data for a dentry (64 B).
@@ -26,16 +42,12 @@
  *               file type - 4 B 
  *               inode num - 4 B 
  *               reserved  - 24 B
- *
- * Note: we use int32_t purposely here such that we can be sure we are using 32
- * bit integers regardless of whether that is what an integer is defined as in
- * this system (though in mp3 it should be the same). 
  */
 typedef struct {
   uint8_t file_name[MAX_DIRNAME_LEN];
   int32_t file_type;
   int32_t inode_num;
-  uint8_t reserved[24]; // 24 reserved bytes
+  uint8_t reserved[24]; // 24 bytes reserved
 } dentry_t;
 
 /**
@@ -54,8 +66,6 @@ typedef struct {
   uint8_t reserved[52]; // 52 bytes reserved
   dentry_t dentries[MAX_DENTRIES];
 } bootblock_t;
-
-/* Declaration of functions to perform the reading */
 
 /**
  * read_dentry_by_name()
