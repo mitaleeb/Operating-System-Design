@@ -18,6 +18,8 @@
 #define FT_RTC 0
 #define FT_DIR 1
 #define FT_REG 2
+/* Global variable for file system location */
+unsigned int file_system_loc;
 
 /**
  * inode_t - a struct that holds the data for an inode (4 KB).
@@ -88,15 +90,83 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 
 /**
- * read_data()
+ * file_open()
  * 
- * DESCRIPTION: reads up to length bytes starting from position offset in file
- *              inode, and puts the data into BUFF.
- * INPUTS: inode - inode number of file to read
- *         offset - offset to start reading at
- *         buf - the buffer to write to
- *         length - the number of bytes to read
- * OUTPUTS: number of bytes read (0 means EOF)
+ * DESCRIPTION:  “Opening” these files consists of storing appropriate jump tables in these two locations in the file array,
+ *                and marking the files as in-use
+ * INPUTS: fname - the filename to open
+ * OUTPUTS: 0 if successful, -1 otherwise
  */
-int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+int32_t file_open (const uint8_t* fname);
+
+/**
+ * file_read()
+ * 
+ * DESCRIPTION:  Reads bytes from a file and copies the bytes read into a buffer
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         nbytes -- number of bytes to read
+ * OUTPUTS: total bytes read if successful, -1 otherwise
+ */  
+int32_t file_read (int32_t fd, void* buf, int32_t nbytes);
+
+/**
+ * file_write()
+ * 
+ * DESCRIPTION:  Writes to a file from buffer
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         nbytes -- number of bytes to read
+ * OUTPUTS: Always -1 because this is a read only file system
+ */  
+int32_t file_write (int32_t fd, void* buf, int32_t nbytes);
+
+/**
+ * file_close()
+ * 
+ * DESCRIPTION:  Close file in use
+ * INPUTS: fd -- file descriptor for file to close
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */  
+int32_t file_close (int32_t fd);
+
+/**
+ * dir_open()
+ * 
+ * DESCRIPTION:  Opens a directory
+ * INPUTS: fname - the filename to open
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
+int32_t dir_open (const uint8_t* fname);
+
+/**
+ * dir_read()
+ * 
+ * DESCRIPTION:  Outputs name of directory to buffer
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         nbytes -- number of bytes to read
+ * OUTPUTS: total bytes read if successful, -1 otherwise
+ */  
+int32_t dir_read (int32_t fd, void* buf, int32_t nbytes);
+
+/**
+ * dir_write()
+ * 
+ * DESCRIPTION:  Writes to a directory
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         nbytes -- number of bytes to read
+ * OUTPUTS: Always -1 because this is a read only file system
+ */  
+int32_t dir_write (int32_t fd, void* buf, int32_t nbytes);
+
+/**
+ * dir_close()
+ * 
+ * DESCRIPTION:  Close directory that is open
+ * INPUTS: fd -- file descriptor for directory to close
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */  
+int32_t dir_close (int32_t fd);
 

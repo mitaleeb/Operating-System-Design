@@ -11,7 +11,7 @@
 #include "bootinit/idt.h"
 #include "devices.h"
 #include "bootinit/paging.h"
-
+#include "fsys/fs.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -59,6 +59,7 @@ void entry(unsigned long magic, unsigned long addr) {
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
+            file_system_loc = (unsigned int)mod->mod_start; // starting of file system from multiboot
             for (i = 0; i < 16; i++) {
                 printf("0x%x ", *((char*)(mod->mod_start+i)));
             }

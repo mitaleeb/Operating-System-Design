@@ -21,9 +21,9 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   int32_t num_dentries = bootblock->num_dentries;
 
   // sanity check making sure num_dentries is less than max dentries
-  if (num_dentries > MAX_DENTRIES) 
+  if (num_dentries > MAX_DENTRIES){ 
     return -1;
-  
+  }
   int i;
   for (i = 0; i < num_dentries; i++) {
     if (bootblock->dentries[i].file_name == fname) { // @TODO: this is a check for equality, which is not correct for strings
@@ -103,5 +103,56 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   }
 
   return bytes_read;
+}
+
+
+/**
+ * file_open()
+ * 
+ * DESCRIPTION:  “Opening” these files consists of storing appropriate jump tables in these two locations in the file array,
+ *                and marking the files as in-use
+ * INPUTS: fname - the filename to open
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
+int32_t file_open (const uint8_t* fname){
+  return 0;
+}
+
+/**
+ * file_read()
+ * 
+ * DESCRIPTION:  Reads bytes from a file and copies the bytes read into a buffer
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         num_b -- number of bytes to read
+ * OUTPUTS: total bytes read if successful, -1 otherwise
+ */  
+int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
+  // call some helper function in order to read the data in the file
+  return 0;
+}
+
+/**
+ * file_write()
+ * 
+ * DESCRIPTION:  Writes to a file from buffer
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         num_b -- number of bytes to read
+ * OUTPUTS: Always -1 because this is a read only file system
+ */  
+int32_t file_write (int32_t fd, void* buf, int32_t nbytes){
+  return -1;
+}
+
+/**
+ * file_close()
+ * 
+ * DESCRIPTION:  Close file in use
+ * INPUTS: fd -- file descriptor for file to close
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */  
+int32_t file_close (int32_t fd){
+  return 0;
 }
 
