@@ -332,11 +332,11 @@ int except_test() {
 int file_system_output(){
   TEST_HEADER;
   uint8_t test_buf[4096];
-  int8_t* file = 'frame0.txt';
+  int8_t* file = "frame0.txt";
   /*if(file_open(file) == 0){
     printf("File is opened");
   }*/
-  if(read_data((uint8_t*)file, 0, test_buf, 4096) < 0){
+  if(file_read((uint32_t) ((uint8_t*) file), test_buf, 4096) < 0){
     return FAIL;
   }
   //file_read((uint8_t*)file, test_buf, 4000);

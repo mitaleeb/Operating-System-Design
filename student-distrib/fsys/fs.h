@@ -91,6 +91,19 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 
 /**
+ * read_data()
+ * 
+ * DESCRIPTION: reads up to length bytes starting from position offset in file
+ *              inode, and puts the data into BUFF.
+ * INPUTS: inode - inode number of file to read
+ *         offset - offset to start reading at
+ *         buf - the buffer to write to
+ *         length - the number of bytes to read
+ * OUTPUTS: number of bytes read (0 means EOF)
+ */
+int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+
+/**
  * file_open()
  * 
  * DESCRIPTION:  “Opening” these files consists of storing appropriate jump tables in these two locations in the file array,

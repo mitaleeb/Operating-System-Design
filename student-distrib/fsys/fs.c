@@ -18,7 +18,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   }
 
   // Set the start of bootblock struct to the start of file system
-  bootblock = (unsigned int *)file_system_loc;
+  bootblock = (bootblock_t*) file_system_loc;
 
   // loop through all the dentries until we find one with a name that matches
   int32_t num_dentries = bootblock->num_dentries;
@@ -48,7 +48,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
   if (dentry == NULL) {
     return -1;
   }
-  bootblock = (unsigned int *)file_system_loc;
+  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_dentries = bootblock->num_dentries;
 
   // Make sure our index is in a valid range
@@ -63,7 +63,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
   int32_t bytes_read = 0;
-  bootblock = (unsigned int *) file_system_loc;
+  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_inodes = bootblock->num_inodes;
 
   // the starting index, (offset / BLOCK_SIZE, since offset is in bytes)
@@ -76,13 +76,13 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
   // find the file with inode index "inode"
   // remember to +1 to the inode index because inodes are zero indexed
-  inode_t* src_file = (inode_t*) (bootblock + (inode + 1) * BLOCK_SIZE);
+  inode_t* src_file = (inode_t*) (bootblock + (inode + 1));
 
   // get the start dblock location
   int32_t dblock_ptr = src_file->dblocks[dblock_index];
 
   // get the pointer to the starting data block
-  void* curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr) * BLOCK_SIZE);
+  void* curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr));
 
   // start the pointer at a location in the data block based on the offset
   curr_dblock += (offset % BLOCK_SIZE);
@@ -91,19 +91,20 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   uint32_t file_progress = offset;
 
   // loop until we've copied at most "length" bytes, or reached EOF
-  while (bytes_read < length || file_progress >= src_file->length) {
+  while (bytes_read < length && file_progress < src_file->length) {
     memcpy(buf, curr_dblock, 1); // copy a byte
     
     // increment all loop variables
     bytes_read++;
     file_progress++;
+    curr_dblock++;
 
     // check if we're out of range of the curr_dblock
     if ((bytes_read + offset) % (BLOCK_SIZE) == 0) {
       // go to next dblock
       dblock_index++;
       dblock_ptr = src_file->dblocks[dblock_index];
-      curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr) * BLOCK_SIZE);
+      curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr));
     }
   }
 
