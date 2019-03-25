@@ -196,7 +196,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
   int curr_directory=0;
 
   if(read_dentry_by_index(curr_directory, &dentry) == -1){
-    return 0;
+    return -1;
   }
   if (read_dentry_by_index(curr_directory, &dentry) == 0){
     for (i = 0; i <= 32; i++){
@@ -207,8 +207,8 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
     curr_directory++;
     return length;
   }
-  else{
-    return 0;
+  else {
+    return -1;
   }
 }
 
