@@ -42,7 +42,8 @@ extern void backspace_buffer(void);
 /* Function for when user presses enter */
 extern void enter_buffer(void);
 
-extern int32_t terminal_open();
-extern int32_t terminal_close();
+/* terminal system call functions: */
+extern int32_t terminal_open(void);
+extern int32_t terminal_close(void);
 extern int32_t terminal_read(uint8_t* buf, int32_t length);
 extern int32_t terminal_write(uint8_t* buf, int32_t length);

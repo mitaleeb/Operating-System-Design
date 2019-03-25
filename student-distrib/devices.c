@@ -19,6 +19,10 @@
 #define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
 #define PIC_ACK     0x20
 #define IRQ_KEYBOARD 	1
+#define KEYBOARD_PORT 0x60
+#define HIGH_BITMASK 0x80
+#define TERM_COLS 80
+#define TERM_ROWS 25
 
 
 #define CAPS_PRESS 0x3A
@@ -84,9 +88,9 @@ static uint8_t keyboard_output4[128] = {
 * int32_t terminal_open()
 *   Inputs: none
 *   Return Value: 0
-*		Function: none
+*		Function: open terminal driver
 */
-int32_t terminal_open(){
+int32_t terminal_open(void){
 	return 0;
 }
 
@@ -94,9 +98,9 @@ int32_t terminal_open(){
 * int32_t terminal_close()
 *   Inputs: none
 *   Return Value: 0
-*		Function: none
+*		Function: close terminal driver
 */
-int32_t terminal_close(){
+int32_t terminal_close(void){
 	return 0;
 }
 
@@ -106,7 +110,7 @@ int32_t terminal_close(){
 *   Inputs: uint8_t* buf = buffer
 *		int32_t length = length
 *   Return Value: number of bytes read
-*	Function: read keyboard buffer, clear keyboard buffer
+*		Function: read keyboard buffer, clear keyboard buffer
 * 	calling terminal read should give a clear buffer
 */
 int32_t terminal_read(uint8_t* buf, int32_t length) {
@@ -155,10 +159,11 @@ int32_t terminal_write(uint8_t* buf, int32_t length) {
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
 		return 0;
-
+  /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
 			putc(buf[i]);
 	}
+	/*return the copied length, if successful */
 	return length;
 }
 
@@ -193,11 +198,11 @@ void handle_keyboard_interrupt() {
     uint8_t c = 0x00;
 	  do {
 			  /* read from 0x60 = data port from keyboard controller */
-				c = inb(0x60);
+				c = inb(KEYBOARD_PORT);
 				/* if key code is negative, then button has been released */
-        if (inb(0x60) & 0x80)
+        if (inb(KEYBOARD_PORT) & HIGH_BITMASK)
 				{
-					/* check for button release */
+					/* check for button releases */
 					if(c == LEFT_SHIFT_RELEASE || c == RIGHT_SHIFT_RELEASE)
 						shift_flag = 0;
 					else if(c == CONTROL_RELEASE)
@@ -206,7 +211,7 @@ void handle_keyboard_interrupt() {
 					else if(c == CAPS_PRESS)
 						caps_flag ^= 1;
 				}
-				else
+				else    /* button is being pressed */
 				{
 					/* check for capslock toggle */
 					if(c == CAPS_PRESS)
@@ -271,26 +276,30 @@ void handle_keyboard_interrupt() {
  */
 extern void write_to_buffer(uint8_t k) {
 	/* check if end of buffer has been reached */
-	if(term_buffer_index >= 127) {
+	if(term_buffer_index >= MAXBUFFER - 1) {
 		return;
 	}
-	if(column_index > 79) {
+	/* if max length is reached, start new line */
+	if(column_index > TERM_COLS - 1) {
 		enter_position();
 		update_cursor();
 		column_index = 0;
 	}
+	/* If it hasnt, write to terminal */
 	new_term_buffer[term_buffer_index] = k;
 	putc(k);
 	update_cursor();
 	term_buffer_index++;
 	column_index++;
 }
+
 /* void backspace_buffer(void)
  * Inputs: none
  * Return Value: none
  * Function: Handles keyboard input for when backspace key is pressed
  */
 extern void backspace_buffer(void) {
+	/* check to ensure beginning of line is not reached */
 	if(term_buffer_index > 0) {
 		term_buffer_index--;
 		new_term_buffer[term_buffer_index] = '\0';
