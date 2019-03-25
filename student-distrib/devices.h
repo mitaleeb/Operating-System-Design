@@ -1,7 +1,7 @@
 /**
  * devices.h
  *
- * h file that holds a lot of definitions of functions, including all the
+ * h file that holds definitions of functions, including all the
  * functions in devices.c
  */
 
