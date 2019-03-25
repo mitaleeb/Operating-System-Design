@@ -10,7 +10,6 @@
 #include "tests.h"
 #include "bootinit/idt.h"
 #include "devices.h"
-#include "rtc.h"
 #include "bootinit/paging.h"
 
 #define RUN_TESTS
