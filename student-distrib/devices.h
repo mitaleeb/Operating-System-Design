@@ -7,6 +7,7 @@
 
 #include "x86_desc.h"
 #include "bootinit/idt.h"
+#include "linkage.h"
 
 /**
  * Function Declarations
