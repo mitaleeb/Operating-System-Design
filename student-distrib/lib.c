@@ -52,6 +52,23 @@ void clear(void) {
        screen_x = 0;
    }
 
+ /*
+  * void scroll_up(void)
+  * 	Inputs: none
+  * 	Return: none
+  * 	Function: shift all characters up by one line
+  */
+  void scroll_up(void) {
+    memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
+    uint8_t i;
+    for(i=0; i<NUM_COLS; i++) {
+      *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';
+    }
+    screen_y--;
+  }
+
+
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character
