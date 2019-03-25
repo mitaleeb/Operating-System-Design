@@ -39,8 +39,11 @@ static int shift_flag = 0;
 static int control_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-uint8_t term_buffer[MAXBUFFER];
+uint8_t old_term_buffer[MAXBUFFER];
+uint8_t new_term_buffer[MAXBUFFER];
+static int term_buffer_index = 0;
 static int term_flag = 0;
+static int column_index = 0;
 
 
 // keyboard_output1 for regular input
@@ -137,12 +140,11 @@ void handle_keyboard_interrupt() {
 					/* check for button release */
 					if(c == LEFT_SHIFT_RELEASE || c == RIGHT_SHIFT_RELEASE)
 						shift_flag = 0;
-					if(c == CONTROL_RELEASE)
+					else if(c == CONTROL_RELEASE)
 						control_flag = 0;
 					/* check for capslock toggle */
-					if(c == CAPS_PRESS)
+					else if(c == CAPS_PRESS)
 						caps_flag ^= 1;
-
 				}
 				else
 				{
@@ -150,35 +152,47 @@ void handle_keyboard_interrupt() {
 					if(c == CAPS_PRESS)
 						caps_flag ^= 1;
 					/* check for button press */
-					if(c == CONTROL_PRESS)
+					else if(c == BACKSPACE_PRESS)
+						backspace_flag = 1;
+					else if(c == ENTER_PRESS) {
+						enter_flag = 1;
+						term_flag = 1;
+					}
+					else if(c == CONTROL_PRESS)
 						control_flag = 1;
-					if(c == LEFT_SHIFT_PRESS || c == RIGHT_SHIFT_PRESS)
+					else if(c == LEFT_SHIFT_PRESS || c == RIGHT_SHIFT_PRESS)
 						shift_flag = 1;
 
-
+					/* if cntrl-l is pressed, clear screen */
 					if(control_flag && c == L_PRESS) {
 						clear();
-
+						reset_position();
 					}
+					/* if backspace is pressed */
+					else if(backspace_flag)
+						backspace_buffer();
+					/* if enter is pressed */
+					else if(enter_flag)
+						enter_buffer();
 					/*if shift and caps */
 					else if(shift_flag && caps_flag) {
 						if (keyboard_output4[c] != '\0')
-							putc(keyboard_output4[c]);
+							write_to_buffer(keyboard_output4[c]);
 					}
 					/*if only shift*/
 					else if(shift_flag && !caps_flag) {
 						if (keyboard_output2[c] != '\0')
-							putc(keyboard_output2[c]);
+							write_to_buffer(keyboard_output2[c]);
 					}
 					/*if only caps*/
-					else if (!shift_flag && caps_flag) {
+					else if(!shift_flag && caps_flag) {
 						if (keyboard_output3[c] != '\0')
-							putc(keyboard_output3[c]);
+							write_to_buffer(keyboard_output3[c]);
 					}
 					/*if neither*/
 					else {
 						if (keyboard_output1[c] != '\0')
-							putc(keyboard_output1[c]);
+							write_to_buffer(keyboard_output1[c]);
 					}
 				}
 				break;
@@ -189,6 +203,62 @@ void handle_keyboard_interrupt() {
     /* set interrupts */
 		enable_irq(IRQ_KEYBOARD);
 }
+
+/* void write_to_buffer(uint8_t k)
+ * Inputs: the character to write to the terminal buffer
+ * Return Value: none
+ * Function: Handles keyboard input and writes to buffer to be written to screen
+ */
+extern void write_to_buffer(uint8_t k) {
+	/* check if end of buffer has been reached */
+	if(term_buffer_index >= 127) {
+		return;
+	}
+	if(column_index > 79) {
+		enter_position();
+		column_index = 0;
+	}
+	new_term_buffer[term_buffer_index] = k;
+	putc(k);
+	term_buffer_index++;
+	column_index++;
+}
+/* void backspace_buffer(void)
+ * Inputs: none
+ * Return Value: none
+ * Function: Handles keyboard input for when backspace key is pressed
+ */
+extern void backspace_buffer(void) {
+	if(term_buffer_index > 0) {
+		new_term_buffer[term_buffer_index--] = '/0';
+		decrement_position();
+		putc(' ');
+		decrement_position();
+		column_index--;
+	}
+	backspace_flag = 0;
+}
+
+/* void enter_buffer(void)
+ * Inputs: none
+ * Return Value: none
+ * Function: Handles keyboard input for when enter key is pressed
+ */
+ extern void enter_buffer(void) {
+	 int i;
+	 for(i = 0; i < MAXBUFFER; i++)
+	 {
+		 /*copy new buff into old buff */
+		 old_term_buffer[i] = new_term_buffer[i];
+		 /* clear new buff */
+		 new_term_buffer[i] = '\0';
+	 }
+	 term_buffer_index = 0;
+	 column_index = 0;
+	 enter_position();
+	 enter_flag = 0;
+ }
+
 
 /* void init_rtc()
  * Inputs: none

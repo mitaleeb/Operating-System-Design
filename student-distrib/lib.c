@@ -24,6 +24,34 @@ void clear(void) {
     }
 }
 
+/* void reset_cursor(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: resets screen_x and screen_y */
+ void reset_position(void) {
+   screen_x = 0;
+   screen_y = 0;
+ }
+
+ /* void decrement_position(void);
+  * Inputs: void
+  * Return Value: none
+  * Function: decrements x position */
+  void decrement_position(void) {
+    if(screen_x > 0)
+      screen_x--;
+  }
+
+  /* void enter_position(void);
+   * Inputs: void
+   * Return Value: none
+   * Function: increments y position */
+   void enter_position(void) {
+     if(screen_y < NUM_ROWS - 1)
+       screen_y++;
+       screen_x = 0;
+   }
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character
