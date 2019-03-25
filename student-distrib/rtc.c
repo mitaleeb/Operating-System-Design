@@ -17,7 +17,9 @@
 #define SLAVE_START_INTERRUPT 0x28
 #define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
 #define PIC_ACK     0x20
-#define IRQ_RTC 			8
+#define IRQ_RTC 	8
+#define OUT_RTC 0x70
+#define IN_RTC 0x71
 
 /* void init_rtc()
  * Inputs: none
