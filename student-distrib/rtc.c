@@ -8,7 +8,7 @@
 #include "i8259.h"
 #include "lib.h"
 #include "bootinit/idt.h"
-#include "devices.h"
+#include "rtc.h"
 
 
 #define MASTER_PORT_A 0x20
