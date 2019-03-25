@@ -74,6 +74,7 @@ void clear(void) {
   }
 
   /*
+    REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
     * void update_cursor()
     *   Inputs: none
     *   Return Value: none

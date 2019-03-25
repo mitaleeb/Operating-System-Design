@@ -405,7 +405,7 @@ int terminal_test() {
   }
 
   return result;
-
+}
 /**
  * int file_system_file_output()
  *
@@ -446,12 +446,17 @@ int file_system_dir_output(){
   }
   // Specify that this is current directory but not relevant for checkpoint 2
   int8_t* dir = ".";
+
   // Open directory
   dir_open(((uint8_t*) dir));
+
+  if (dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
+    return FAIL;
+  }
   // Loop through Directory Entries and output all file names to screen
   for(i=0; i< MAX_DENTRIES; i++){
     if(dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
-      return FAIL;
+      return PASS;
     }
     puts((int8_t*)test_buf);
     putc('\n');
@@ -486,20 +491,15 @@ void launch_tests() {
   TEST_OUTPUT("rtc write test", rtc_write_test());
   printf("Finished RTC Write Test \n");
 
+  TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  printf("Finished File System File Output Test                          \n"); 
+
+  TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  printf("Finished File System Directory Output Test                          \n");
+
   TEST_OUTPUT("terminal test", terminal_test());
   printf("Finished Terminal Read and Write Test \n");
 
-  TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n"); 
-
-  TEST_OUTPUT("file system directory test ", file_system_dir_output());
-  printf("Finished File System Directory Output Test                          \n");
-
-  TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n"); 
-
-  TEST_OUTPUT("file system directory test ", file_system_dir_output());
-  printf("Finished File System Directory Output Test                          \n");
 
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.
