@@ -88,24 +88,48 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   curr_dblock += (offset % BLOCK_SIZE);
 
   // keep track of how far into the file we are, in bytes
-  uint32_t file_progress = offset;
+  uint32_t file_remaining = length;
+  if (src_file->length - offset < length) {
+    file_remaining = src_file->length - offset;
+  }
 
-  // loop until we've copied at most "length" bytes, or reached EOF
-  while (bytes_read < length && file_progress < src_file->length) {
-    memcpy(buf, curr_dblock, 1); // copy a byte
-    
-    // increment all loop variables
-    bytes_read++;
-    file_progress++;
-    curr_dblock++;
+  // first deal with the very first block which has the offset
+  // if file_remaining is more than block - offset, copy the remaining block
+    if (file_remaining > BLOCK_SIZE - (offset % BLOCK_SIZE)) {
+      memcpy(buf, curr_dblock + offset, BLOCK_SIZE - (offset % BLOCK_SIZE));
+      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
+      bytes_read += BLOCK_SIZE - (offset % BLOCK_SIZE);
+    } else {
+      // otherwise, copy the remaining file
+      memcpy(buf, curr_dblock, file_remaining);
+      file_remaining -= file_remaining;
+      bytes_read += file_remaining;
+    }
+
+  // now we can loop until we have no more of the file remaining
+  while (file_remaining > 0) {
+
+    // if file_remaining is greater than this block, copy the whole block
+    if (file_remaining > BLOCK_SIZE) {
+      memcpy(buf, curr_dblock, BLOCK_SIZE);
+      file_remaining -= BLOCK_SIZE;
+      bytes_read += BLOCK_SIZE;
+    } else {
+      // otherwise, copy the remaining file
+      memcpy(buf, curr_dblock, file_remaining);
+      file_remaining -= file_remaining;
+      bytes_read += file_remaining;
+    }
 
     // check if we're out of range of the curr_dblock
     if ((bytes_read + offset) % (BLOCK_SIZE) == 0) {
       // go to next dblock
       dblock_index++;
-      dblock_ptr = src_file->dblocks[dblock_index];
+      if (dblock_index < DBLOCKS_PER_INODE)
+        dblock_ptr = src_file->dblocks[dblock_index];
       curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr));
     }
+
   }
 
   return bytes_read;
