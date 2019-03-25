@@ -3,9 +3,13 @@
 #include "bootinit/paging.h"
 #include "lib.h"
 #include "x86_desc.h"
+#include "i8259.h"
+#include "devices.h"
+#include "rtc.h"
 
 #define PASS 1
 #define FAIL 0
+#define IRQ_RTC 8
 
 /* format these macros as you see fit */
 #define TEST_HEADER                                                     \
@@ -325,9 +329,7 @@ int except_test() {
   return result;
 }
 
-
 /* Checkpoint 2 tests */
-
 
 /**
  * rtc_read_test()
@@ -397,6 +399,12 @@ void launch_tests() {
 
   TEST_OUTPUT("page deref test", page_deref_test());
   printf("Finished Page Dereference Test                           \n");
+
+  TEST_OUTPUT("rtc write test", rtc_read_test());
+  printf("Finished RTC Read Test                                   \n");
+
+  TEST_OUTPUT("rtc write test", rtc_write_test());
+  printf("Finished RTC Write Test                                  \n");
 
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.
