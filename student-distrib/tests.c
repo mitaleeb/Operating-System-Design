@@ -3,16 +3,21 @@
 #include "bootinit/paging.h"
 #include "lib.h"
 #include "x86_desc.h"
+#include "i8259.h"
+#include "devices.h"
+#include "rtc.h"
+#include "fsys/fs.h"
 
 #define PASS 1
 #define FAIL 0
+#define IRQ_RTC 8
 
 /* format these macros as you see fit */
 #define TEST_HEADER                                                     \
   printf("[TEST %s] Running %s at %s:%d\n", __FUNCTION__, __FUNCTION__, \
          __FILE__, __LINE__)
 #define TEST_OUTPUT(name, result) \
-  printf("[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
+  printf("\n[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
 
 static inline void assertion_failure() {
   /* Use exception #15 for assertions, otherwise
@@ -325,7 +330,142 @@ int except_test() {
   return result;
 }
 
-/* Checkpoint 2 tests */
+/* CHECKPOINT 2 TESTS */
+
+/**
+ * rtc_read_test()
+ *
+ * DESCRIPTION: Checks if rtc_read waits for interrupt,
+ *              does not get stuck in infinite loop
+ */
+int rtc_read_test() {
+  enable_irq(IRQ_RTC);
+
+  rtc_read();
+
+  disable_irq(IRQ_RTC);
+
+  printf("Finished RTC Read Test                                  \n");
+  return PASS;
+}
+
+/**
+ * rtc_write_test()
+ *
+ * DESCRIPTION: Checks if rtc_write returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_write_test() {
+  enable_irq(IRQ_RTC);
+  int32_t i, j, val;
+  int result = PASS;
+
+
+   for (i=2; i<=1024; i*=2) {
+     val = rtc_write(i);
+     if(val < 0){
+      printf("Invalid RTC frequency = %d \n", i);
+      disable_irq(IRQ_RTC);
+       result = FAIL;
+     } else {
+        printf("RTC frequency = %d \n", i);
+        for(j = 0; j < 10; j++) {
+            rtc_read();
+          printf("a");
+        }
+     }
+     printf("\n");
+   }
+
+  printf("Finished RTC Write Test \n");
+  return result;
+}
+
+/**
+ * terminal_test()
+ *
+ * DESCRIPTION: Tests whether terminal_read and terminal_write works as expected
+ *
+ */
+int terminal_test() {
+  TEST_HEADER;
+  int result = PASS;
+  int len = 128;
+  int output = 0;
+  int output2 = 0;
+  uint8_t k[128];
+
+  printf("Enter text for terminal buffer: \n");
+
+  output = terminal_read(k,len);
+  output2 = terminal_write(k, output);
+  if(output != output2) {
+    assertion_failure();
+    result = FAIL;
+  }
+
+  return result;
+}
+/**
+ * int file_system_file_output()
+ *
+ * DESCRIPTION: Test to write file contents out to terminal 
+ */
+int file_system_file_output(){
+  TEST_HEADER;
+  int i;
+  uint8_t test_buf[BLOCK_SIZE];
+  for (i = 0; i <= BLOCK_SIZE; i++){
+      ((int8_t*)(test_buf))[i] = '\0';
+  }
+  // SPECIFY WHICH FILE YOU WANT TO OUTPUT
+  int8_t* file = "frame0.txt";
+  // Check if file to be read exists and if so put it in buffer
+  if(file_read((uint32_t) ((uint8_t*) file), test_buf, BLOCK_SIZE) < 0){
+    return FAIL;
+  }
+  // Output Contents of File from test buffer to screen
+  puts((int8_t*)test_buf);
+  //file_close(file);
+  return PASS;
+}
+/**
+ * int file_system_dir_output()
+ *
+ * DESCRIPTION: Test to list out all the files in a directory
+ */
+
+int file_system_dir_output(){
+  TEST_HEADER;
+  // Initialize local variables
+  int i;
+  uint8_t test_buf[4096];
+  // Clear buffer
+  for (i = 0; i <= 4096; i++){
+      ((int8_t*)(test_buf))[i] = '\0';
+  }
+  // Specify that this is current directory but not relevant for checkpoint 2
+  int8_t* dir = ".";
+
+  // Open directory
+  dir_open(((uint8_t*) dir));
+
+  if (dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
+    return FAIL;
+  }
+  // Loop through Directory Entries and output all file names to screen
+  for(i=0; i< MAX_DENTRIES; i++){
+    if(dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
+      return PASS;
+    }
+    puts((int8_t*)test_buf);
+    putc('\n');
+  }
+  // Close current directory 
+  dir_close((uint32_t) ((uint8_t*) dir));
+  return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -333,17 +473,33 @@ int except_test() {
 /* Test suite entry point */
 void launch_tests() {
   TEST_OUTPUT("idt_test", idt_test());
-  printf("Finished IDT Test 1                                      \n");
+  printf("Finished IDT Test 1 \n");
 
   // launch your tests here
   TEST_OUTPUT("idt_test2", idt_test2());
-  printf("Finished IDT Test 2                                      \n");
+  printf("Finished IDT Test 2 \n");
 
   TEST_OUTPUT("page test", page_value_test());
-  printf("Finished Page Value Test                                 \n");
+  printf("Finished Page Value Test \n");
 
   TEST_OUTPUT("page deref test", page_deref_test());
-  printf("Finished Page Dereference Test                           \n");
+  printf("Finished Page Dereference Test \n");
+
+  TEST_OUTPUT("rtc write test", rtc_read_test());
+  printf("Finished RTC Read Test \n");
+
+  TEST_OUTPUT("rtc write test", rtc_write_test());
+  printf("Finished RTC Write Test \n");
+
+  TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  printf("Finished File System File Output Test                          \n"); 
+
+  TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  printf("Finished File System Directory Output Test                          \n");
+
+  TEST_OUTPUT("terminal test", terminal_test());
+  printf("Finished Terminal Read and Write Test \n");
+
 
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.
