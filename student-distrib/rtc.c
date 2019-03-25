@@ -21,6 +21,10 @@
 #define OUT_RTC 0x70
 #define IN_RTC 0x71
 
+// initialize flag to check if interrupt has occurred
+volatile int interrupt_flag = 0;
+
+
 /* void init_rtc()
  * Inputs: none
  * Return Value: none
