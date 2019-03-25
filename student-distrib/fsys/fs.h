@@ -20,6 +20,7 @@
 #define FT_REG 2
 /* Global variable for file system location */
 unsigned int file_system_loc;
+int curr_directory;
 
 /**
  * inode_t - a struct that holds the data for an inode (4 KB).

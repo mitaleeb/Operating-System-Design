@@ -193,7 +193,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
   /* Initializes Local Variables */
   dentry_t dentry;
   int i;
-  int curr_directory=0;
+  curr_directory=0;
 
   if(read_dentry_by_index(curr_directory, &dentry) == -1){
     return -1;
@@ -204,6 +204,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
     }
     int32_t length = strlen((int8_t*)dentry.file_name);
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
+    curr_directory++;
     return length;
   }
 }
