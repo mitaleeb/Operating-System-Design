@@ -206,9 +206,6 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
     return length;
   }
-  else {
-    return -1;
-  }
 }
 
 /**
