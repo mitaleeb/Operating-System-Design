@@ -1,3 +1,24 @@
+/**
+ * rtc.c
+ *
+ * A file that holds functions that help initialize
+ * and handle interrupts from the rtc.
+ */
+
+#include "i8259.h"
+#include "lib.h"
+#include "bootinit/idt.h"
+#include "devices.h"
+
+
+#define MASTER_PORT_A 0x20
+#define SLAVE_PORT_A 0xA0
+#define MASTER_START_INTERRUPT 0x20
+#define SLAVE_START_INTERRUPT 0x28
+#define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
+#define PIC_ACK     0x20
+#define IRQ_RTC 			8
+
 /* void init_rtc()
  * Inputs: none
  * Return Value: none
