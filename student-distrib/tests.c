@@ -495,6 +495,12 @@ void launch_tests() {
   TEST_OUTPUT("file system directory test ", file_system_dir_output());
   printf("Finished File System Directory Output Test                          \n");
 
+  TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  printf("Finished File System File Output Test                          \n"); 
+
+  TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  printf("Finished File System Directory Output Test                          \n");
+
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.
   // TEST_OUTPUT("Intentional Bluescreen Test", except_test());
