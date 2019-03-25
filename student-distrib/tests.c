@@ -24,15 +24,6 @@ static inline void assertion_failure() {
   asm volatile("int $15");
 }
 
-uint8_t k[79] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                ' ',' ',' ',' '
-};
-
-
 /* Checkpoint 1 tests */
 
 /* IDT Test - Example
@@ -398,14 +389,16 @@ int rtc_write_test() {
 int terminal_test() {
   TEST_HEADER;
   int result = PASS;
-  int len = 79;
+  int len = 128;
   int output = 0;
+  int output2 = 0;
+  uint8_t k[128];
 
   printf("Enter text for terminal buffer: \n");
 
   output = terminal_read(k,len);
-  output = terminal_write(k, len);
-  if(output == 0) {
+  output2 = terminal_write(k, output);
+  if(output != output2) {
     assertion_failure();
     result = FAIL;
   }

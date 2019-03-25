@@ -161,7 +161,9 @@ int32_t terminal_write(uint8_t* buf, int32_t length) {
 		return 0;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-			putc(buf[i]);
+		if(i == 79)
+			enter_position();
+		putc(buf[i]);
 	}
 	/*return the copied length, if successful */
 	return length;
@@ -200,7 +202,7 @@ void handle_keyboard_interrupt() {
 			  /* read from 0x60 = data port from keyboard controller */
 				c = inb(KEYBOARD_PORT);
 				/* if key code is negative, then button has been released */
-        if (inb(KEYBOARD_PORT) & HIGH_BITMASK)
+        if (c & HIGH_BITMASK)
 				{
 					/* check for button releases */
 					if(c == LEFT_SHIFT_RELEASE || c == RIGHT_SHIFT_RELEASE)
@@ -232,6 +234,7 @@ void handle_keyboard_interrupt() {
 					if(control_flag && c == L_PRESS) {
 						clear();
 						reset_position();
+						update_cursor();
 					}
 					/* if backspace is pressed */
 					else if(backspace_flag)
@@ -307,6 +310,7 @@ extern void backspace_buffer(void) {
 		putc(' ');
 		update_cursor();
 		decrement_position();
+		update_cursor();
 		column_index--;
 	}
 	backspace_flag = 0;
