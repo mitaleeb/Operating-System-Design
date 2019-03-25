@@ -2,7 +2,8 @@
  * devices.c
  *
  * A file that holds functions that help initialize
- * and handle interrupts from the keyboard and RTC.
+ * and handle interrupts from the keyboard and writes
+ * to the terminal.
  */
 
 #include "i8259.h"
@@ -18,7 +19,6 @@
 #define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
 #define PIC_ACK     0x20
 #define IRQ_KEYBOARD 	1
-#define IRQ_RTC 			8
 
 
 #define CAPS_PRESS 0x3A
