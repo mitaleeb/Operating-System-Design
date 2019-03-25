@@ -16,13 +16,22 @@
   printf("[TEST %s] Running %s at %s:%d\n", __FUNCTION__, __FUNCTION__, \
          __FILE__, __LINE__)
 #define TEST_OUTPUT(name, result) \
-  printf("[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
+  printf("\n[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
 
 static inline void assertion_failure() {
   /* Use exception #15 for assertions, otherwise
      reserved by Intel */
   asm volatile("int $15");
 }
+
+uint8_t k[79] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' '
+};
+
 
 /* Checkpoint 1 tests */
 
@@ -376,10 +385,33 @@ int rtc_write_test() {
      printf("\n");
    }
 
-  printf("Finished RTC Write Test                               \n");
+  printf("Finished RTC Write Test \n");
   return result;
 }
 
+/**
+ * terminal_test()
+ *
+ * DESCRIPTION: Tests whether terminal_read and terminal_write works as expected
+ *
+ */
+int terminal_test() {
+  TEST_HEADER;
+  int result = PASS;
+  int len = 79;
+  int output = 0;
+
+  printf("Enter text for terminal buffer: \n");
+
+  output = terminal_read(k,len);
+  output = terminal_write(k, len);
+  if(output == 0) {
+    assertion_failure();
+    result = FAIL;
+  }
+
+  return result;
+}
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -388,23 +420,26 @@ int rtc_write_test() {
 /* Test suite entry point */
 void launch_tests() {
   TEST_OUTPUT("idt_test", idt_test());
-  printf("Finished IDT Test 1                                      \n");
+  printf("Finished IDT Test 1 \n");
 
   // launch your tests here
   TEST_OUTPUT("idt_test2", idt_test2());
-  printf("Finished IDT Test 2                                      \n");
+  printf("Finished IDT Test 2 \n");
 
   TEST_OUTPUT("page test", page_value_test());
-  printf("Finished Page Value Test                                 \n");
+  printf("Finished Page Value Test \n");
 
   TEST_OUTPUT("page deref test", page_deref_test());
-  printf("Finished Page Dereference Test                           \n");
+  printf("Finished Page Dereference Test \n");
 
   TEST_OUTPUT("rtc write test", rtc_read_test());
-  printf("Finished RTC Read Test                                   \n");
+  printf("Finished RTC Read Test \n");
 
   TEST_OUTPUT("rtc write test", rtc_write_test());
-  printf("Finished RTC Write Test                                  \n");
+  printf("Finished RTC Write Test \n");
+
+  TEST_OUTPUT("terminal test", terminal_test());
+  printf("Finished Terminal Read and Write Test \n");
 
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.

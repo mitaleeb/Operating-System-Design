@@ -73,7 +73,21 @@ void clear(void) {
     screen_y--;
   }
 
+  /*
+    * void update_cursor()
+    *   Inputs: none
+    *   Return Value: none
+    *	 Function: update the cursor position in screen
+    */
+    void update_cursor(void) {
+    	unsigned short pos = (screen_y * 80) + screen_x;
 
+    	outb(0x0F, 0x3D4);
+    	outb((unsigned char)(pos & 0xFF), 0x3D5);
+
+    	outb(0x0E, 0x3D4);
+    	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
+    }
 
 
 /* Standard printf().

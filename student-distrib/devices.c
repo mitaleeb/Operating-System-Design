@@ -32,15 +32,12 @@
 #define ENTER_PRESS 0x1C
 #define BACKSPACE_PRESS 0x0E
 
-#define MAXBUFFER 128
 
 static int caps_flag = 0;
 static int shift_flag = 0;
 static int control_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-uint8_t old_term_buffer[MAXBUFFER];
-uint8_t new_term_buffer[MAXBUFFER];
 static int term_buffer_index = 0;
 static int term_flag = 0;
 static int column_index = 0;
@@ -120,25 +117,13 @@ int32_t terminal_read(uint8_t* buf, int32_t length) {
 		return 0;
 
 	/* return unless buffer is ready to be read */
-	if(!term_flag)
-		return 0;
+	while(!term_flag) {}
 
 	/* read from input to old terminal buffer */
 	if (length <= MAXBUFFER) {
-		for(i = 0; i < length; i++) {
-			old_term_buffer[i] = buf[i];
-		}
-		for(i = length; i < MAXBUFFER; i++) {
-			old_term_buffer[i] = '\0';
-		}
-	 	// memcpy(buf, &(old_term_buffer), length)
-
+	 	memcpy(buf, &(old_term_buffer), length);
 	} else {
-		for(i = 0; i < MAXBUFFER; i++) {
-			old_term_buffer[i] = buf[i];
-		}
-	 	// memcpy(buf, &(old_term_buffer), MAXBUFFER)
-
+	 	memcpy(buf, &(old_term_buffer), MAXBUFFER);
 	}
 
 	/* clear new terminal buffer */
@@ -291,10 +276,12 @@ extern void write_to_buffer(uint8_t k) {
 	}
 	if(column_index > 79) {
 		enter_position();
+		update_cursor();
 		column_index = 0;
 	}
 	new_term_buffer[term_buffer_index] = k;
 	putc(k);
+	update_cursor();
 	term_buffer_index++;
 	column_index++;
 }
@@ -309,6 +296,7 @@ extern void backspace_buffer(void) {
 		new_term_buffer[term_buffer_index] = '\0';
 		decrement_position();
 		putc(' ');
+		update_cursor();
 		decrement_position();
 		column_index--;
 	}
@@ -332,6 +320,7 @@ extern void backspace_buffer(void) {
 	 term_buffer_index = 0;
 	 column_index = 0;
 	 enter_position();
+	 update_cursor();
 	 enter_flag = 0;
  }
 
