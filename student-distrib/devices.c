@@ -104,6 +104,58 @@ int32_t terminal_close(){
 }
 
 
+/*
+* int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: number of bytes read
+*	Function: read keyboard buffer, clear keyboard buffer
+* 	calling terminal read should give a clear buffer
+*/
+int32_t terminal_read(uint8_t* buf, int32_t length) {
+	int i;
+
+	/* check if invalid buffer is passed in */
+	if(buf == NULL || length < 0)
+		return -1;
+
+	/* return unless buffer is ready to be read */
+	if(!term_flag)
+		return -1;
+
+	/* read from input to old terminal buffer */
+	if (length <= MAXBUFFER) {
+		for(i = 0; i < length; i++) {
+			old_term_buffer[i] = buf[i];
+		}
+		for(i = length; i < MAXBUFFER; i++) {
+			old_term_buffer[i] = '\0';
+		}
+	 	// memcpy(buf, &(old_term_buffer), length)
+
+	} else {
+		for(i = 0; i < MAXBUFFER; i++) {
+			old_term_buffer[i] = buf[i];
+		}
+	 	// memcpy(buf, &(old_term_buffer), MAXBUFFER)
+
+	}
+
+	/* clear new terminal buffer */
+	for(i = 0; i < MAXBUFFER; i++) {
+		new_term_buffer[i] = '\0';
+	}
+
+	/* reset flag so terminal is not ready to be read */
+	term_flag = 0;
+
+	/* return number of bytes read */
+	if (length < MAXBUFFER) {
+		return length;
+	} else {
+		return MAXBUFFER;
+	}
+}
 
 
 
@@ -115,10 +167,17 @@ int32_t terminal_close(){
  * Function: initialize keyboard device by masking IRQ line
  */
 void init_keyboard() {
-    /* keyboard is on IR1 of master PIC */
-    enable_irq(IRQ_KEYBOARD);
+		int i;
+		/* clear terminal buffer */
+		for(i = 0; i < MAXBUFFER; i++) {
+			new_term_buffer[i] = '\0';
+		}
+		term_flag = 0;
 
+		/* keyboard is on IR1 of master PIC */
+    enable_irq(IRQ_KEYBOARD);
 }
+
 /* void handle_keyboard_interrupt()
  * Inputs: none
  * Return Value: none
