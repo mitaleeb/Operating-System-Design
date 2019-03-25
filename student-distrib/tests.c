@@ -328,23 +328,60 @@ int except_test() {
 
 /* CHECKPOINT 2 TESTS */
 
-/* file system driver */
-int file_system_output(){
+/**
+ * int file_system_file_output()
+ *
+ * DESCRIPTION: Test to write file contents out to terminal 
+ */
+int file_system_file_output(){
   TEST_HEADER;
-  uint8_t test_buf[4096];
+  int i;
+  uint8_t test_buf[BLOCK_SIZE];
+  for (i = 0; i <= BLOCK_SIZE; i++){
+      ((int8_t*)(test_buf))[i] = '\0';
+  }
+  // SPECIFY WHICH FILE YOU WANT TO OUTPUT
   int8_t* file = "frame0.txt";
-  /*if(file_open(file) == 0){
-    printf("File is opened");
-  }*/
-  if(file_read((uint32_t) ((uint8_t*) file), test_buf, 4096) < 0){
+  // Check if file to be read exists and if so put it in buffer
+  if(file_read((uint32_t) ((uint8_t*) file), test_buf, BLOCK_SIZE) < 0){
     return FAIL;
   }
-  //file_read((uint8_t*)file, test_buf, 4000);
+  // Output Contents of File from test buffer to screen
   puts((int8_t*)test_buf);
   //file_close(file);
   return PASS;
 }
+/**
+ * int file_system_dir_output()
+ *
+ * DESCRIPTION: Test to list out all the files in a directory
+ */
 
+int file_system_dir_output(){
+  TEST_HEADER;
+  // Initialize local variables
+  int i;
+  uint8_t test_buf[4096];
+  // Clear buffer
+  for (i = 0; i <= 4096; i++){
+      ((int8_t*)(test_buf))[i] = '\0';
+  }
+  // Specify that this is current directory but not relevant for checkpoint 2
+  int8_t* dir = ".";
+  // Open directory
+  dir_open(((uint8_t*) dir));
+  // Loop through Directory Entries and output all file names to screen
+  for(i=0; i< MAX_DENTRIES; i++){
+    if(dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
+      return FAIL;
+    }
+    puts((int8_t*)test_buf);
+    putc('\n');
+  }
+  // Close current directory 
+  dir_close((uint32_t) ((uint8_t*) dir));
+  return PASS;
+}
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -365,8 +402,11 @@ void launch_tests() {
   TEST_OUTPUT("page deref test", page_deref_test());
   printf("Finished Page Dereference Test                           \n");
 
-  TEST_OUTPUT("file system output test ", file_system_output());
-  printf("Finished File System Output Test                          \n");
+  TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  printf("Finished File System File Output Test                          \n"); 
+
+  TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  printf("Finished File System Directory Output Test                          \n");
 
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.

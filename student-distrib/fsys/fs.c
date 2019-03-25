@@ -9,6 +9,7 @@
 /* @TODO: get the bootblock pointer in some way. Right now I'm just assuming
 it's a pointer we get somehow. */
 bootblock_t* bootblock;
+unsigned int curr_directory = 0;
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   
@@ -29,7 +30,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   }
   int i;
   for (i = 0; i < num_dentries; i++) {
-    if (!strncmp(bootblock->dentries[i].file_name, fname, strlen(fname))) {
+    if (!strncmp((int8_t*)bootblock->dentries[i].file_name, (int8_t*)fname, strlen((int8_t*)fname))) {
       // copy the dentry struct from here into the dentry_t parameter
       // we know the dentry struct is DENTRY_SIZE bytes, so we can just use memcpy
       memcpy(dentry, &(bootblock->dentries[i]), DENTRY_SIZE);
@@ -207,6 +208,7 @@ int32_t file_close (int32_t fd){
  * OUTPUTS: 0 if successful, -1 otherwise
  */
 int32_t dir_open (const uint8_t* fname){
+  curr_directory = 0;
   return 0;
 }
 
@@ -223,21 +225,22 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
   /* Initializes Local Variables */
   dentry_t dentry;
   int i;
-  curr_directory=0;
 
-  if(read_dentry_by_index(curr_directory, &dentry) == -1){
-    return -1;
-  }
   if (read_dentry_by_index(curr_directory, &dentry) == 0){
     for (i = 0; i <= 32; i++){
       ((int8_t*)(buf))[i] = '\0';
     }
     int32_t length = strlen((int8_t*)dentry.file_name);
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
+    //printf(buf);
     curr_directory++;
     return length;
   }
-  return -1;
+  // Makes sure that directory exists
+  else {
+    //curr_directory = 0;
+    return -1;
+  }
 }
 
 /**
@@ -261,6 +264,7 @@ int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
  * OUTPUTS: 0 if successful, -1 otherwise
  */  
 int32_t dir_close (int32_t fd){
+  curr_directory = 0;
   return 0;
 }
 
