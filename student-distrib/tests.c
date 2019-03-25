@@ -325,7 +325,60 @@ int except_test() {
   return result;
 }
 
+
 /* Checkpoint 2 tests */
+
+
+/**
+ * rtc_read_test()
+ *
+ * DESCRIPTION: Checks if rtc_read waits for interrupt,
+ *              does not get stuck in infinite loop
+ */
+int rtc_read_test() {
+  enable_irq(IRQ_RTC);
+
+  rtc_read();
+
+  disable_irq(IRQ_RTC);
+
+  printf("Finished RTC Read Test                                  \n");
+  return PASS;
+}
+
+/**
+ * rtc_write_test()
+ *
+ * DESCRIPTION: Checks if rtc_write returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_write_test() {
+  enable_irq(IRQ_RTC);
+  int32_t i, j, val;
+  int result = PASS;
+
+
+   for (i=2; i<=1024; i*=2) {
+     val = rtc_write(i);
+     if(val < 0){
+     	printf("Invalid RTC frequency = %d \n", i);
+     	disable_irq(IRQ_RTC);
+       result = FAIL;
+     } else {
+        printf("RTC frequency = %d \n", i);
+        for(j = 0; j < 10; j++) {
+            rtc_read();
+	        printf("a");
+        }
+     }
+     printf("\n");
+   }
+
+  printf("Finished RTC Write Test                               \n");
+  return result;
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
