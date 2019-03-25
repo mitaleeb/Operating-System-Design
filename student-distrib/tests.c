@@ -3,17 +3,21 @@
 #include "bootinit/paging.h"
 #include "lib.h"
 #include "x86_desc.h"
+#include "i8259.h"
+#include "devices.h"
+#include "rtc.h"
 #include "fsys/fs.h"
 
 #define PASS 1
 #define FAIL 0
+#define IRQ_RTC 8
 
 /* format these macros as you see fit */
 #define TEST_HEADER                                                     \
   printf("[TEST %s] Running %s at %s:%d\n", __FUNCTION__, __FUNCTION__, \
          __FILE__, __LINE__)
 #define TEST_OUTPUT(name, result) \
-  printf("[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
+  printf("\n[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
 
 static inline void assertion_failure() {
   /* Use exception #15 for assertions, otherwise
@@ -329,6 +333,80 @@ int except_test() {
 /* CHECKPOINT 2 TESTS */
 
 /**
+ * rtc_read_test()
+ *
+ * DESCRIPTION: Checks if rtc_read waits for interrupt,
+ *              does not get stuck in infinite loop
+ */
+int rtc_read_test() {
+  enable_irq(IRQ_RTC);
+
+  rtc_read();
+
+  disable_irq(IRQ_RTC);
+
+  printf("Finished RTC Read Test                                  \n");
+  return PASS;
+}
+
+/**
+ * rtc_write_test()
+ *
+ * DESCRIPTION: Checks if rtc_write returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_write_test() {
+  enable_irq(IRQ_RTC);
+  int32_t i, j, val;
+  int result = PASS;
+
+
+   for (i=2; i<=1024; i*=2) {
+     val = rtc_write(i);
+     if(val < 0){
+      printf("Invalid RTC frequency = %d \n", i);
+      disable_irq(IRQ_RTC);
+       result = FAIL;
+     } else {
+        printf("RTC frequency = %d \n", i);
+        for(j = 0; j < 10; j++) {
+            rtc_read();
+          printf("a");
+        }
+     }
+     printf("\n");
+   }
+
+  printf("Finished RTC Write Test \n");
+  return result;
+}
+
+/**
+ * terminal_test()
+ *
+ * DESCRIPTION: Tests whether terminal_read and terminal_write works as expected
+ *
+ */
+int terminal_test() {
+  TEST_HEADER;
+  int result = PASS;
+  int len = 128;
+  int output = 0;
+  int output2 = 0;
+  uint8_t k[128];
+
+  printf("Enter text for terminal buffer: \n");
+
+  output = terminal_read(k,len);
+  output2 = terminal_write(k, output);
+  if(output != output2) {
+    assertion_failure();
+    result = FAIL;
+  }
+
+  return result;
+
+/**
  * int file_system_file_output()
  *
  * DESCRIPTION: Test to write file contents out to terminal 
@@ -390,17 +468,32 @@ int file_system_dir_output(){
 /* Test suite entry point */
 void launch_tests() {
   TEST_OUTPUT("idt_test", idt_test());
-  printf("Finished IDT Test 1                                      \n");
+  printf("Finished IDT Test 1 \n");
 
   // launch your tests here
   TEST_OUTPUT("idt_test2", idt_test2());
-  printf("Finished IDT Test 2                                      \n");
+  printf("Finished IDT Test 2 \n");
 
   TEST_OUTPUT("page test", page_value_test());
-  printf("Finished Page Value Test                                 \n");
+  printf("Finished Page Value Test \n");
 
   TEST_OUTPUT("page deref test", page_deref_test());
-  printf("Finished Page Dereference Test                           \n");
+  printf("Finished Page Dereference Test \n");
+
+  TEST_OUTPUT("rtc write test", rtc_read_test());
+  printf("Finished RTC Read Test \n");
+
+  TEST_OUTPUT("rtc write test", rtc_write_test());
+  printf("Finished RTC Write Test \n");
+
+  TEST_OUTPUT("terminal test", terminal_test());
+  printf("Finished Terminal Read and Write Test \n");
+
+  TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  printf("Finished File System File Output Test                          \n"); 
+
+  TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  printf("Finished File System Directory Output Test                          \n");
 
   TEST_OUTPUT("file system file contents test ", file_system_file_output());
   printf("Finished File System File Output Test                          \n"); 
