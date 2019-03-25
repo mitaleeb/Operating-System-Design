@@ -204,7 +204,6 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
     }
     int32_t length = strlen((int8_t*)dentry.file_name);
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
-    curr_directory++;
     return length;
   }
   else {
