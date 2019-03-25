@@ -32,16 +32,17 @@
 #define ENTER_PRESS 0x1C
 #define BACKSPACE_PRESS 0x0E
 
+#define MAXBUFFER 128
 
 static int caps_flag = 0;
 static int shift_flag = 0;
 static int control_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-uint8_t *term_buffer;
+uint8_t term_buffer[MAXBUFFER];
+static int term_flag = 0;
 
 
-// static uint8_t key_state = 0x00;
 // keyboard_output1 for regular input
 static uint8_t keyboard_output1[128] = {
 	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
@@ -77,6 +78,33 @@ static uint8_t keyboard_output4[128] = {
 	 '\0', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', '\0', '\0',
 	 '\0', ' ', '\0'
 };
+
+
+/*
+* int32_t terminal_open()
+*   Inputs: none
+*   Return Value: 0
+*		Function: none
+*/
+int32_t terminal_open(){
+	return 0;
+}
+
+/*
+* int32_t terminal_close()
+*   Inputs: none
+*   Return Value: 0
+*		Function: none
+*/
+int32_t terminal_close(){
+	return 0;
+}
+
+
+
+
+
+
 
 /* void init_keyboard()
  * Inputs: none
