@@ -48,7 +48,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
   if (dentry == NULL) {
     return -1;
   }
-  //(int *)bootblock = (int *)file_system_loc;
+  bootblock = (unsigned int *)file_system_loc;
   int32_t num_dentries = bootblock->num_dentries;
 
   // Make sure our index is in a valid range
@@ -207,6 +207,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
     curr_directory++;
     return length;
   }
+  return -1;
 }
 
 /**
