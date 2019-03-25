@@ -29,7 +29,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   }
   int i;
   for (i = 0; i < num_dentries; i++) {
-    if (strncmp(bootblock->dentries[i].file_name, fname, strlen(fname))) {
+    if (!strncmp(bootblock->dentries[i].file_name, fname, strlen(fname))) {
       // copy the dentry struct from here into the dentry_t parameter
       // we know the dentry struct is DENTRY_SIZE bytes, so we can just use memcpy
       memcpy(dentry, &(bootblock->dentries[i]), DENTRY_SIZE);
@@ -120,6 +120,11 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  * OUTPUTS: 0 if successful, -1 otherwise
  */
 int32_t file_open (const uint8_t* fname){
+  dentry_t dentry;
+  if(read_dentry_by_name((uint8_t *)fname, &dentry) == -1)
+  {
+    return -1;
+  }
   return 0;
 }
 
@@ -141,7 +146,7 @@ int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
     return -1;
   }
   /* If the file exists, copy the data into the buffer and returns bytes read of file*/
-  read_dentry_by_name((uint8_t *)fd, &dentry);
+  //read_dentry_by_name((uint8_t *)fd, &dentry);
   return read_data(dentry.inode_num, 0, buf, nbytes);
 }
 

@@ -144,7 +144,8 @@ void entry(unsigned long magic, unsigned long addr) {
     {
         populate_idt();
     }
-
+    module_t* mod = (module_t*)mbi->mods_addr;
+    file_system_loc = (unsigned int)mod->mod_start;
     // turn on paging
     page_init();
 

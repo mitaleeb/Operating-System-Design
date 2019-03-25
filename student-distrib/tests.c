@@ -3,6 +3,7 @@
 #include "bootinit/paging.h"
 #include "lib.h"
 #include "x86_desc.h"
+#include "fsys/fs.h"
 
 #define PASS 1
 #define FAIL 0
@@ -325,7 +326,26 @@ int except_test() {
   return result;
 }
 
-/* Checkpoint 2 tests */
+/* CHECKPOINT 2 TESTS */
+
+/* file system driver */
+int file_system_output(){
+  TEST_HEADER;
+  uint8_t test_buf[4096];
+  int8_t* file = 'frame0.txt';
+  /*if(file_open(file) == 0){
+    printf("File is opened");
+  }*/
+  if(read_data((uint8_t*)file, 0, test_buf, 4096) < 0){
+    return FAIL;
+  }
+  //file_read((uint8_t*)file, test_buf, 4000);
+  puts((int8_t*)test_buf);
+  //file_close(file);
+  return PASS;
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -344,6 +364,9 @@ void launch_tests() {
 
   TEST_OUTPUT("page deref test", page_deref_test());
   printf("Finished Page Dereference Test                           \n");
+
+  TEST_OUTPUT("file system output test ", file_system_output());
+  printf("Finished File System Output Test                          \n");
 
   // Test that purposefully puts the system into an unusable state by forcing
   // one of the first 32 exceptions to happen. Comment it out to boot the OS.
