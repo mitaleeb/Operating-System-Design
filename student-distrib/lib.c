@@ -24,6 +24,72 @@ void clear(void) {
     }
 }
 
+/* void reset_cursor(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: resets screen_x and screen_y */
+ void reset_position(void) {
+   screen_x = 0;
+   screen_y = 0;
+ }
+
+ /* void decrement_position(void);
+  * Inputs: void
+  * Return Value: none
+  * Function: decrements x position */
+  void decrement_position(void) {
+    if(screen_x > 0)
+      screen_x--;
+  }
+
+  /* void enter_position(void);
+   * Inputs: void
+   * Return Value: none
+   * Function: increments y position */
+   void enter_position(void) {
+     if(screen_y < NUM_ROWS - 1) {
+       screen_y++;
+       screen_x = 0;
+     }
+     else {
+       scroll_up();
+       screen_y++;
+       screen_x = 0;
+     }
+   }
+
+ /*
+  * void scroll_up(void)
+  * 	Inputs: none
+  * 	Return: none
+  * 	Function: shift all characters up by one line
+  */
+  void scroll_up(void) {
+    memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
+    uint8_t i;
+    for(i=0; i<NUM_COLS; i++) {
+      *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';
+    }
+    screen_y--;
+  }
+
+  /*
+    * void update_cursor()
+    *   Inputs: none
+    *   Return Value: none
+    *	 Function: update the cursor position in screen
+    */
+    void update_cursor(void) {
+    	unsigned short pos = (screen_y * 80) + screen_x;
+
+    	outb(0x0F, 0x3D4);
+    	outb((unsigned char)(pos & 0xFF), 0x3D5);
+
+    	outb(0x0E, 0x3D4);
+    	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
+    }
+
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character
@@ -168,6 +234,8 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    if(screen_x > NUM_COLS - 1 && screen_y > NUM_ROWS - 1)
+      scroll_up();
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
