@@ -17,6 +17,9 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     return -1;
   }
 
+  // Set the start of bootblock struct to the start of file system
+  bootblock = (unsigned int *)file_system_loc;
+
   // loop through all the dentries until we find one with a name that matches
   int32_t num_dentries = bootblock->num_dentries;
 
@@ -45,11 +48,11 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
   if (dentry == NULL) {
     return -1;
   }
-
+  //(int *)bootblock = (int *)file_system_loc;
   int32_t num_dentries = bootblock->num_dentries;
 
   // Make sure our index is in a valid range
-  if (index >= num_dentries) {
+  if (index >= num_dentries || index <0) {
     return -1;
   }
 
@@ -60,6 +63,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
   int32_t bytes_read = 0;
+  bootblock = (unsigned int *) file_system_loc;
   int32_t num_inodes = bootblock->num_inodes;
 
   // the starting index, (offset / BLOCK_SIZE, since offset is in bytes)
@@ -130,7 +134,15 @@ int32_t file_open (const uint8_t* fname){
  */  
 int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
   // call some helper function in order to read the data in the file
-  return 0;
+  dentry_t dentry;
+  
+  if(read_dentry_by_name((uint8_t *)fd, &dentry) == -1)
+  {
+    return -1;
+  }
+  /* If the file exists, copy the data into the buffer and returns bytes read of file*/
+  read_dentry_by_name((uint8_t *)fd, &dentry);
+  return read_data(dentry.inode_num, 0, buf, nbytes);
 }
 
 /**
@@ -156,4 +168,73 @@ int32_t file_write (int32_t fd, void* buf, int32_t nbytes){
 int32_t file_close (int32_t fd){
   return 0;
 }
+
+/**
+ * dir_open()
+ * 
+ * DESCRIPTION:  Opens a directory
+ * INPUTS: fname - the filename to open
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
+int32_t dir_open (const uint8_t* fname){
+  return 0;
+}
+
+/**
+ * dir_read()
+ * 
+ * DESCRIPTION:  Outputs name of directory to buffer
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         nbytes -- number of bytes to read
+ * OUTPUTS: total bytes read if successful, -1 otherwise
+ */  
+int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
+  /* Initializes Local Variables */
+  dentry_t dentry;
+  int i;
+  int curr_directory=0;
+
+  if(read_dentry_by_index(curr_directory, &dentry) == -1){
+    return 0;
+  }
+  if (read_dentry_by_index(curr_directory, &dentry) == 0){
+    for (i = 0; i <= 32; i++){
+      ((int8_t*)(buf))[i] = '\0';
+    }
+    int32_t length = strlen((int8_t*)dentry.file_name);
+    strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
+    curr_directory++;
+    return length;
+  }
+  else{
+    return 0;
+  }
+}
+
+/**
+ * dir_write()
+ * 
+ * DESCRIPTION:  Writes to a directory
+ * INPUTS: fd -- file descriptor
+ *         buf -- starting pointer of copy data buffer
+ *         nbytes -- number of bytes to read
+ * OUTPUTS: Always -1 because this is a read only file system
+ */  
+int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
+  return -1;
+}
+
+/**
+ * dir_close()
+ * 
+ * DESCRIPTION:  Close directory that is open
+ * INPUTS: fd -- file descriptor for directory to close
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */  
+int32_t dir_close (int32_t fd){
+  return 0;
+}
+
+
 
