@@ -117,11 +117,11 @@ int32_t terminal_read(uint8_t* buf, int32_t length) {
 
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
-		return -1;
+		return 0;
 
 	/* return unless buffer is ready to be read */
 	if(!term_flag)
-		return -1;
+		return 0;
 
 	/* read from input to old terminal buffer */
 	if (length <= MAXBUFFER) {
@@ -157,9 +157,25 @@ int32_t terminal_read(uint8_t* buf, int32_t length) {
 	}
 }
 
+/*
+* int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: number of bytes written
+*	Function: write keyboard buffer, clear keyboard buffer
+*
+*/
+int32_t terminal_write(uint8_t* buf, int32_t length) {
+	int i;
+	/* check if invalid buffer is passed in */
+	if(buf == NULL || length < 0)
+		return 0;
 
-
-
+	for(i = 0; i < length; i ++) {
+			putc(buf[i]);
+	}
+	return length;
+}
 
 /* void init_keyboard()
  * Inputs: none
@@ -289,7 +305,8 @@ extern void write_to_buffer(uint8_t k) {
  */
 extern void backspace_buffer(void) {
 	if(term_buffer_index > 0) {
-		new_term_buffer[term_buffer_index--] = '/0';
+		term_buffer_index--;
+		new_term_buffer[term_buffer_index] = '\0';
 		decrement_position();
 		putc(' ');
 		decrement_position();

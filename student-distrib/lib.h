@@ -18,6 +18,7 @@ void reset_position(void);
 void decrement_position(void);
 void enter_position(void);
 void scroll_up(void);
+void update_cursor(void);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);

@@ -40,3 +40,4 @@ extern void enter_buffer(void);
 extern int32_t terminal_open();
 extern int32_t terminal_close();
 extern int32_t terminal_read(uint8_t* buf, int32_t length);
+extern int32_t terminal_write(uint8_t* buf, int32_t length);

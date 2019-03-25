@@ -47,9 +47,15 @@ void clear(void) {
    * Return Value: none
    * Function: increments y position */
    void enter_position(void) {
-     if(screen_y < NUM_ROWS - 1)
+     if(screen_y < NUM_ROWS - 1) {
        screen_y++;
        screen_x = 0;
+     }
+     else {
+       scroll_up();
+       screen_y++;
+       screen_x = 0;
+     }
    }
 
  /*
@@ -66,6 +72,7 @@ void clear(void) {
     }
     screen_y--;
   }
+
 
 
 
@@ -213,6 +220,8 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    if(screen_x > NUM_COLS - 1 && screen_y > NUM_ROWS - 1)
+      scroll_up();
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
