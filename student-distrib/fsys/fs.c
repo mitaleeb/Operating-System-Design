@@ -6,10 +6,7 @@
 
 #include "fs.h"
 
-/* @TODO: get the bootblock pointer in some way. Right now I'm just assuming
-it's a pointer we get somehow. */
-bootblock_t* bootblock;
-unsigned int curr_directory = 0;
+static uint32_t curr_directory = 0;
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   
@@ -18,19 +15,19 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     return -1;
   }
 
-  // Set the start of bootblock struct to the start of file system
-  bootblock = (bootblock_t*) file_system_loc;
-
-  // loop through all the dentries until we find one with a name that matches
   int32_t num_dentries = bootblock->num_dentries;
 
   // sanity check making sure num_dentries is less than max dentries
   if (num_dentries > MAX_DENTRIES){ 
     return -1;
   }
+
+  uint32_t fname_len = strlen((int8_t*)fname);
+
+  // loop through all the dentries until we find one with a name that matches
   int i;
   for (i = 0; i < num_dentries; i++) {
-    if (!strncmp((int8_t*)bootblock->dentries[i].file_name, (int8_t*)fname, strlen((int8_t*)fname))) {
+    if (!strncmp((int8_t*)(bootblock->dentries[i].file_name), (int8_t*)fname, fname_len)) {
       // copy the dentry struct from here into the dentry_t parameter
       // we know the dentry struct is DENTRY_SIZE bytes, so we can just use memcpy
       memcpy(dentry, &(bootblock->dentries[i]), DENTRY_SIZE);
@@ -49,11 +46,10 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
   if (dentry == NULL) {
     return -1;
   }
-  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_dentries = bootblock->num_dentries;
 
   // Make sure our index is in a valid range
-  if (index >= num_dentries || index <0) {
+  if (index >= num_dentries || index < 0) {
     return -1;
   }
 
@@ -64,7 +60,6 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
   int32_t bytes_read = 0;
-  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_inodes = bootblock->num_inodes;
 
   // the starting index, (offset / BLOCK_SIZE, since offset is in bytes)

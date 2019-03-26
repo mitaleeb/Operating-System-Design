@@ -60,7 +60,6 @@ void entry(unsigned long magic, unsigned long addr) {
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
-            file_system_loc = (unsigned int)mod->mod_start; // starting of file system from multiboot
             for (i = 0; i < 16; i++) {
                 printf("0x%x ", *((char*)(mod->mod_start+i)));
             }
@@ -142,11 +141,12 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Construct the IDT */
-    {
-        populate_idt();
-    }
+    populate_idt();
+
+    /* initialize the pointer to the start of the filesystem */
     module_t* mod = (module_t*)mbi->mods_addr;
-    file_system_loc = (unsigned int)mod->mod_start;
+    bootblock = (bootblock_t*)mod->mod_start;
+
     // turn on paging
     page_init();
 
@@ -166,7 +166,6 @@ void entry(unsigned long magic, unsigned long addr) {
     printf("Enabling Interrupts\n");
     sti();
 
-    asm volatile("int $0x21");
 #ifdef RUN_TESTS
     /* Run tests */
     launch_tests();
