@@ -421,7 +421,9 @@ int file_system_file_output(){
   // SPECIFY WHICH FILE YOU WANT TO OUTPUT
   int8_t* file = "frame0.txt";
   // Check if file to be read exists and if so put it in buffer
-  if(file_read((uint32_t) ((uint8_t*) file), test_buf, BLOCK_SIZE) < 0){
+  int32_t bytes_read = file_read((uint32_t) ((uint8_t*) file), test_buf, BLOCK_SIZE);
+  printf("bytes read: %d\n", bytes_read);
+  if(bytes_read < 0){
     return FAIL;
   }
   // Output Contents of File from test buffer to screen

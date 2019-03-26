@@ -6,10 +6,7 @@
 
 #include "fs.h"
 
-/* @TODO: get the bootblock pointer in some way. Right now I'm just assuming
-it's a pointer we get somehow. */
-bootblock_t* bootblock;
-unsigned int curr_directory = 0;
+static uint32_t curr_directory = 0;
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   
@@ -18,19 +15,19 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     return -1;
   }
 
-  // Set the start of bootblock struct to the start of file system
-  bootblock = (bootblock_t*) file_system_loc;
-
-  // loop through all the dentries until we find one with a name that matches
   int32_t num_dentries = bootblock->num_dentries;
 
   // sanity check making sure num_dentries is less than max dentries
   if (num_dentries > MAX_DENTRIES){ 
     return -1;
   }
+
+  uint32_t fname_len = strlen((int8_t*)fname);
+
+  // loop through all the dentries until we find one with a name that matches
   int i;
   for (i = 0; i < num_dentries; i++) {
-    if (!strncmp((int8_t*)bootblock->dentries[i].file_name, (int8_t*)fname, strlen((int8_t*)fname))) {
+    if (!strncmp((int8_t*)(bootblock->dentries[i].file_name), (int8_t*)fname, fname_len)) {
       // copy the dentry struct from here into the dentry_t parameter
       // we know the dentry struct is DENTRY_SIZE bytes, so we can just use memcpy
       memcpy(dentry, &(bootblock->dentries[i]), DENTRY_SIZE);
@@ -49,11 +46,10 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
   if (dentry == NULL) {
     return -1;
   }
-  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_dentries = bootblock->num_dentries;
 
   // Make sure our index is in a valid range
-  if (index >= num_dentries || index <0) {
+  if (index >= num_dentries || index < 0) {
     return -1;
   }
 
@@ -64,7 +60,6 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
   int32_t bytes_read = 0;
-  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_inodes = bootblock->num_inodes;
 
   // the starting index, (offset / BLOCK_SIZE, since offset is in bytes)
@@ -98,13 +93,13 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   // if file_remaining is more than block - offset, copy the remaining block
     if (file_remaining > BLOCK_SIZE - (offset % BLOCK_SIZE)) {
       memcpy(buf, curr_dblock + offset, BLOCK_SIZE - (offset % BLOCK_SIZE));
-      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
       bytes_read += BLOCK_SIZE - (offset % BLOCK_SIZE);
+      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
     } else {
       // otherwise, copy the remaining file
       memcpy(buf, curr_dblock, file_remaining);
-      file_remaining -= file_remaining;
       bytes_read += file_remaining;
+      file_remaining -= file_remaining;
     }
 
   // now we can loop until we have no more of the file remaining
@@ -113,13 +108,13 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     // if file_remaining is greater than this block, copy the whole block
     if (file_remaining > BLOCK_SIZE) {
       memcpy(buf, curr_dblock, BLOCK_SIZE);
-      file_remaining -= BLOCK_SIZE;
       bytes_read += BLOCK_SIZE;
+      file_remaining -= BLOCK_SIZE;
     } else {
       // otherwise, copy the remaining file
       memcpy(buf, curr_dblock, file_remaining);
-      file_remaining -= file_remaining;
       bytes_read += file_remaining;
+      file_remaining -= file_remaining;
     }
 
     // check if we're out of range of the curr_dblock
