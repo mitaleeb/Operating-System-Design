@@ -93,13 +93,13 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   // if file_remaining is more than block - offset, copy the remaining block
     if (file_remaining > BLOCK_SIZE - (offset % BLOCK_SIZE)) {
       memcpy(buf, curr_dblock + offset, BLOCK_SIZE - (offset % BLOCK_SIZE));
-      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
       bytes_read += BLOCK_SIZE - (offset % BLOCK_SIZE);
+      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
     } else {
       // otherwise, copy the remaining file
       memcpy(buf, curr_dblock, file_remaining);
-      file_remaining -= file_remaining;
       bytes_read += file_remaining;
+      file_remaining -= file_remaining;
     }
 
   // now we can loop until we have no more of the file remaining
@@ -108,13 +108,13 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     // if file_remaining is greater than this block, copy the whole block
     if (file_remaining > BLOCK_SIZE) {
       memcpy(buf, curr_dblock, BLOCK_SIZE);
-      file_remaining -= BLOCK_SIZE;
       bytes_read += BLOCK_SIZE;
+      file_remaining -= BLOCK_SIZE;
     } else {
       // otherwise, copy the remaining file
       memcpy(buf, curr_dblock, file_remaining);
-      file_remaining -= file_remaining;
       bytes_read += file_remaining;
+      file_remaining -= file_remaining;
     }
 
     // check if we're out of range of the curr_dblock
