@@ -109,11 +109,12 @@ int32_t terminal_close(void){
 * int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length)
 *   Inputs: uint8_t* buf = buffer
 *		int32_t length = length
+*   int32_t fd = file decorator
 *   Return Value: number of bytes read
 *		Function: read keyboard buffer, clear keyboard buffer
 * 	calling terminal read should give a clear buffer
 */
-int32_t terminal_read(uint8_t* buf, int32_t length) {
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length) {
 	int i;
 
 	/* check if invalid buffer is passed in */
@@ -150,18 +151,23 @@ int32_t terminal_read(uint8_t* buf, int32_t length) {
 * int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length)
 *   Inputs: uint8_t* buf = buffer
 *		int32_t length = length
+*   int32_t fd = file decorator
 *   Return Value: number of bytes written
 *	Function: write keyboard buffer, clear keyboard buffer
 *
 */
-int32_t terminal_write(uint8_t* buf, int32_t length) {
+int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
 	int i;
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
 		return 0;
+	/* check to ensure buf.size > length, otherwise reassign length */
+	int buflen = strlen(&buf);
+	if(buflen < length)
+		length = buflen;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-		if(i == 79)
+		if(i == TERM_COLS)
 			enter_position();
 		putc(buf[i]);
 	}
@@ -236,6 +242,9 @@ void handle_keyboard_interrupt() {
 						reset_position();
 						update_cursor();
 					}
+					/* if control is held down, do not print any characters */
+					else if(control_flag)
+						break;
 					/* if backspace is pressed */
 					else if(backspace_flag)
 						backspace_buffer();

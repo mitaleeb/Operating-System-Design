@@ -392,16 +392,25 @@ int terminal_test() {
   int len = 128;
   int output = 0;
   int output2 = 0;
+  int fd = 1;  /* holder fd to allow test to compile */
   uint8_t k[128];
 
   printf("Enter text for terminal buffer: \n");
 
-  output = terminal_read(k,len);
-  output2 = terminal_write(k, output);
+  output = terminal_read(fd, k,len);
+  output2 = terminal_write(fd, k, output);
   if(output != output2) {
     assertion_failure();
     result = FAIL;
   }
+  // printf("%d", terminal_write(fd, "aaa", 4));
+  // printf("\n");
+  // printf("%d", terminal_write(fd, "bbb", -1));
+  // printf("\n");
+  // printf("%d", terminal_write(fd, "ccc", 3));
+  // printf("\n");
+  // printf("%d", terminal_write(fd, "ddd", 0));
+  // printf("\n");
 
   return result;
 }
