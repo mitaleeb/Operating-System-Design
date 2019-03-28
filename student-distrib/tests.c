@@ -475,7 +475,7 @@ int file_system_dir_output(){
 
 /* Test suite entry point */
 void launch_tests() {
-  /*TEST_OUTPUT("idt_test", idt_test());
+  TEST_OUTPUT("idt_test", idt_test());
   printf("Finished IDT Test 1 \n");
 
   // launch your tests here
@@ -488,25 +488,25 @@ void launch_tests() {
   TEST_OUTPUT("page deref test", page_deref_test());
   printf("Finished Page Dereference Test \n");
 
-  /*TEST_OUTPUT("rtc write test", rtc_read_test());
+  TEST_OUTPUT("rtc write test", rtc_read_test());
   printf("Finished RTC Read Test \n");
 
   TEST_OUTPUT("rtc write test", rtc_write_test());
-  printf("Finished RTC Write Test \n");*/
+  printf("Finished RTC Write Test \n");
 
   TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n");  */
+  printf("Finished File System File Output Test                          \n");  
 
-  /*TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  TEST_OUTPUT("file system directory test ", file_system_dir_output());
   printf("Finished File System Directory Output Test                          \n");
 
-<<<<<<< HEAD
- /* TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n"); */
-=======
+
   TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n");*/
->>>>>>> 5471d20afe21169b377b8c0ddbf2151e00a608ba
+  printf("Finished Terminal Read and Write Test \n");
+
+  TEST_OUTPUT("terminal test", terminal_test());
+  printf("Finished Terminal Read and Write Test \n");
+
 
 
   // Test that purposefully puts the system into an unusable state by forcing
