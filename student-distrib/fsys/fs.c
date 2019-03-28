@@ -24,6 +24,11 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
 
   uint32_t fname_len = strlen((int8_t*)fname);
 
+  // fail if our fname_len is greater than MAX_DIRNAME_LEN
+  if (fname_len > MAX_DIRNAME_LEN) {
+    return -1;
+  }
+
   // loop through all the dentries until we find one with a name that matches
   int i;
   for (i = 0; i < num_dentries; i++) {
