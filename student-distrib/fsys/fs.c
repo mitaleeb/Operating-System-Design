@@ -271,7 +271,7 @@ int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
  * OUTPUTS: 0 if successful, -1 otherwise
  */  
 int32_t dir_close (int32_t fd){
-  if (fname == NULL) {
+  if (fd == NULL) {
     return -1;
   }
   curr_directory = 0;
