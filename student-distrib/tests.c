@@ -10,6 +10,7 @@
 #define PASS 1
 #define FAIL 0
 #define IRQ_RTC 8
+#define MAXBUFSIZE 128
 
 /* format these macros as you see fit */
 #define TEST_HEADER                                                     \
@@ -394,22 +395,35 @@ int terminal_test() {
   int output2 = 0;
   int fd = 1;  /* holder fd to allow test to compile */
   uint8_t k[128];
+  int i;
+  int found;
+  for(i = 0; i < MAXBUFSIZE; i++) {
+    k[i] = '\0';
+  }
 
   printf("Enter text for terminal buffer: \n");
 
   output = terminal_read(fd, k,len);
   output2 = terminal_write(fd, k, output);
-  if(output != output2) {
+
+  /* check for the first instance of null character to find the end of string */
+  for(i = 0; i < MAXBUFSIZE; i++) {
+    if(k[i] == '\0') {
+      found = i;
+      break;
+    }
+  }
+  if(found != output2) {
     assertion_failure();
     result = FAIL;
   }
-  // printf("%d", terminal_write(fd, "aaa", 4));
+  // printf("%d", terminal_write(fd, "aaaaa", 4));
   // printf("\n");
-  // printf("%d", terminal_write(fd, "bbb", -1));
+  // printf("%d", terminal_write(fd, "bbbbb", -1));
   // printf("\n");
-  // printf("%d", terminal_write(fd, "ccc", 3));
+  // printf("%d", terminal_write(fd, "ccccc", 6));
   // printf("\n");
-  // printf("%d", terminal_write(fd, "ddd", 0));
+  // printf("%d", terminal_write(fd, "ddddd", 0));
   // printf("\n");
 
   return result;

@@ -158,11 +158,14 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length) {
 */
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
 	int i;
+
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
 		return 0;
+
 	/* check to ensure buf.size > length, otherwise reassign length */
-	int buflen = strlen(&buf);
+	int buflen = strlen(buf);
+	//printf("buflen is %d", buflen);
 	if(buflen < length)
 		length = buflen;
   /* print each buffer value to terminal */
@@ -241,6 +244,7 @@ void handle_keyboard_interrupt() {
 						clear();
 						reset_position();
 						update_cursor();
+						column_index = 0;
 					}
 					/* if control is held down, do not print any characters */
 					else if(control_flag)
