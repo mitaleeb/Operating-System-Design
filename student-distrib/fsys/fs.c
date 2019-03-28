@@ -24,6 +24,11 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
 
   uint32_t fname_len = strlen((int8_t*)fname);
 
+  // fail if our fname_len is greater than MAX_DIRNAME_LEN
+  if (fname_len > MAX_DIRNAME_LEN) {
+    return -1;
+  }
+
   // loop through all the dentries until we find one with a name that matches
   int i;
   for (i = 0; i < num_dentries; i++) {
@@ -203,6 +208,10 @@ int32_t file_close (int32_t fd){
  * OUTPUTS: 0 if successful, -1 otherwise
  */
 int32_t dir_open (const uint8_t* fname){
+  // Check null pointers
+  if (fname == NULL) {
+    return -1;
+  }
   curr_directory = 0;
   return 0;
 }
@@ -226,6 +235,9 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
       ((int8_t*)(buf))[i] = '\0';
     }
     int32_t length = strlen((int8_t*)dentry.file_name);
+    if (length > MAX_DIRNAME_LEN) {
+      length = MAX_DIRNAME_LEN;
+    }
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
     //printf(buf);
     curr_directory++;
@@ -259,6 +271,9 @@ int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
  * OUTPUTS: 0 if successful, -1 otherwise
  */  
 int32_t dir_close (int32_t fd){
+  if (fd == NULL) {
+    return -1;
+  }
   curr_directory = 0;
   return 0;
 }

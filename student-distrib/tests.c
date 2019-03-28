@@ -436,20 +436,22 @@ int terminal_test() {
 int file_system_file_output(){
   TEST_HEADER;
   int i;
-  uint8_t test_buf[BLOCK_SIZE];
+  uint8_t test_buf[10 * BLOCK_SIZE];
   for (i = 0; i <= BLOCK_SIZE; i++){
       ((int8_t*)(test_buf))[i] = '\0';
   }
   // SPECIFY WHICH FILE YOU WANT TO OUTPUT
-  int8_t* file = "frame0.txt";
+  int8_t* file = "cat";
   // Check if file to be read exists and if so put it in buffer
-  int32_t bytes_read = file_read((uint32_t) ((uint8_t*) file), test_buf, BLOCK_SIZE);
+  int32_t bytes_read = file_read((uint32_t) ((uint8_t*) file), test_buf, 10 * BLOCK_SIZE);
   printf("bytes read: %d\n", bytes_read);
   if(bytes_read < 0){
     return FAIL;
   }
   // Output Contents of File from test buffer to screen
-  puts((int8_t*)test_buf);
+  for (i = 0; i < bytes_read; i++) {
+    putc(test_buf[i]);
+  }
   //file_close(file);
   return PASS;
 }
@@ -471,12 +473,11 @@ int file_system_dir_output(){
   // Specify that this is current directory but not relevant for checkpoint 2
   int8_t* dir = ".";
 
-  // Open directory
-  dir_open(((uint8_t*) dir));
-
   if (dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
     return FAIL;
   }
+  // Open directory
+  dir_open(((uint8_t*) dir));
   // Loop through Directory Entries and output all file names to screen
   for(i=0; i< MAX_DENTRIES; i++){
     if(dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
@@ -517,13 +518,18 @@ void launch_tests() {
   printf("Finished RTC Write Test \n");
 
   TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n");
+  printf("Finished File System File Output Test                          \n");  
 
   TEST_OUTPUT("file system directory test ", file_system_dir_output());
   printf("Finished File System Directory Output Test                          \n");
 
+
   TEST_OUTPUT("terminal test", terminal_test());
   printf("Finished Terminal Read and Write Test \n");
+
+  TEST_OUTPUT("terminal test", terminal_test());
+  printf("Finished Terminal Read and Write Test \n");
+
 
 
   // Test that purposefully puts the system into an unusable state by forcing
