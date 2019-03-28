@@ -414,14 +414,14 @@ int terminal_test() {
 int file_system_file_output(){
   TEST_HEADER;
   int i;
-  uint8_t test_buf[2 * BLOCK_SIZE];
+  uint8_t test_buf[10 * BLOCK_SIZE];
   for (i = 0; i <= BLOCK_SIZE; i++){
       ((int8_t*)(test_buf))[i] = '\0';
   }
   // SPECIFY WHICH FILE YOU WANT TO OUTPUT
   int8_t* file = "cat";
   // Check if file to be read exists and if so put it in buffer
-  int32_t bytes_read = file_read((uint32_t) ((uint8_t*) file), test_buf, 2 * BLOCK_SIZE);
+  int32_t bytes_read = file_read((uint32_t) ((uint8_t*) file), test_buf, 10 * BLOCK_SIZE);
   printf("bytes read: %d\n", bytes_read);
   if(bytes_read < 0){
     return FAIL;
