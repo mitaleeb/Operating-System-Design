@@ -12,7 +12,7 @@
 #include "devices.h"
 #include "rtc.h"
 #include "bootinit/paging.h"
-
+#include "fsys/fs.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -141,9 +141,11 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Construct the IDT */
-    {
-        populate_idt();
-    }
+    populate_idt();
+
+    /* initialize the pointer to the start of the filesystem */
+    module_t* mod = (module_t*)mbi->mods_addr;
+    bootblock = (bootblock_t*)mod->mod_start;
 
     // turn on paging
     page_init();
@@ -164,7 +166,6 @@ void entry(unsigned long magic, unsigned long addr) {
     printf("Enabling Interrupts\n");
     sti();
 
-    asm volatile("int $0x21");
 #ifdef RUN_TESTS
     /* Run tests */
     launch_tests();
