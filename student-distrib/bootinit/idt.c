@@ -5,7 +5,7 @@
  */
 
 #include "idt.h"
-#include "../devices.h"
+#include "../keyboard.h"
 #include "../rtc.h"
 #include "../lib.h"
 #include "../linkage.h"

@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "bootinit/idt.h"
-#include "devices.h"
+#include "keyboard.h"
 #include "rtc.h"
 #include "bootinit/paging.h"
 #include "fsys/fs.h"

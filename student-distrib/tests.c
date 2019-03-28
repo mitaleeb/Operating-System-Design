@@ -4,7 +4,7 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "i8259.h"
-#include "devices.h"
+#include "keyboard.h"
 #include "rtc.h"
 #include "fsys/fs.h"
 
@@ -406,7 +406,6 @@ int terminal_test() {
 
   output = terminal_read(fd, k,len);
   output2 = terminal_write(fd, k, output);
-
   /* check for the first instance of null character to find the end of string */
   for(i = 0; i < MAXBUFSIZE; i++) {
     if(k[i] == '\0') {
@@ -432,7 +431,7 @@ int terminal_test() {
 /**
  * int file_system_file_output()
  *
- * DESCRIPTION: Test to write file contents out to terminal 
+ * DESCRIPTION: Test to write file contents out to terminal
  */
 int file_system_file_output(){
   TEST_HEADER;
@@ -486,7 +485,7 @@ int file_system_dir_output(){
     puts((int8_t*)test_buf);
     putc('\n');
   }
-  // Close current directory 
+  // Close current directory
   dir_close((uint32_t) ((uint8_t*) dir));
   return PASS;
 }
@@ -497,6 +496,7 @@ int file_system_dir_output(){
 
 /* Test suite entry point */
 void launch_tests() {
+
   TEST_OUTPUT("idt_test", idt_test());
   printf("Finished IDT Test 1 \n");
 
@@ -517,7 +517,7 @@ void launch_tests() {
   printf("Finished RTC Write Test \n");
 
   TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n"); 
+  printf("Finished File System File Output Test                          \n");
 
   TEST_OUTPUT("file system directory test ", file_system_dir_output());
   printf("Finished File System Directory Output Test                          \n");

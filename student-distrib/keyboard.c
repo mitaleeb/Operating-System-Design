@@ -1,5 +1,5 @@
 /**
- * devices.c
+ * keyboard.c
  *
  * A file that holds functions that help initialize
  * and handle interrupts from the keyboard and writes
@@ -9,7 +9,7 @@
 #include "i8259.h"
 #include "lib.h"
 #include "bootinit/idt.h"
-#include "devices.h"
+#include "keyboard.h"
 
 
 #define MASTER_PORT_A 0x20
@@ -297,7 +297,6 @@ extern void write_to_buffer(uint8_t k) {
 	}
 	/* if max length is reached, start new line */
 	if(column_index > TERM_COLS - 1) {
-		enter_position();
 		update_cursor();
 		column_index = 0;
 	}
