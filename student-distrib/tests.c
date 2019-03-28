@@ -449,12 +449,11 @@ int file_system_dir_output(){
   // Specify that this is current directory but not relevant for checkpoint 2
   int8_t* dir = ".";
 
-  // Open directory
-  dir_open(((uint8_t*) dir));
-
   if (dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
     return FAIL;
   }
+  // Open directory
+  dir_open(((uint8_t*) dir));
   // Loop through Directory Entries and output all file names to screen
   for(i=0; i< MAX_DENTRIES; i++){
     if(dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
@@ -474,7 +473,7 @@ int file_system_dir_output(){
 
 /* Test suite entry point */
 void launch_tests() {
-  TEST_OUTPUT("idt_test", idt_test());
+  /*TEST_OUTPUT("idt_test", idt_test());
   printf("Finished IDT Test 1 \n");
 
   // launch your tests here
@@ -494,13 +493,13 @@ void launch_tests() {
   printf("Finished RTC Write Test \n");
 
   TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n"); 
+  printf("Finished File System File Output Test                          \n");  */
 
   TEST_OUTPUT("file system directory test ", file_system_dir_output());
   printf("Finished File System Directory Output Test                          \n");
 
-  TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n");
+ /* TEST_OUTPUT("terminal test", terminal_test());
+  printf("Finished Terminal Read and Write Test \n"); */
 
 
   // Test that purposefully puts the system into an unusable state by forcing
