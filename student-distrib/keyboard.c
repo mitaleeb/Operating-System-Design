@@ -164,14 +164,12 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
 		return 0;
 
 	/* check to ensure buf.size > length, otherwise reassign length */
-	int buflen = strlen(buf);
+	int buflen = strlen((int8_t*) buf);
 	//printf("buflen is %d", buflen);
 	if(buflen < length)
 		length = buflen;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-		if(i == TERM_COLS)
-			enter_position();
 		putc(buf[i]);
 	}
 	/*return the copied length, if successful */
