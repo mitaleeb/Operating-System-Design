@@ -231,6 +231,9 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
       ((int8_t*)(buf))[i] = '\0';
     }
     int32_t length = strlen((int8_t*)dentry.file_name);
+    if (length > MAX_DIRNAME_LEN) {
+      length = MAX_DIRNAME_LEN;
+    }
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
     //printf(buf);
     curr_directory++;
