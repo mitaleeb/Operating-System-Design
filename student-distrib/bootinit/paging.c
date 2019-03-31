@@ -77,6 +77,11 @@ void page_init()
     );
 }
 
+/**
+ * page_flushtlb()
+ * 
+ * DESCRIPTION: flushes the TLB. Necessary when changes made to paging
+ */
 void page_flushtlb() {
     /* according to wiki.osdev.org/TLB, we can flush the TLB by simply writing
        to the PDBR (CR3) */
