@@ -1,0 +1,27 @@
+/**
+ * syscall.h
+ */
+
+#include "lib.h"
+
+/* some defines to make our code more readable */
+#define EXEC_ADDR 0x08048000
+
+/* the magic numbers at the beginning of executables */
+const uint8_t EXEC_IDENTIFIER[4] = {0x7f, 0x45, 0x4c, 0x46};
+
+/* functions to help us set up the ability to receive a syscall */
+int32_t syscall_call(int num, int32_t arg1, int32_t arg2, int32_t arg3);
+
+/* the actual system calls */
+int32_t system_execute(const uint8_t* command);
+
+int32_t system_halt(uint8_t status);
+
+int32_t system_read(int32_t fd, void* buf, int32_t nbytes);
+
+int32_t system_write(int32_t fd, const void* buf, int32_t nbytes);
+
+int32_t system_open(const uint8_t* filename);
+
+int32_t system_close(int32_t fd);
