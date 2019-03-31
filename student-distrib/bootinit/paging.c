@@ -77,6 +77,13 @@ void page_init()
     );
 }
 
+void page_flushtlb() {
+    /* according to wiki.osdev.org/TLB, we can flush the TLB by simply writing
+       to the PDBR (CR3) */
+    asm volatile ("movl %%cr3, %%eax;"
+                  "movl %%eax, %%cr3");
+}
+
 /**
  * add_page_dir_entry()
  * 

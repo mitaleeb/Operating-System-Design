@@ -41,6 +41,14 @@ typedef struct page_table_struct {
 void page_init();
 
 /**
+ * page_flushtlb()
+ * 
+ * DESCRIPTION: flushes the TLB. Necessary when changes made to paging
+ * structures. 
+ */
+void page_flushtlb();
+
+/**
  * paging_tester()
  *
  * DESCRIPTION: tests whether we have the correct values in our page descriptor
