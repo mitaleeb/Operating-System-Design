@@ -7,27 +7,11 @@
 #include "syscall.h"
 
 /* declare the array holding the syscall function pointers */
-static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
+/* unnecessary since the assembly table works (allows variable params) */
+// static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
 
 /* the magic numbers at the beginning of executables */
 static uint8_t EXEC_IDENTIFIER[4] = {0x7f, 0x45, 0x4c, 0x46};
-
-// This function may be totally useless, depending on if the current linkage
-// works (if it does, we can simply remove this and the static array above)
-int32_t syscall_call(int num, int32_t arg1, int32_t arg2, int32_t arg3) {
-  if (num < 1 || num > NUM_SYSCALLS) {
-    return -1; // failure case
-  }
-
-  num--; // our table is indexed by 0
-
-  // make sure our function call isn't null (not implemented yet)
-  if (syscall_table[num]) {
-    return (*syscall_table[num])(arg1, arg2, arg3);
-  }
-
-  return -1;
-}
 
 int32_t system_execute(const uint8_t* command) {
   return -1;

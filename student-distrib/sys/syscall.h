@@ -13,8 +13,8 @@
 /* functions to help us set up the ability to receive a syscall */
 extern int32_t syscall_linker(); // prototype for assembly linkage
 
-// This function may or may not be necessary, unsure yet.
-int32_t syscall_call(int num, int32_t arg1, int32_t arg2, int32_t arg3);
+// This function is unnecessary since asm linkage works
+// int32_t syscall_call(int num, int32_t arg1, int32_t arg2, int32_t arg3);
 
 /* the actual system calls (1-10)*/
 int32_t system_halt(uint8_t status);
