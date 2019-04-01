@@ -172,7 +172,8 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    int z = system_execute("shell");
+    char com[6] = "shell";
+    int z = system_execute((uint8_t*) com);
     printf("Return value of system call: %d", z);
 
     /* Spin (nicely, so we don't chew up cycles) */
