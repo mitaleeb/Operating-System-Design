@@ -1,6 +1,4 @@
-# syscall.S - Set up system call linkage
-
-#include "syscall.h"
+# syscall_asm.S - Set up system call linkage
 
 .data                 # section declaration (see blink.S)
 

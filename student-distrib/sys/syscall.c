@@ -9,6 +9,9 @@
 /* declare the array holding the syscall function pointers */
 static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
 
+/* the magic numbers at the beginning of executables */
+static uint8_t EXEC_IDENTIFIER[4] = {0x7f, 0x45, 0x4c, 0x46};
+
 // This function may be totally useless, depending on if the current linkage
 // works (if it does, we can simply remove this and the static array above)
 int32_t syscall_call(int num, int32_t arg1, int32_t arg2, int32_t arg3) {
@@ -58,10 +61,10 @@ int32_t system_vidmap(uint8_t** screen_start) {
   return -1;
 }
 
-int32_t set_handler(int32_t signum, void* handler_address) {
+int32_t system_sethandler(int32_t signum, void* handler_address) {
   return -1;
 }
 
-int32_t sigreturn() {
+int32_t system_sigreturn() {
   return -1;
 }

@@ -172,7 +172,8 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    system_execute("shell");
+    int z = system_execute("shell");
+    printf("Return value of system call: %d", z);
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

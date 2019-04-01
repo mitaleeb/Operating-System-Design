@@ -2,16 +2,13 @@
  * syscall.h
  */
 
-#include "types.h"
+#include "../types.h"
 
 /* some defines to make our code more readable */
 #define EXEC_ADDR 0x08048000
 
 /* the number of system calls */
 #define NUM_SYSCALLS 6
-
-/* the magic numbers at the beginning of executables */
-const uint8_t EXEC_IDENTIFIER[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 /* functions to help us set up the ability to receive a syscall */
 extern int32_t syscall_linker(); // prototype for assembly linkage
@@ -36,6 +33,6 @@ int32_t system_getargs(uint8_t* buf, int32_t nbytes);
 
 int32_t system_vidmap(uint8_t** screen_start);
 
-int32_t set_handler(int32_t signum, void* handler_address);
+int32_t system_sethandler(int32_t signum, void* handler_address);
 
-int32_t sigreturn(void);
+int32_t system_sigreturn(void);
