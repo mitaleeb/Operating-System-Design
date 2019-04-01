@@ -1,23 +1,44 @@
-.globl syscall_linker
+# syscall.S - Set up system call linkage
+
+#include "syscall.h"
+
+.data                 # section declaration (see blink.S)
+
+syscall_table:
+  .long 0             # put a 0 in to make our indexing from 1
+  .long system_halt
+  .long system_execute
+  .long system_read
+  .long system_write
+  .long system_open
+  .long system_close
+  .long system_getargs
+  .long system_vidmap
+  .long system_sethandler
+  .long system_sigreturn
 
 RETVAL:
   .long 0             # the return value of the syscall
+
+
+.text                 # section declaration (see blink.S)
+
+.globl syscall_linker
 
 syscall_linker:
   pushal
   pushfl
 
-  cmpl $10, %eax      # support system calls 1 to 10
+  cmpl $10, %eax       # support system calls 1 to 10
   jg syscall_invalid
   cmpl $1, %eax
   jl syscall_invalid
 
   pushl %edx
   pushl %ecx
-  pushl %ebx
-  pushl %eax          # push arguments to stack and call
-  call syscall_call
-  addl $16, %esp      # pop the 4 arguments off the stack
+  pushl %ebx          # push arguments to stack and call     
+  call *syscall_table(,%eax,4)
+  addl $12, %esp      # pop the 3 arguments off the stack
   jmp syscall_end
 
 syscall_invalid:
@@ -27,5 +48,5 @@ syscall_end:
   movl %eax, RETVAL
   popfl
   popal
-  movl RETVAL, %eax   # store the retrun value into eax
+  movl RETVAL, %eax   # store the return value into eax
   iret

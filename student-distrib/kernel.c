@@ -13,6 +13,7 @@
 #include "rtc.h"
 #include "bootinit/paging.h"
 #include "fsys/fs.h"
+#include "sys/syscall.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -147,7 +148,7 @@ void entry(unsigned long magic, unsigned long addr) {
     module_t* mod = (module_t*)mbi->mods_addr;
     bootblock = (bootblock_t*)mod->mod_start;
 
-    // turn on paging
+    /* turn on paging */
     page_init();
 
     /* Init the PIC */
@@ -171,6 +172,7 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    system_execute("shell");
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
