@@ -357,12 +357,13 @@ int rtc_read_test() {
  *              for valid/invalid frequency
  */
 int rtc_write_test() {
-  enable_irq(IRQ_RTC);
+  // enable_irq(IRQ_RTC);
   int32_t i, j, val;
+  int32_t * freq;
   int result = PASS;
 
-   for (i=0; i<=1024; i*=2) {
-     int32_t* freq = (int32_t *)i; 
+  for (i=2; i<=1024; i*=2) {
+     freq = &i; 
      val = rtc_write(0, freq , 4);
      if(val < 0){
       printf("Invalid RTC frequency = %d \n", i);
@@ -370,20 +371,18 @@ int rtc_write_test() {
       result = FAIL;
      } else {
         printf("RTC frequency = %d \n", i);
-        for(j = 0; j < 11; j++) {
-          rtc_read(0, (int8_t *)i , 4);
+        for(j = 0; j < 10; j++) {
+          rtc_read(0, NULL, 0);
           printf("a");
         }
+      result = PASS;
      }
      printf("\n");
-     if(i==0){
-       i++; 
-     } 
    }
-
   printf("Finished RTC Write Test \n");
   return result;
 }
+
 
 /**
  * rtc_open_test()

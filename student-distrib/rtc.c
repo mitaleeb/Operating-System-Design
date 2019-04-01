@@ -160,45 +160,44 @@ int32_t rtc_write (int32_t fd, const void* buf, int32_t nbytes) {
   if ((int32_t)buf == NULL || nbytes != 4) {
     return -1;
   } else {
-    freq = ((int32_t)buf);
+    freq = *((int32_t*)buf);
   }
 
   /* set rate (Hz) */
   switch(freq) {
-    case 1024: {
+    case 1024:
       rate = RATE_1024;
       break;
-    } case 512: {
+    case 512: 
       rate = RATE_512;
       break;
-    } case 256: {
+    case 256:
       rate = RATE_256;
       break;
-    } case 128: {
+    case 128: 
       rate = RATE_128;
       break;
-    } case 64: {
+    case 64: 
       rate = RATE_64;
       break;
-    } case 32: {
+    case 32: 
       rate = RATE_32;
       break;
-    } case 16: {
+    case 16: 
       rate = RATE_16;
       break;
-    } case 8: {
+    case 8: 
       rate = RATE_8;
       break;
-    } case 4: {
+    case 4: 
       rate = RATE_4;
       break;
-    } case 2: {
+    case 2: 
       rate = RATE_2;
       break;
-    } case 0: {
+    case 0: 
       rate = RATE_0;
       break;
-    }
     default:
       return -1;
   }
