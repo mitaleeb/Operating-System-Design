@@ -262,7 +262,7 @@ int idt_test2() {
   }
 
   /* force system call interrupt */
-  asm volatile("int $0x80");
+  // asm volatile("int $0x80");
 
   /* if all cases passed, return success */
   return result;
@@ -280,7 +280,6 @@ int page_value_test() {
 
   // call the paging tester to see if it outputs 0
   if (paging_tester()) {
-    // assertion_failure();
     result = FAIL;
   }
 
@@ -417,14 +416,6 @@ int terminal_test() {
     assertion_failure();
     result = FAIL;
   }
-  // printf("%d", terminal_write(fd, "aaaaa", 4));
-  // printf("\n");
-  // printf("%d", terminal_write(fd, "bbbbb", -1));
-  // printf("\n");
-  // printf("%d", terminal_write(fd, "ccccc", 6));
-  // printf("\n");
-  // printf("%d", terminal_write(fd, "ddddd", 0));
-  // printf("\n");
 
   return result;
 }
@@ -498,37 +489,32 @@ int file_system_dir_output(){
 /* Test suite entry point */
 void launch_tests() {
 
-  TEST_OUTPUT("idt_test", idt_test());
-  printf("Finished IDT Test 1 \n");
+  clear(); // clear the screen
 
   // launch your tests here
+  TEST_OUTPUT("idt_test", idt_test());
   TEST_OUTPUT("idt_test2", idt_test2());
-  printf("Finished IDT Test 2 \n");
-
   TEST_OUTPUT("page test", page_value_test());
-  printf("Finished Page Value Test \n");
-
   TEST_OUTPUT("page deref test", page_deref_test());
-  printf("Finished Page Dereference Test \n");
 
-  TEST_OUTPUT("rtc write test", rtc_read_test());
-  printf("Finished RTC Read Test \n");
+  // TEST_OUTPUT("rtc write test", rtc_read_test());
+  // printf("Finished RTC Read Test \n");
 
-  TEST_OUTPUT("rtc write test", rtc_write_test());
-  printf("Finished RTC Write Test \n");
+  // TEST_OUTPUT("rtc write test", rtc_write_test());
+  // printf("Finished RTC Write Test \n");
 
-  TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n");  
+  // TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  // printf("Finished File System File Output Test                          \n");  
 
-  TEST_OUTPUT("file system directory test ", file_system_dir_output());
-  printf("Finished File System Directory Output Test                          \n");
+  // TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  // printf("Finished File System Directory Output Test                          \n");
 
 
-  TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n");
+  // TEST_OUTPUT("terminal test", terminal_test());
+  // printf("Finished Terminal Read and Write Test \n");
 
-  TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n");
+  // TEST_OUTPUT("terminal test", terminal_test());
+  // printf("Finished Terminal Read and Write Test \n");
 
 
 

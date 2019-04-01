@@ -2,7 +2,7 @@
  * syscall.h
  */
 
-#include "lib.h"
+#include "types.h"
 
 /* some defines to make our code more readable */
 #define EXEC_ADDR 0x08048000
