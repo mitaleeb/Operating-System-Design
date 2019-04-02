@@ -29,6 +29,7 @@ static page_table_t page_table_1 __attribute__ ((aligned (PAGE_4KB)));
 /* static function declarations */
 static void add_page_dir_entry(void* phys_addr, void* virtual_addr, uint32_t flags);
 static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flags);
+static void page_flushtlb();
 
 /**
  * page_init()
@@ -77,12 +78,23 @@ void page_init()
     );
 }
 
+void add_program_page(void* phys_addr, void* virt_addr, int adding) {
+    uint32_t flags = USER_LEVEL | PAGE_4MB | READ_WRITE;
+    if (adding) {
+        // we are adding the page, so set it to present
+        flags = flags | PRESENT;
+    }
+
+    // call our static helper function to allocate the page dir entry
+    add_page_dir_entry(phys_addr, virt_addr, flags);
+}
+
 /**
  * page_flushtlb()
  * 
  * DESCRIPTION: flushes the TLB. Necessary when changes made to paging
  */
-void page_flushtlb() {
+static void page_flushtlb() {
     /* according to wiki.osdev.org/TLB, we can flush the TLB by simply writing
        to the PDBR (CR3) */
     asm volatile ("movl %%cr3, %%eax;"
