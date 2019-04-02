@@ -341,7 +341,7 @@ int except_test() {
 int rtc_read_test() {
   enable_irq(IRQ_RTC);
 
-  rtc_read();
+  rtc_read(0, NULL, 0);
 
   disable_irq(IRQ_RTC);
 
@@ -356,30 +356,92 @@ int rtc_read_test() {
  *              for valid/invalid frequency
  */
 int rtc_write_test() {
-  enable_irq(IRQ_RTC);
+  // enable_irq(IRQ_RTC);
   int32_t i, j, val;
+  int32_t * freq;
   int result = PASS;
 
-
-   for (i=2; i<=1024; i*=2) {
-     val = rtc_write(i);
+  for (i=2; i<=1024; i*=2) {
+     freq = &i; 
+     val = rtc_write(0, freq , 4);
      if(val < 0){
       printf("Invalid RTC frequency = %d \n", i);
       disable_irq(IRQ_RTC);
-       result = FAIL;
+      result = FAIL;
      } else {
         printf("RTC frequency = %d \n", i);
         for(j = 0; j < 10; j++) {
-            rtc_read();
+          rtc_read(0, NULL, 0);
           printf("a");
         }
+      result = PASS;
      }
      printf("\n");
    }
-
   printf("Finished RTC Write Test \n");
   return result;
 }
+
+
+/**
+ * rtc_open_test()
+ *
+ * DESCRIPTION: Checks if rtc_open returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_open_test() {
+  enable_irq(IRQ_RTC);
+  int32_t j, val;
+  int result = PASS;
+
+  val = rtc_open(NULL);
+  if(val < 0) {
+    printf("Invalid RTC frequency");
+    disable_irq(IRQ_RTC);
+    result = FAIL;
+  } else {
+    printf("Valid RTC frequency");
+    for(j = 0; j < 10; j++) {
+      rtc_read(0, NULL, 0);
+      printf("a");
+    }
+  }
+  printf("\n");
+
+  printf("Finished RTC Open Test \n");
+  return result;
+}
+
+/**
+ * rtc_close_test()
+ *
+ * DESCRIPTION: Checks if rtc_close returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_close_test() {
+  enable_irq(IRQ_RTC);
+  int32_t j, val;
+  int result = PASS;
+
+  val = rtc_close(0);
+  if(val < 0) {
+    printf("Invalid RTC frequency");
+    disable_irq(IRQ_RTC);
+    result = FAIL;
+  } else {
+    printf("Valid RTC frequency");
+    for(j = 0; j < 10; j++) {
+      rtc_read(0, NULL, 0);
+      printf("a");
+    }
+  }
+  printf("\n");
+
+  printf("Finished RTC Close Test \n");
+  return result;
+}
+
+
 
 /**
  * terminal_test()
