@@ -4,11 +4,10 @@
  * A file that holds functions that help populate the idt.
  */
 
-#include "idt.h"
-#include "../keyboard.h"
-#include "../rtc.h"
 #include "../lib.h"
 #include "../linkage.h"
+#include "../sys/syscall.h"
+#include "idt.h"
 
 void populate_idt() {
   /* load IDT */
@@ -77,7 +76,7 @@ void populate_idt() {
   /* vector for rtc interrupt */
   SET_IDT_ENTRY(idt[0x28], rtc_linkage);
   /* vector for system call interrupt */
-  SET_IDT_ENTRY(idt[0x80], systemcall_linkage);
+  SET_IDT_ENTRY(idt[0x80], &syscall_linker);
 }
 
 /* idt_de() - Divide Error. Vector 0x00. */
