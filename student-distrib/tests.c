@@ -342,7 +342,7 @@ int except_test() {
 int rtc_read_test() {
   enable_irq(IRQ_RTC);
 
-  rtc_read();
+  rtc_read(0, NULL, 0);
 
   disable_irq(IRQ_RTC);
 
@@ -357,30 +357,92 @@ int rtc_read_test() {
  *              for valid/invalid frequency
  */
 int rtc_write_test() {
-  enable_irq(IRQ_RTC);
+  // enable_irq(IRQ_RTC);
   int32_t i, j, val;
+  int32_t * freq;
   int result = PASS;
 
-
-   for (i=2; i<=1024; i*=2) {
-     val = rtc_write(i);
+  for (i=2; i<=1024; i*=2) {
+     freq = &i; 
+     val = rtc_write(0, freq , 4);
      if(val < 0){
       printf("Invalid RTC frequency = %d \n", i);
       disable_irq(IRQ_RTC);
-       result = FAIL;
+      result = FAIL;
      } else {
         printf("RTC frequency = %d \n", i);
         for(j = 0; j < 10; j++) {
-            rtc_read();
+          rtc_read(0, NULL, 0);
           printf("a");
         }
+      result = PASS;
      }
      printf("\n");
    }
-
   printf("Finished RTC Write Test \n");
   return result;
 }
+
+
+/**
+ * rtc_open_test()
+ *
+ * DESCRIPTION: Checks if rtc_open returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_open_test() {
+  enable_irq(IRQ_RTC);
+  int32_t j, val;
+  int result = PASS;
+
+  val = rtc_open(NULL);
+  if(val < 0) {
+    printf("Invalid RTC frequency");
+    disable_irq(IRQ_RTC);
+    result = FAIL;
+  } else {
+    printf("Valid RTC frequency");
+    for(j = 0; j < 10; j++) {
+      rtc_read(0, NULL, 0);
+      printf("a");
+    }
+  }
+  printf("\n");
+
+  printf("Finished RTC Open Test \n");
+  return result;
+}
+
+/**
+ * rtc_close_test()
+ *
+ * DESCRIPTION: Checks if rtc_close returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_close_test() {
+  enable_irq(IRQ_RTC);
+  int32_t j, val;
+  int result = PASS;
+
+  val = rtc_close(0);
+  if(val < 0) {
+    printf("Invalid RTC frequency");
+    disable_irq(IRQ_RTC);
+    result = FAIL;
+  } else {
+    printf("Valid RTC frequency");
+    for(j = 0; j < 10; j++) {
+      rtc_read(0, NULL, 0);
+      printf("a");
+    }
+  }
+  printf("\n");
+
+  printf("Finished RTC Close Test \n");
+  return result;
+}
+
+
 
 /**
  * terminal_test()
@@ -498,7 +560,7 @@ int file_system_dir_output(){
 /* Test suite entry point */
 void launch_tests() {
 
-  TEST_OUTPUT("idt_test", idt_test());
+/*  TEST_OUTPUT("idt_test", idt_test());
   printf("Finished IDT Test 1 \n");
 
   // launch your tests here
@@ -506,7 +568,7 @@ void launch_tests() {
   printf("Finished IDT Test 2 \n");
 
   TEST_OUTPUT("page test", page_value_test());
-  printf("Finished Page Value Test \n");
+  printf("Finished Page Value Test \n"); */
 
   TEST_OUTPUT("page deref test", page_deref_test());
   printf("Finished Page Dereference Test \n");
@@ -517,7 +579,7 @@ void launch_tests() {
   TEST_OUTPUT("rtc write test", rtc_write_test());
   printf("Finished RTC Write Test \n");
 
-  TEST_OUTPUT("file system file contents test ", file_system_file_output());
+ /* TEST_OUTPUT("file system file contents test ", file_system_file_output());
   printf("Finished File System File Output Test                          \n");  
 
   TEST_OUTPUT("file system directory test ", file_system_dir_output());
@@ -528,7 +590,7 @@ void launch_tests() {
   printf("Finished Terminal Read and Write Test \n");
 
   TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n");
+  printf("Finished Terminal Read and Write Test \n"); */
 
 
 
