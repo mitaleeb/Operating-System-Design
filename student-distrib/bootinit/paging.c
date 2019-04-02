@@ -87,6 +87,8 @@ void add_program_page(void* phys_addr, void* virt_addr, int adding) {
 
     // call our static helper function to allocate the page dir entry
     add_page_dir_entry(phys_addr, virt_addr, flags);
+
+    page_flushtlb(); // flush the tlb
 }
 
 /**
