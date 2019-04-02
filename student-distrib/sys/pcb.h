@@ -23,4 +23,5 @@ typedef struct {
 
 typedef struct {
   fd_entry_t file_descs[MAX_FDS];
+  pcb_t* parent_pcb;
 } pcb_t;

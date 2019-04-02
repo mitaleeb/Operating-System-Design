@@ -22,7 +22,16 @@ int32_t system_execute(const uint8_t* command) {
 }
 
 int32_t system_halt(uint8_t status) {
-  return -1;
+  /* restore parent data */
+
+  /* restore parent paging */
+
+  /* close relevant fds */
+
+  /* jump to execute return */
+  // asm("jmp EXECUTE_RETURN");
+
+  return -1; // we should never get here
 }
 
 int32_t system_read(int32_t fd, void* buf, int32_t nbytes) {
