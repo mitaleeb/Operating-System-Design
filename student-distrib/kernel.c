@@ -174,7 +174,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Execute the first program ("shell") ... */
     char com[6] = "shell";
     int z = system_execute((uint8_t*) com);
-    printf("Return value of system call: %d", z);
+    printf("Return value of initial shell call: %d", z);
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

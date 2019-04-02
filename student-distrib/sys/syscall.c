@@ -5,6 +5,7 @@
  */
 
 #include "syscall.h"
+#include "pcb.h"
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
