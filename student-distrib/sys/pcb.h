@@ -21,7 +21,12 @@ typedef struct {
   int32_t flags;
 } fd_entry_t;
 
-typedef struct {
+typedef struct _pcb {
   fd_entry_t file_descs[MAX_FDS];
-  pcb_t* parent_pcb;
+  int pid; // the process id, 0 for first shell
+  struct _pcb* parent_pcb;
 } pcb_t;
+
+/* hold variables regarding processes */
+pcb_t* curr_pcb; // pointer to the current pcb
+int num_procs; // number of currently open processes

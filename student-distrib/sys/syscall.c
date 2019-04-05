@@ -11,14 +11,11 @@
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
 
-/* hold a pointer to the current pcb */
-pcb_t* curr_pcb;
-
 /* the magic numbers at the beginning of executables */
 static uint8_t EXEC_IDENTIFIER[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 int32_t system_execute(const uint8_t* command) {
-  return -1;
+  return 34;
 }
 
 int32_t system_halt(uint8_t status) {
