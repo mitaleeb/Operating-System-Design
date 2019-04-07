@@ -44,13 +44,12 @@ void page_init();
  * add_program_page()
  * 
  * DESCRIPTION: adds or removes a 4 MB page to our page directory for a program
- * (shell or executed by shell)
+ * (shell or executed by shell) Maps to 128 MB
  * INPUTS: phys_addr - pointer to the physical address to be mapped
- *         virt_addr - a pointer to the virtual address mapped to
  *         adding - 1 if we want to add the page, 0 if we want to remove
  * OUTPUTS: none
  */
-void add_program_page(void* phys_addr, void* virt_addr, int adding);
+void add_program_page(void* phys_addr, int adding);
 
 /**
  * paging_tester()

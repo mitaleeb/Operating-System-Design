@@ -17,6 +17,7 @@
 /* definitions for the beginning of certain segments */
 #define KERNEL_ADDR 0x400000
 #define VIDEO_ADDR 0xB8000
+#define PROG_VADDR 0x08000000
 
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
@@ -78,7 +79,7 @@ void page_init()
     );
 }
 
-void add_program_page(void* phys_addr, void* virt_addr, int adding) {
+void add_program_page(void* phys_addr, int adding) {
     uint32_t flags = USER_LEVEL | PAGE_4MB | READ_WRITE;
     if (adding) {
         // we are adding the page, so set it to present
@@ -86,7 +87,7 @@ void add_program_page(void* phys_addr, void* virt_addr, int adding) {
     }
 
     // call our static helper function to allocate the page dir entry
-    add_page_dir_entry(phys_addr, virt_addr, flags);
+    add_page_dir_entry(phys_addr, (void*) PROG_VADDR, flags);
 
     page_flushtlb(); // flush the tlb
 }
