@@ -90,7 +90,7 @@ static uint8_t keyboard_output4[128] = {
 *   Return Value: 0
 *		Function: open terminal driver
 */
-int32_t terminal_open(void){
+int32_t terminal_open(const uint8_t* filename){
 	return 0;
 }
 
@@ -100,7 +100,7 @@ int32_t terminal_open(void){
 *   Return Value: 0
 *		Function: close terminal driver
 */
-int32_t terminal_close(void){
+int32_t terminal_close(int32_t fd){
 	return 0;
 }
 
@@ -114,7 +114,7 @@ int32_t terminal_close(void){
 *		Function: read keyboard buffer, clear keyboard buffer
 * 	calling terminal read should give a clear buffer
 */
-int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length) {
+int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	int i;
 
 	/* check if invalid buffer is passed in */
@@ -156,7 +156,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length) {
 *	Function: write keyboard buffer, clear keyboard buffer
 *
 */
-int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
+int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 	int i;
 
 	/* check if invalid buffer is passed in */
@@ -170,7 +170,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
 		length = buflen;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-		putc(buf[i]);
+		putc(((uint8_t*)buf)[i]);
 	}
 	/*return the copied length, if successful */
 	return length;

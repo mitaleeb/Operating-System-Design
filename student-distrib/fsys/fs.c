@@ -185,7 +185,7 @@ int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
  *         num_b -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t file_write (int32_t fd, void* buf, int32_t nbytes){
+int32_t file_write (int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 
@@ -259,7 +259,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
  *         nbytes -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
+int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 
