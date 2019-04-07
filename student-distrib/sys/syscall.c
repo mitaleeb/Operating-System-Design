@@ -295,15 +295,21 @@ int32_t system_open(const uint8_t* filename) {
   curr_pcb->file_descs[i].inode = dir_entry.inode_num;
   curr_pcb->file_descs[i].file_position = 0;
   
-  // set up the proper jump table
+  // set up the proper jump table and open the file
   switch(dir_entry.file_type) {
-    case 0: // rtc
+    case FT_RTC: // rtc
+      if (rtc_open(filename) < 0) {
+        return -1;
+      }
       curr_pcb->file_descs[i].fops_table = &rtc_fops;
       break;
-    case 1: // directory
+    case FT_DIR: // directory
+      if (dir_open(filename) < 0) {
+        return -1;
+      }
       curr_pcb->file_descs[i].fops_table = &dir_fops;
       break;
-    case 2: // file
+    case FT_REG: // file
       if (file_open(filename) < 0) {
         return -1;
       }
@@ -325,6 +331,11 @@ int32_t system_close(int32_t fd) {
   // check fd table to fd not in use
   if (curr_pcb->file_descs[fd].flags == FD_NOT_IN_USE) {
     return -1; // already closed!
+  }
+
+  // call the close function for that file
+  if (curr_pcb->file_descs[fd].fops_table->close(fd) < 0) {
+    return -1; // the close failed
   }
 
   // close the fd by setting it to not in use

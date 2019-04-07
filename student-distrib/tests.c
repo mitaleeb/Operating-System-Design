@@ -552,6 +552,7 @@ int file_system_dir_output(){
 void launch_tests() {
 
   clear(); // clear the screen
+  reset_position(); // reset the position
 
   // launch your tests here
   TEST_OUTPUT("idt_test", idt_test());
