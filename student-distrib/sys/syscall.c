@@ -223,7 +223,7 @@ int32_t system_halt(uint8_t status) {
 
   /* restore parent data */
   curr_pcb = curr_pcb->parent_pcb;
-  process_array[(uint8_t) curr_pcb->process_num] = 0;
+  process_array[(uint8_t) curr_pcb->pid] = 0;
   num_procs--;
   
   // if we are out of processes, execute another shell
