@@ -21,7 +21,7 @@
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-uint8_t process_array[2] = {0, 0};
+uint8_t process_array[6] = {0, 0, 0, 0, 0, 0};
 
 /* static definitions of certain file operations */
 static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
