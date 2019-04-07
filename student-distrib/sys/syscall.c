@@ -21,9 +21,11 @@
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
+uint8_t process_array[6] = {0, 0, 0, 0, 0, 0};
 
 /* static definitions of certain file operations */
-static fops_t std_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
+static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
+static fops_t stdout_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
 static fops_t rtc_fops = {&rtc_read, &rtc_write, &rtc_open, &rtc_close};
 static fops_t dir_fops = {&dir_read, &dir_write, &dir_open, &dir_close};
 static fops_t file_fops = {&file_read, &file_write, &file_open, &file_close};
@@ -49,7 +51,8 @@ int32_t system_execute(const uint8_t* command) {
   /***** 1. Parse Command *****/
   int8_t filename[32];
   int8_t arguments[128];
-  int filename_idx = 0, space_flag = 0;
+  int32_t filename_idx = 0, space_flag = 0;
+  int32_t next_process = -1;
   int cmd_len = (int) strlen((int8_t*)command);
 
   // skip the leading spaces in command
@@ -87,15 +90,28 @@ int32_t system_execute(const uint8_t* command) {
   if(read_dentry_by_name((uint8_t *) filename, &dir_entry) < 0)
 		return -1;
 
-	// if file is valid, check if executable by checking first 4 bytes
-	uint8_t buf[4];
-	read_data(dir_entry.inode_num, 0, buf, 4);
-	if(buf[0] !=  ELF[0] || buf[1] != ELF[1] || buf[2] != ELF[2] || buf[3] != ELF[3])
-		return -1;
-  
-  /* find entry point by getting 4-byte unsigned integer in bytes 24-27 */
-  read_data(dir_entry.inode_num, 24, buf, 4);
-  uint32_t entry_point = *((uint32_t*)buf);
+    // if file is valid, check if executable by checking first 4 bytes
+    uint8_t buf[4];
+    read_data(dir_entry.inode_num, 0, buf, 4);
+    if(buf[0] !=  ELF[0] || buf[1] != ELF[1] || buf[2] != ELF[2] || buf[3] != ELF[3])
+    	return -1;
+    
+    /* find entry point by getting 4-byte unsigned integer in bytes 24-27 */
+    read_data(dir_entry.inode_num, 24, buf, 4);
+    uint32_t entry_point = *((uint32_t*)buf);
+    
+    /* check PCB array for next process since
+    * we must support up to 6 in kernel */
+    for (i = 0; i < 6; i++) {
+     if (process_array[i] == 0) {
+     	process_array[i] = 1;
+     	next_process = i;
+     	break;
+     }
+    }
+    if (next_process < 0)
+     return -1;
+    
 
   /***** 3. Set Up Program Paging *****/
   /* 
@@ -106,7 +122,7 @@ int32_t system_execute(const uint8_t* command) {
 	 * must be copied to the correct offset (0x00048000) within that page. 
    */
 
-  int32_t phys_addr = EIGHT_MB + (num_procs * FOUR_MB);
+  int32_t phys_addr = EIGHT_MB + (next_process * FOUR_MB);
   add_program_page((void*)phys_addr, 1);
 
   /***** 4. User-Level Program Loader *****/
@@ -139,11 +155,11 @@ int32_t system_execute(const uint8_t* command) {
   /* set up the file descriptor tables */
   
   // first set the stdin/out fops
-  curr_pcb->file_descs[0].fops_table = &std_fops;
+  curr_pcb->file_descs[0].fops_table = &stdin_fops;
   curr_pcb->file_descs[0].inode = dir_entry.inode_num;
   curr_pcb->file_descs[0].file_position = 0;
   curr_pcb->file_descs[0].flags = FD_IN_USE;
-  curr_pcb->file_descs[1].fops_table = &std_fops;
+  curr_pcb->file_descs[1].fops_table = &stdout_fops;
   curr_pcb->file_descs[1].inode = dir_entry.inode_num;
   curr_pcb->file_descs[1].file_position = 0;
   curr_pcb->file_descs[1].flags = FD_IN_USE;
@@ -207,6 +223,7 @@ int32_t system_halt(uint8_t status) {
 
   /* restore parent data */
   curr_pcb = curr_pcb->parent_pcb;
+  process_array[(uint8_t) curr_pcb->pid] = 0;
   num_procs--;
   
   // if we are out of processes, execute another shell
