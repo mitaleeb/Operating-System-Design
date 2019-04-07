@@ -21,7 +21,7 @@
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-uint8_t process_array[6] = {0, 0, 0, 0, 0, 0};
+int process_array[6] = {0, 0, 0, 0, 0, 0};
 
 /* static definitions of certain file operations */
 static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
@@ -222,8 +222,8 @@ int32_t system_halt(uint8_t status) {
   }
 
   /* restore parent data */
+  process_array[curr_pcb->pid] = 0;
   curr_pcb = curr_pcb->parent_pcb;
-  process_array[(uint8_t) curr_pcb->pid] = 0;
   num_procs--;
   
   // if we are out of processes, execute another shell
