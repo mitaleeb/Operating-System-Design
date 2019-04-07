@@ -17,6 +17,7 @@
 #define EIGHT_KB    0x00002000
 #define MB_128      0x08000000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
+#define PROG_VADDR  0x08048000
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
@@ -122,13 +123,13 @@ int32_t system_execute(const uint8_t* command) {
 	 * must be copied to the correct offset (0x00048000) within that page. 
    */
 
-  int32_t phys_addr = EIGHT_MB + (next_process * FOUR_MB);
+  int32_t phys_addr = EIGHT_MB + (num_procs * FOUR_MB);
   add_program_page((void*)phys_addr, 1);
 
   /***** 4. User-Level Program Loader *****/
 
 	/* copy the entire file to memory starting at virtual address 0x08048000 */
-  read_data(dir_entry.inode_num, 0, (uint8_t*) 0x08048000, FOUR_MB);
+  read_data(dir_entry.inode_num, 0, (uint8_t*) PROG_VADDR, FOUR_MB);
 
   /***** 5. Create Process Control Block (PCB) *****/
 
