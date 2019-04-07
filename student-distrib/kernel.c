@@ -172,16 +172,7 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    char com[6] = "shell";
-    int z = system_execute((uint8_t*) com);
-    printf("Return value of initial shell call: %d", z);
-
-    // test
-    asm volatile("movl $2, %%eax;"
-                 "int $0x80;"
-                 "movl %%eax, %0" : "=r" (z): : "%eax");
-    
-    printf("Retrun value of execute call from int instr: %d", z);
+    run_shell();
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

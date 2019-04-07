@@ -4,21 +4,42 @@
  * This file holds the implementations of the files declared in syscall.h.
  */
 
-#include "syscall.h"
 #include "pcb.h"
 #include "../fsys/fs.h"
 #include "../bootinit/paging.h"
+#include "../keyboard.h"
+#include "../rtc.h"
+#include "../x86_desc.h"
+#include "syscall.h"
 
 #define EIGHT_MB    0x00800000
 #define FOUR_MB     0x00400000
 #define EIGHT_KB    0x00002000
+#define MB_128      0x08000000
+#define NEW_ESP     (MB_128 + FOUR_MB - 4)
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
 
+/* static definitions of certain file operations */
+static fops_t std_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
+static fops_t rtc_fops = {&rtc_read, &rtc_write, &rtc_open, &rtc_close};
+static fops_t dir_fops = {&dir_read, &dir_write, &dir_open, &dir_close};
+static fops_t file_fops = {&file_read, &file_write, &file_open, &file_close};
+static fops_t null_fops = {NULL, NULL, NULL, NULL};
+
 /* the magic numbers at the beginning of executables */
 static uint8_t ELF[4] = {0x7f, 0x45, 0x4c, 0x46};
+
+/* static variables that we use to store certain info */
+static uint32_t saved_ebp;
+static uint32_t saved_esp;
+
+int32_t run_shell() {
+  char com[6] = "shell";
+  return system_execute((uint8_t*)com);
+}
 
 int32_t system_execute(const uint8_t* command) {
   if (command == NULL) {
@@ -86,7 +107,7 @@ int32_t system_execute(const uint8_t* command) {
    */
 
   int32_t phys_addr = EIGHT_MB + (num_procs * FOUR_MB);
-  add_program_page(phys_addr, 1);
+  add_program_page((void*)phys_addr, 1);
 
   /***** 4. User-Level Program Loader *****/
 
@@ -113,26 +134,105 @@ int32_t system_execute(const uint8_t* command) {
   curr_pcb = new_pcb;
 
   // copy parsed argument to the buffer in current PCB
-	// strcpy(curr_pcb->argument_buf, arguments);
-
+	strcpy((int8_t*) (curr_pcb->arg_buf), arguments);
 
   /* set up the file descriptor tables */
+  
+  // first set the stdin/out fops
+  curr_pcb->file_descs[0].fops_table = &std_fops;
+  curr_pcb->file_descs[0].inode = dir_entry.inode_num;
+  curr_pcb->file_descs[0].file_position = 0;
+  curr_pcb->file_descs[0].flags = FD_IN_USE;
+  curr_pcb->file_descs[1].fops_table = &std_fops;
+  curr_pcb->file_descs[1].inode = dir_entry.inode_num;
+  curr_pcb->file_descs[1].file_position = 0;
+  curr_pcb->file_descs[1].flags = FD_IN_USE;
+
+  // initialize the rest of the fd tables (starting with entry 2)
+  for(i = 2; i < MAX_FDS; i++) {
+    curr_pcb->file_descs[i].fops_table = &null_fops;
+    curr_pcb->file_descs[i].inode = -1;
+    curr_pcb->file_descs[i].file_position = 0;
+    curr_pcb->file_descs[i].flags = FD_NOT_IN_USE;
+  }
 
   /***** 6. Context Switch *****/
 
+  // update the tss with the kernel stack info
+  tss.ss0 = KERNEL_DS;
+  tss.esp0 = EIGHT_MB - (curr_pcb->pid) * EIGHT_KB - 4;
 
-  return 34;
+  // save current ebp and esp
+  asm volatile(
+    "movl %%esp, %0;"
+    "movl %%ebp, %1;"
+    :"=g" (saved_esp), "=g" (saved_ebp) // outputs
+    : // inputs
+    : "memory" // clobbered registers
+  );
+  
+  // switch to ring 3. This code is based on code from wiki.osdev.org
+  asm volatile(
+    "cli;"
+    "mov %2, %%ax;"
+    "mov %%ax, %%ds;"
+    "mov %%ax, %%es;"
+    "mov %%ax, %%fs;"
+    "mov %%ax, %%gs;"
+    "pushl %2;" // push user data segment with bottom 2 bits set for ring 3
+    "pushl %3;" // push user ESP
+    "pushfl;"
+    "popl %%eax;"
+    "orl $0x200, %%eax;" // set IF bit to 1 (bit 9)
+    "pushl %%eax;" // push modified flags
+    "pushl %1;" // push user code segment with bottom 2 bits set for ring 3
+    "pushl %0;" // push entry point
+    "iret;"
+    : // output
+    : "g" (entry_point), "g" (USER_CS), "g" (USER_DS), "g" (NEW_ESP) // input
+    : "%eax", "memory" // clobbered registers
+  );
+
+  return -1; // we should never actually reach this specific return statment
 }
 
 int32_t system_halt(uint8_t status) {
+  /* close relevant fds */
+  int i;
+  for (i = 0; i < MAX_FDS; i++) {
+    // close the halted pcb's fds
+    system_close(i);
+    (curr_pcb->file_descs[i]).fops_table = &null_fops;
+  }
+
   /* restore parent data */
+  curr_pcb = curr_pcb->parent_pcb;
+  num_procs--;
+  
+  // if we are out of processes, execute another shell
+  if (num_procs == 0) {
+    run_shell();
+  }
 
   /* restore parent paging */
-
-  /* close relevant fds */
+  int32_t phys_addr = EIGHT_MB + (curr_pcb->pid * FOUR_MB);
+  add_program_page((void*)phys_addr, 1);
 
   /* jump to execute return */
-  // asm("jmp EXECUTE_RETURN");
+  // set the tss esp0 to the current pcb's kernel stack
+  tss.esp0 = EIGHT_MB - (curr_pcb->pid) * EIGHT_KB - 4;
+
+  // restore the saved stack, and perform execute's return
+  asm volatile(
+    "movl %2, %%esp;"
+    "movl %1, %%ebp;"
+    "movl %0, %%eax;"
+    "leave;" // execute's return
+    "ret;"
+    : // output
+    : "g" ((uint32_t)status), "g" (saved_ebp), "g" (saved_esp)
+    : "%eax" // clobbered registers
+  );
 
   return -1; // we should never get here
 }
@@ -170,11 +270,67 @@ int32_t system_write(int32_t fd, const void* buf, int32_t nbytes) {
 }
 
 int32_t system_open(const uint8_t* filename) {
-  return -1;
+  // find the correspondingly named file
+  dentry_t dir_entry;
+  if(read_dentry_by_name(filename, &dir_entry) < 0) {
+    return -1; // fail
+  }
+
+  // allocate an unused file descriptor. make sure to start after stdin/out.
+  int i;
+  for (i = 2; i < MAX_FDS; i++) {
+    if (curr_pcb->file_descs[i].flags == FD_NOT_IN_USE) {
+      // open the file descriptor
+      curr_pcb->file_descs[i].flags = FD_IN_USE;
+      break;
+    }
+  }
+  
+  // make sure we found an empty file descriptor
+  if (i == MAX_FDS) {
+    return -1;
+  }
+
+  // initialize the file descriptor
+  curr_pcb->file_descs[i].inode = dir_entry.inode_num;
+  curr_pcb->file_descs[i].file_position = 0;
+  
+  // set up the proper jump table
+  switch(dir_entry.file_type) {
+    case 0: // rtc
+      curr_pcb->file_descs[i].fops_table = &rtc_fops;
+      break;
+    case 1: // directory
+      curr_pcb->file_descs[i].fops_table = &dir_fops;
+      break;
+    case 2: // file
+      if (file_open(filename) < 0) {
+        return -1;
+      }
+      curr_pcb->file_descs[i].fops_table = &file_fops;
+      break;
+    default: return -1;
+  }
+  return i; // return the file descriptor
 }
 
 int32_t system_close(int32_t fd) {
-  return -1;
+
+  /* check if valid file descriptor. note that the user should never be allowed
+  to close the defaults descriptors (0 and 1). */
+  if (fd < 2 || fd >= MAX_FDS) {
+    return -1;
+  }
+
+  // check fd table to fd not in use
+  if (curr_pcb->file_descs[fd].flags == FD_NOT_IN_USE) {
+    return -1; // already closed!
+  }
+
+  // close the fd by setting it to not in use
+  curr_pcb->file_descs[fd].flags = FD_NOT_IN_USE;
+
+  return 0;
 }
 
 int32_t system_getargs(uint8_t* buf, int32_t nbytes) {

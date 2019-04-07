@@ -37,6 +37,10 @@ void populate_idt() {
     } else {
       idt[i].reserved3 = 0x01;
     }
+
+    if (i == 0x80) {
+      idt[i].reserved3 = 0x01;
+    }
     idt[i].reserved4 = 0x00;
 
     /* if vector > 32 interrupt, general exception */
@@ -72,9 +76,9 @@ void populate_idt() {
   }
 
   /* vector for keyboard interrupt */
-  SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
+  SET_IDT_ENTRY(idt[0x21], &keyboard_linkage);
   /* vector for rtc interrupt */
-  SET_IDT_ENTRY(idt[0x28], rtc_linkage);
+  SET_IDT_ENTRY(idt[0x28], &rtc_linkage);
   /* vector for system call interrupt */
   SET_IDT_ENTRY(idt[0x80], &syscall_linker);
 }
