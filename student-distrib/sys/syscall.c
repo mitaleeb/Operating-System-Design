@@ -23,7 +23,8 @@
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
 
 /* static definitions of certain file operations */
-static fops_t std_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
+static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
+static fops_t stdout_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
 static fops_t rtc_fops = {&rtc_read, &rtc_write, &rtc_open, &rtc_close};
 static fops_t dir_fops = {&dir_read, &dir_write, &dir_open, &dir_close};
 static fops_t file_fops = {&file_read, &file_write, &file_open, &file_close};
@@ -139,11 +140,11 @@ int32_t system_execute(const uint8_t* command) {
   /* set up the file descriptor tables */
   
   // first set the stdin/out fops
-  curr_pcb->file_descs[0].fops_table = &std_fops;
+  curr_pcb->file_descs[0].fops_table = &stdin_fops;
   curr_pcb->file_descs[0].inode = dir_entry.inode_num;
   curr_pcb->file_descs[0].file_position = 0;
   curr_pcb->file_descs[0].flags = FD_IN_USE;
-  curr_pcb->file_descs[1].fops_table = &std_fops;
+  curr_pcb->file_descs[1].fops_table = &stdout_fops;
   curr_pcb->file_descs[1].inode = dir_entry.inode_num;
   curr_pcb->file_descs[1].file_position = 0;
   curr_pcb->file_descs[1].flags = FD_IN_USE;
