@@ -54,6 +54,8 @@ typedef struct _pcb {
   fd_entry_t file_descs[MAX_FDS];
   int pid; // the process id, 0 for first shell
   struct _pcb* parent_pcb;
+  uint32_t parent_esp;
+  uint32_t parent_ebp;
   int8_t arg_buf[128];
 } pcb_t;
 

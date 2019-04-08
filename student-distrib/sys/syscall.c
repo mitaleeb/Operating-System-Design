@@ -37,10 +37,6 @@ static fops_t null_fops = {NULL, NULL, NULL, NULL};
 /* the magic numbers at the beginning of executables */
 static uint8_t ELF[4] = {0x7f, 0x45, 0x4c, 0x46};
 
-/* static variables that we use to store certain info */
-static uint32_t saved_ebp;
-static uint32_t saved_esp;
-
 int32_t run_shell() {
   char com[6] = "shell";
   return system_execute((uint8_t*)com);
@@ -191,7 +187,7 @@ int32_t system_execute(const uint8_t* command) {
   asm volatile(
     "movl %%esp, %0;"
     "movl %%ebp, %1;"
-    :"=g" (saved_esp), "=g" (saved_ebp) // outputs
+    :"=g" (curr_pcb->parent_esp), "=g" (curr_pcb->parent_ebp) // outputs
     : // inputs
     : "memory" // clobbered registers
   );
@@ -231,6 +227,8 @@ int32_t system_halt(uint8_t status) {
   }
 
   /* restore parent data */
+  int32_t saved_esp = curr_pcb->parent_esp;
+  int32_t saved_ebp = curr_pcb->parent_ebp;
   process_array[curr_pcb->pid] = 0;
   curr_pcb = curr_pcb->parent_pcb;
   num_procs--;
