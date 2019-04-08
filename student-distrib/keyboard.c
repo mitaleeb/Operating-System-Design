@@ -47,7 +47,7 @@ static int term_flag = 0;
 static int column_index = 0;
 
 
-// keyboard_output1 for regular input
+/* keyboard_output1 for regular input */
 static uint8_t keyboard_output1[128] = {
 	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
 	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',
@@ -56,7 +56,7 @@ static uint8_t keyboard_output1[128] = {
 	 '\0', ' ', '\0'
 };
 
-// keyboard_output2 for when shift is pressed
+/* keyboard_output2 for when shift is pressed */
 static uint8_t keyboard_output2[128] = {
 	 '\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
 	 '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',
@@ -65,7 +65,7 @@ static uint8_t keyboard_output2[128] = {
 	 '\0', ' ', '\0'
 };
 
-//keyboard_output3 for when capslock is pressed
+/*keyboard_output3 for when capslock is pressed*/
 static uint8_t keyboard_output3[128] = {
 	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
 	 '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']',
@@ -74,7 +74,7 @@ static uint8_t keyboard_output3[128] = {
 	 '\0', ' ', '\0'
 };
 
-//keyboard_output4 for when capslock AND shift is pressed
+/*keyboard_output4 for when capslock AND shift is pressed*/
 static uint8_t keyboard_output4[128] = {
 	 '\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
 	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}',
@@ -90,7 +90,7 @@ static uint8_t keyboard_output4[128] = {
 *   Return Value: 0
 *		Function: open terminal driver
 */
-int32_t terminal_open(void){
+int32_t terminal_open(const uint8_t* filename){
 	return 0;
 }
 
@@ -100,7 +100,7 @@ int32_t terminal_open(void){
 *   Return Value: 0
 *		Function: close terminal driver
 */
-int32_t terminal_close(void){
+int32_t terminal_close(int32_t fd){
 	return 0;
 }
 
@@ -114,7 +114,7 @@ int32_t terminal_close(void){
 *		Function: read keyboard buffer, clear keyboard buffer
 * 	calling terminal read should give a clear buffer
 */
-int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length) {
+int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	int i;
 
 	/* check if invalid buffer is passed in */
@@ -156,7 +156,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length) {
 *	Function: write keyboard buffer, clear keyboard buffer
 *
 */
-int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
+int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 	int i;
 
 	/* check if invalid buffer is passed in */
@@ -170,7 +170,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length) {
 		length = buflen;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-		putc(buf[i]);
+		putc(((uint8_t*)buf)[i]);
 	}
 	/*return the copied length, if successful */
 	return length;
@@ -241,7 +241,7 @@ void handle_keyboard_interrupt() {
 					if(control_flag && c == L_PRESS) {
 						clear();
 						reset_position();
-						update_cursor();
+						//update_cursor();
 						column_index = 0;
 					}
 					/* if control is held down, do not print any characters */
@@ -290,18 +290,18 @@ void handle_keyboard_interrupt() {
  */
 extern void write_to_buffer(uint8_t k) {
 	/* check if end of buffer has been reached */
-	if(term_buffer_index >= MAXBUFFER - 1) {
+	if(term_buffer_index >= MAXBUFFER - 2) {
 		return;
 	}
 	/* if max length is reached, start new line */
 	if(column_index > TERM_COLS - 1) {
-		update_cursor();
+		//update_cursor();
 		column_index = 0;
 	}
 	/* If it hasnt, write to terminal */
 	new_term_buffer[term_buffer_index] = k;
 	putc(k);
-	update_cursor();
+	//update_cursor();
 	term_buffer_index++;
 	column_index++;
 }
@@ -318,7 +318,7 @@ extern void backspace_buffer(void) {
 		new_term_buffer[term_buffer_index] = '\0';
 		decrement_position();
 		putc(' ');
-		update_cursor();
+		//update_cursor();
 		decrement_position();
 		update_cursor();
 		column_index--;
@@ -343,7 +343,7 @@ extern void backspace_buffer(void) {
 	 term_buffer_index = 0;
 	 column_index = 0;
 	 enter_position();
-	 update_cursor();
+	 //update_cursor();
 	 enter_flag = 0;
  }
 

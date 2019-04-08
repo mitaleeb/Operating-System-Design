@@ -4,6 +4,7 @@
  * This file holds the functions to read/parse the read-only filesystem.
  */
 
+#include "../sys/pcb.h"
 #include "fs.h"
 
 static uint32_t curr_directory = 0;
@@ -100,6 +101,11 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
       memcpy(buf, curr_dblock + offset, BLOCK_SIZE - (offset % BLOCK_SIZE));
       bytes_read += BLOCK_SIZE - (offset % BLOCK_SIZE);
       file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
+      // go to next dblock
+      dblock_index++;
+      if (dblock_index < DBLOCKS_PER_INODE)
+        dblock_ptr = src_file->dblocks[dblock_index];
+      curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr));
     } else {
       // otherwise, copy the remaining file
       memcpy(buf, curr_dblock, file_remaining);
@@ -112,12 +118,12 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
     // if file_remaining is greater than this block, copy the whole block
     if (file_remaining > BLOCK_SIZE) {
-      memcpy(buf, curr_dblock, BLOCK_SIZE);
+      memcpy(buf + bytes_read, curr_dblock, BLOCK_SIZE);
       bytes_read += BLOCK_SIZE;
       file_remaining -= BLOCK_SIZE;
     } else {
       // otherwise, copy the remaining file
-      memcpy(buf, curr_dblock, file_remaining);
+      memcpy(buf + bytes_read, curr_dblock, file_remaining);
       bytes_read += file_remaining;
       file_remaining -= file_remaining;
     }
@@ -166,9 +172,9 @@ int32_t file_open (const uint8_t* fname){
 int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
   // call some helper function in order to read the data in the file
   dentry_t dentry;
+  int32_t inode_num = curr_pcb->file_descs[fd].inode;
   
-  if(read_dentry_by_name((uint8_t *)fd, &dentry) == -1)
-  {
+  if(read_dentry_by_index(inode_num, &dentry) == -1) { // nvm this is incorrect
     return -1;
   }
   /* If the file exists, copy the data into the buffer and returns bytes read of file*/
@@ -185,7 +191,7 @@ int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
  *         num_b -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t file_write (int32_t fd, void* buf, int32_t nbytes){
+int32_t file_write (int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 
@@ -259,7 +265,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
  *         nbytes -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
+int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 

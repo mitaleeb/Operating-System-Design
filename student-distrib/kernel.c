@@ -13,6 +13,8 @@
 #include "rtc.h"
 #include "bootinit/paging.h"
 #include "fsys/fs.h"
+#include "sys/syscall.h"
+#include "sys/pcb.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -147,7 +149,7 @@ void entry(unsigned long magic, unsigned long addr) {
     module_t* mod = (module_t*)mbi->mods_addr;
     bootblock = (bootblock_t*)mod->mod_start;
 
-    // turn on paging
+    /* turn on paging */
     page_init();
 
     /* Init the PIC */
@@ -158,6 +160,9 @@ void entry(unsigned long magic, unsigned long addr) {
 
     init_keyboard();
     init_rtc();
+
+    // initialize the pcb global data
+    curr_pcb = NULL;
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
@@ -171,6 +176,10 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    // clear the screen and reset the cursor position
+    clear();
+    reset_position();
+    run_shell();
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
