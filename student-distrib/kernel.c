@@ -9,10 +9,12 @@
 #include "debug.h"
 #include "tests.h"
 #include "bootinit/idt.h"
-#include "devices.h"
+#include "keyboard.h"
 #include "rtc.h"
 #include "bootinit/paging.h"
 #include "fsys/fs.h"
+#include "sys/syscall.h"
+#include "sys/pcb.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -60,7 +62,6 @@ void entry(unsigned long magic, unsigned long addr) {
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
-            file_system_loc = (unsigned int)mod->mod_start; // starting of file system from multiboot
             for (i = 0; i < 16; i++) {
                 printf("0x%x ", *((char*)(mod->mod_start+i)));
             }
@@ -142,12 +143,13 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Construct the IDT */
-    {
-        populate_idt();
-    }
+    populate_idt();
+
+    /* initialize the pointer to the start of the filesystem */
     module_t* mod = (module_t*)mbi->mods_addr;
-    file_system_loc = (unsigned int)mod->mod_start;
-    // turn on paging
+    bootblock = (bootblock_t*)mod->mod_start;
+
+    /* turn on paging */
     page_init();
 
     /* Init the PIC */
@@ -159,6 +161,9 @@ void entry(unsigned long magic, unsigned long addr) {
     init_keyboard();
     init_rtc();
 
+    // initialize the pcb global data
+    curr_pcb = NULL;
+
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
@@ -166,12 +171,15 @@ void entry(unsigned long magic, unsigned long addr) {
     printf("Enabling Interrupts\n");
     sti();
 
-    asm volatile("int $0x21");
 #ifdef RUN_TESTS
     /* Run tests */
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    // clear the screen and reset the cursor position
+    clear();
+    reset_position();
+    run_shell();
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

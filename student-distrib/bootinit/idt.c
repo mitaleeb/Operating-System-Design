@@ -4,11 +4,10 @@
  * A file that holds functions that help populate the idt.
  */
 
-#include "idt.h"
-#include "../devices.h"
-#include "../rtc.h"
 #include "../lib.h"
 #include "../linkage.h"
+#include "../sys/syscall.h"
+#include "idt.h"
 
 void populate_idt() {
   /* load IDT */
@@ -36,6 +35,10 @@ void populate_idt() {
     if (i >= 0x20) {
       idt[i].reserved3 = 0x00;
     } else {
+      idt[i].reserved3 = 0x01;
+    }
+
+    if (i == 0x80) {
       idt[i].reserved3 = 0x01;
     }
     idt[i].reserved4 = 0x00;
@@ -73,11 +76,11 @@ void populate_idt() {
   }
 
   /* vector for keyboard interrupt */
-  SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
+  SET_IDT_ENTRY(idt[0x21], &keyboard_linkage);
   /* vector for rtc interrupt */
-  SET_IDT_ENTRY(idt[0x28], rtc_linkage);
+  SET_IDT_ENTRY(idt[0x28], &rtc_linkage);
   /* vector for system call interrupt */
-  SET_IDT_ENTRY(idt[0x80], systemcall_linkage);
+  SET_IDT_ENTRY(idt[0x80], &syscall_linker);
 }
 
 /* idt_de() - Divide Error. Vector 0x00. */
