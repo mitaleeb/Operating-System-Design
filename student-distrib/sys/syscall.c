@@ -18,11 +18,12 @@
 #define MB_128      0x08000000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
+#define MAX_PROCS   6
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-int process_array[6] = {0, 0, 0, 0, 0, 0};
+int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
 
 /* static definitions of certain file operations */
 static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
@@ -53,7 +54,7 @@ int32_t system_execute(const uint8_t* command) {
   int8_t filename[32];
   int8_t arguments[128];
   int32_t filename_idx = 0, space_flag = 0;
-  int32_t next_process = -1;
+  int32_t new_pid = -1;
   int cmd_len = (int) strlen((int8_t*)command);
 
   // skip the leading spaces in command
@@ -91,27 +92,29 @@ int32_t system_execute(const uint8_t* command) {
   if(read_dentry_by_name((uint8_t *) filename, &dir_entry) < 0)
 		return -1;
 
-    // if file is valid, check if executable by checking first 4 bytes
-    uint8_t buf[4];
-    read_data(dir_entry.inode_num, 0, buf, 4);
-    if(buf[0] !=  ELF[0] || buf[1] != ELF[1] || buf[2] != ELF[2] || buf[3] != ELF[3])
-    	return -1;
-    
-    /* find entry point by getting 4-byte unsigned integer in bytes 24-27 */
-    read_data(dir_entry.inode_num, 24, buf, 4);
-    uint32_t entry_point = *((uint32_t*)buf);
-    
-    /* check PCB array for next process since
-    * we must support up to 6 in kernel */
-    for (i = 0; i < 6; i++) {
-     if (process_array[i] == 0) {
-     	process_array[i] = 1;
-     	next_process = i;
-     	break;
-     }
+  // if file is valid, check if executable by checking first 4 bytes
+  uint8_t buf[4];
+  read_data(dir_entry.inode_num, 0, buf, 4);
+  if(buf[0] !=  ELF[0] || buf[1] != ELF[1] || buf[2] != ELF[2] || buf[3] != ELF[3])
+    return -1;
+  
+  /* find entry point by getting 4-byte unsigned integer in bytes 24-27 */
+  read_data(dir_entry.inode_num, 24, buf, 4);
+  uint32_t entry_point = *((uint32_t*)buf);
+  
+  /* check PCB array for next process since
+  * we must support up to 6 in kernel */
+  for (i = 0; i < MAX_PROCS; i++) {
+    if (process_array[i] == 0) {
+      process_array[i] = 1;
+      new_pid = i;
+      break;
     }
-    if (next_process < 0)
-     return -1;
+  }
+
+  // make sure we found a pid available
+  if (new_pid < 0)
+    return -1;
     
 
   /***** 3. Set Up Program Paging *****/
@@ -123,7 +126,7 @@ int32_t system_execute(const uint8_t* command) {
 	 * must be copied to the correct offset (0x00048000) within that page. 
    */
 
-  int32_t phys_addr = EIGHT_MB + (num_procs * FOUR_MB);
+  int32_t phys_addr = EIGHT_MB + (new_pid * FOUR_MB);
   add_program_page((void*)phys_addr, 1);
 
   /***** 4. User-Level Program Loader *****/
@@ -137,8 +140,8 @@ int32_t system_execute(const uint8_t* command) {
   num_procs++;
 
   // each pcb starts at the top of an 8KB block in the kernel
-  pcb_t* new_pcb = (pcb_t*) (EIGHT_MB - (num_procs * EIGHT_KB));
-  new_pcb->pid = num_procs - 1; // set the pid, indexed at 0
+  pcb_t* new_pcb = (pcb_t*) (EIGHT_MB - (new_pid + 1) * EIGHT_KB);
+  new_pcb->pid = new_pid; // set the pid, indexed at 0
 
   if (curr_pcb == NULL) {
     // we are executing the first process
