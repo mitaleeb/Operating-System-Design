@@ -14,6 +14,7 @@
 #include "bootinit/paging.h"
 #include "fsys/fs.h"
 #include "sys/syscall.h"
+#include "sys/pcb.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -159,6 +160,9 @@ void entry(unsigned long magic, unsigned long addr) {
 
     init_keyboard();
     init_rtc();
+
+    // initialize the pcb global data
+    curr_pcb = NULL;
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

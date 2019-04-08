@@ -47,7 +47,7 @@ static int term_flag = 0;
 static int column_index = 0;
 
 
-// keyboard_output1 for regular input
+/* keyboard_output1 for regular input */
 static uint8_t keyboard_output1[128] = {
 	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
 	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',
@@ -56,7 +56,7 @@ static uint8_t keyboard_output1[128] = {
 	 '\0', ' ', '\0'
 };
 
-// keyboard_output2 for when shift is pressed
+/* keyboard_output2 for when shift is pressed */
 static uint8_t keyboard_output2[128] = {
 	 '\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
 	 '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',
@@ -65,7 +65,7 @@ static uint8_t keyboard_output2[128] = {
 	 '\0', ' ', '\0'
 };
 
-//keyboard_output3 for when capslock is pressed
+/*keyboard_output3 for when capslock is pressed*/
 static uint8_t keyboard_output3[128] = {
 	 '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
 	 '\0', '\0', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']',
@@ -74,7 +74,7 @@ static uint8_t keyboard_output3[128] = {
 	 '\0', ' ', '\0'
 };
 
-//keyboard_output4 for when capslock AND shift is pressed
+/*keyboard_output4 for when capslock AND shift is pressed*/
 static uint8_t keyboard_output4[128] = {
 	 '\0', '\0', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
 	 '\0', '\0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}',
@@ -241,7 +241,7 @@ void handle_keyboard_interrupt() {
 					if(control_flag && c == L_PRESS) {
 						clear();
 						reset_position();
-						update_cursor();
+						//update_cursor();
 						column_index = 0;
 					}
 					/* if control is held down, do not print any characters */
@@ -290,18 +290,18 @@ void handle_keyboard_interrupt() {
  */
 extern void write_to_buffer(uint8_t k) {
 	/* check if end of buffer has been reached */
-	if(term_buffer_index >= MAXBUFFER - 1) {
+	if(term_buffer_index >= MAXBUFFER - 2) {
 		return;
 	}
 	/* if max length is reached, start new line */
 	if(column_index > TERM_COLS - 1) {
-		update_cursor();
+		//update_cursor();
 		column_index = 0;
 	}
 	/* If it hasnt, write to terminal */
 	new_term_buffer[term_buffer_index] = k;
 	putc(k);
-	update_cursor();
+	//update_cursor();
 	term_buffer_index++;
 	column_index++;
 }
@@ -318,7 +318,7 @@ extern void backspace_buffer(void) {
 		new_term_buffer[term_buffer_index] = '\0';
 		decrement_position();
 		putc(' ');
-		update_cursor();
+		//update_cursor();
 		decrement_position();
 		update_cursor();
 		column_index--;
@@ -343,7 +343,7 @@ extern void backspace_buffer(void) {
 	 term_buffer_index = 0;
 	 column_index = 0;
 	 enter_position();
-	 update_cursor();
+	 //update_cursor();
 	 enter_flag = 0;
  }
 
