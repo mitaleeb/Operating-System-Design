@@ -4,13 +4,14 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "i8259.h"
-#include "devices.h"
+#include "keyboard.h"
 #include "rtc.h"
 #include "fsys/fs.h"
 
 #define PASS 1
 #define FAIL 0
 #define IRQ_RTC 8
+#define MAXBUFSIZE 128
 
 /* format these macros as you see fit */
 #define TEST_HEADER                                                     \
@@ -261,7 +262,7 @@ int idt_test2() {
   }
 
   /* force system call interrupt */
-  asm volatile("int $0x80");
+  // asm volatile("int $0x80");
 
   /* if all cases passed, return success */
   return result;
@@ -279,7 +280,6 @@ int page_value_test() {
 
   // call the paging tester to see if it outputs 0
   if (paging_tester()) {
-    // assertion_failure();
     result = FAIL;
   }
 
@@ -341,7 +341,7 @@ int except_test() {
 int rtc_read_test() {
   enable_irq(IRQ_RTC);
 
-  rtc_read();
+  rtc_read(0, NULL, 0);
 
   disable_irq(IRQ_RTC);
 
@@ -356,30 +356,92 @@ int rtc_read_test() {
  *              for valid/invalid frequency
  */
 int rtc_write_test() {
-  enable_irq(IRQ_RTC);
+  // enable_irq(IRQ_RTC);
   int32_t i, j, val;
+  int32_t * freq;
   int result = PASS;
 
-
-   for (i=2; i<=1024; i*=2) {
-     val = rtc_write(i);
+  for (i=2; i<=1024; i*=2) {
+     freq = &i; 
+     val = rtc_write(0, freq , 4);
      if(val < 0){
       printf("Invalid RTC frequency = %d \n", i);
       disable_irq(IRQ_RTC);
-       result = FAIL;
+      result = FAIL;
      } else {
         printf("RTC frequency = %d \n", i);
         for(j = 0; j < 10; j++) {
-            rtc_read();
+          rtc_read(0, NULL, 0);
           printf("a");
         }
+      result = PASS;
      }
      printf("\n");
    }
-
   printf("Finished RTC Write Test \n");
   return result;
 }
+
+
+/**
+ * rtc_open_test()
+ *
+ * DESCRIPTION: Checks if rtc_open returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_open_test() {
+  enable_irq(IRQ_RTC);
+  int32_t j, val;
+  int result = PASS;
+
+  val = rtc_open(NULL);
+  if(val < 0) {
+    printf("Invalid RTC frequency");
+    disable_irq(IRQ_RTC);
+    result = FAIL;
+  } else {
+    printf("Valid RTC frequency");
+    for(j = 0; j < 10; j++) {
+      rtc_read(0, NULL, 0);
+      printf("a");
+    }
+  }
+  printf("\n");
+
+  printf("Finished RTC Open Test \n");
+  return result;
+}
+
+/**
+ * rtc_close_test()
+ *
+ * DESCRIPTION: Checks if rtc_close returns correct value
+ *              for valid/invalid frequency
+ */
+int rtc_close_test() {
+  enable_irq(IRQ_RTC);
+  int32_t j, val;
+  int result = PASS;
+
+  val = rtc_close(0);
+  if(val < 0) {
+    printf("Invalid RTC frequency");
+    disable_irq(IRQ_RTC);
+    result = FAIL;
+  } else {
+    printf("Valid RTC frequency");
+    for(j = 0; j < 10; j++) {
+      rtc_read(0, NULL, 0);
+      printf("a");
+    }
+  }
+  printf("\n");
+
+  printf("Finished RTC Close Test \n");
+  return result;
+}
+
+
 
 /**
  * terminal_test()
@@ -393,13 +455,26 @@ int terminal_test() {
   int len = 128;
   int output = 0;
   int output2 = 0;
+  int fd = 1;  /* holder fd to allow test to compile */
   uint8_t k[128];
+  int i;
+  int found;
+  for(i = 0; i < MAXBUFSIZE; i++) {
+    k[i] = '\0';
+  }
 
   printf("Enter text for terminal buffer: \n");
 
-  output = terminal_read(k,len);
-  output2 = terminal_write(k, output);
-  if(output != output2) {
+  output = terminal_read(fd, k,len);
+  output2 = terminal_write(fd, k, output);
+  /* check for the first instance of null character to find the end of string */
+  for(i = 0; i < MAXBUFSIZE; i++) {
+    if(k[i] == '\0') {
+      found = i;
+      break;
+    }
+  }
+  if(found != output2) {
     assertion_failure();
     result = FAIL;
   }
@@ -409,23 +484,27 @@ int terminal_test() {
 /**
  * int file_system_file_output()
  *
- * DESCRIPTION: Test to write file contents out to terminal 
+ * DESCRIPTION: Test to write file contents out to terminal
  */
 int file_system_file_output(){
   TEST_HEADER;
   int i;
-  uint8_t test_buf[BLOCK_SIZE];
+  uint8_t test_buf[10 * BLOCK_SIZE];
   for (i = 0; i <= BLOCK_SIZE; i++){
       ((int8_t*)(test_buf))[i] = '\0';
   }
   // SPECIFY WHICH FILE YOU WANT TO OUTPUT
-  int8_t* file = "frame0.txt";
+  int8_t* file = "cat";
   // Check if file to be read exists and if so put it in buffer
-  if(file_read((uint32_t) ((uint8_t*) file), test_buf, BLOCK_SIZE) < 0){
+  int32_t bytes_read = file_read((uint32_t) ((uint8_t*) file), test_buf, 10 * BLOCK_SIZE);
+  printf("bytes read: %d\n", bytes_read);
+  if(bytes_read < 0){
     return FAIL;
   }
   // Output Contents of File from test buffer to screen
-  puts((int8_t*)test_buf);
+  for (i = 0; i < bytes_read; i++) {
+    putc(test_buf[i]);
+  }
   //file_close(file);
   return PASS;
 }
@@ -447,12 +526,11 @@ int file_system_dir_output(){
   // Specify that this is current directory but not relevant for checkpoint 2
   int8_t* dir = ".";
 
-  // Open directory
-  dir_open(((uint8_t*) dir));
-
   if (dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
     return FAIL;
   }
+  // Open directory
+  dir_open(((uint8_t*) dir));
   // Loop through Directory Entries and output all file names to screen
   for(i=0; i< MAX_DENTRIES; i++){
     if(dir_read((uint32_t)((uint8_t*) dir), test_buf, 4096) < 0){
@@ -461,7 +539,7 @@ int file_system_dir_output(){
     puts((int8_t*)test_buf);
     putc('\n');
   }
-  // Close current directory 
+  // Close current directory
   dir_close((uint32_t) ((uint8_t*) dir));
   return PASS;
 }
@@ -472,33 +550,35 @@ int file_system_dir_output(){
 
 /* Test suite entry point */
 void launch_tests() {
-  TEST_OUTPUT("idt_test", idt_test());
-  printf("Finished IDT Test 1 \n");
+
+  clear(); // clear the screen
+  reset_position(); // reset the position
 
   // launch your tests here
+  TEST_OUTPUT("idt_test", idt_test());
   TEST_OUTPUT("idt_test2", idt_test2());
-  printf("Finished IDT Test 2 \n");
-
   TEST_OUTPUT("page test", page_value_test());
-  printf("Finished Page Value Test \n");
-
   TEST_OUTPUT("page deref test", page_deref_test());
-  printf("Finished Page Dereference Test \n");
 
-  TEST_OUTPUT("rtc write test", rtc_read_test());
-  printf("Finished RTC Read Test \n");
+  // TEST_OUTPUT("rtc write test", rtc_read_test());
+  // printf("Finished RTC Read Test \n");
 
-  TEST_OUTPUT("rtc write test", rtc_write_test());
-  printf("Finished RTC Write Test \n");
+  // TEST_OUTPUT("rtc write test", rtc_write_test());
+  // printf("Finished RTC Write Test \n");
 
-  TEST_OUTPUT("file system file contents test ", file_system_file_output());
-  printf("Finished File System File Output Test                          \n"); 
+  // TEST_OUTPUT("file system file contents test ", file_system_file_output());
+  // printf("Finished File System File Output Test                          \n");  
 
-  TEST_OUTPUT("file system directory test ", file_system_dir_output());
-  printf("Finished File System Directory Output Test                          \n");
+  // TEST_OUTPUT("file system directory test ", file_system_dir_output());
+  // printf("Finished File System Directory Output Test                          \n");
 
-  TEST_OUTPUT("terminal test", terminal_test());
-  printf("Finished Terminal Read and Write Test \n");
+
+  // TEST_OUTPUT("terminal test", terminal_test());
+  // printf("Finished Terminal Read and Write Test \n");
+
+  // TEST_OUTPUT("terminal test", terminal_test());
+  // printf("Finished Terminal Read and Write Test \n");
+
 
 
   // Test that purposefully puts the system into an unusable state by forcing

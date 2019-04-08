@@ -18,8 +18,6 @@
 #define FT_RTC 0
 #define FT_DIR 1
 #define FT_REG 2
-/* Global variable for file system location */
-unsigned int file_system_loc;
 
 
 /**
@@ -69,6 +67,9 @@ typedef struct {
   uint8_t reserved[52]; // 52 bytes reserved
   dentry_t dentries[MAX_DENTRIES];
 } bootblock_t;
+
+/* Pointer to the bootblock (the first block in the filesystem) */
+bootblock_t* bootblock;
 
 /**
  * read_dentry_by_name()
@@ -133,7 +134,7 @@ int32_t file_read (int32_t fd, void* buf, int32_t nbytes);
  *         nbytes -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t file_write (int32_t fd, void* buf, int32_t nbytes);
+int32_t file_write (int32_t fd, const void* buf, int32_t nbytes);
 
 /**
  * file_close()
@@ -173,7 +174,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes);
  *         nbytes -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t dir_write (int32_t fd, void* buf, int32_t nbytes);
+int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes);
 
 /**
  * dir_close()

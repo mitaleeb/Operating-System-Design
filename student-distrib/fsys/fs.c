@@ -4,12 +4,10 @@
  * This file holds the functions to read/parse the read-only filesystem.
  */
 
+#include "../sys/pcb.h"
 #include "fs.h"
 
-/* @TODO: get the bootblock pointer in some way. Right now I'm just assuming
-it's a pointer we get somehow. */
-bootblock_t* bootblock;
-unsigned int curr_directory = 0;
+static uint32_t curr_directory = 0;
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
   
@@ -18,19 +16,24 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     return -1;
   }
 
-  // Set the start of bootblock struct to the start of file system
-  bootblock = (bootblock_t*) file_system_loc;
-
-  // loop through all the dentries until we find one with a name that matches
   int32_t num_dentries = bootblock->num_dentries;
 
   // sanity check making sure num_dentries is less than max dentries
   if (num_dentries > MAX_DENTRIES){ 
     return -1;
   }
+
+  uint32_t fname_len = strlen((int8_t*)fname);
+
+  // fail if our fname_len is greater than MAX_DIRNAME_LEN
+  if (fname_len > MAX_DIRNAME_LEN) {
+    return -1;
+  }
+
+  // loop through all the dentries until we find one with a name that matches
   int i;
   for (i = 0; i < num_dentries; i++) {
-    if (!strncmp((int8_t*)bootblock->dentries[i].file_name, (int8_t*)fname, strlen((int8_t*)fname))) {
+    if (!strncmp((int8_t*)(bootblock->dentries[i].file_name), (int8_t*)fname, fname_len)) {
       // copy the dentry struct from here into the dentry_t parameter
       // we know the dentry struct is DENTRY_SIZE bytes, so we can just use memcpy
       memcpy(dentry, &(bootblock->dentries[i]), DENTRY_SIZE);
@@ -49,11 +52,10 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
   if (dentry == NULL) {
     return -1;
   }
-  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_dentries = bootblock->num_dentries;
 
   // Make sure our index is in a valid range
-  if (index >= num_dentries || index <0) {
+  if (index >= num_dentries || index < 0) {
     return -1;
   }
 
@@ -64,7 +66,6 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
   int32_t bytes_read = 0;
-  bootblock = (bootblock_t*) file_system_loc;
   int32_t num_inodes = bootblock->num_inodes;
 
   // the starting index, (offset / BLOCK_SIZE, since offset is in bytes)
@@ -98,13 +99,18 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   // if file_remaining is more than block - offset, copy the remaining block
     if (file_remaining > BLOCK_SIZE - (offset % BLOCK_SIZE)) {
       memcpy(buf, curr_dblock + offset, BLOCK_SIZE - (offset % BLOCK_SIZE));
-      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
       bytes_read += BLOCK_SIZE - (offset % BLOCK_SIZE);
+      file_remaining -= BLOCK_SIZE - (offset % BLOCK_SIZE);
+      // go to next dblock
+      dblock_index++;
+      if (dblock_index < DBLOCKS_PER_INODE)
+        dblock_ptr = src_file->dblocks[dblock_index];
+      curr_dblock = (void*) (bootblock + (num_inodes + 1 + dblock_ptr));
     } else {
       // otherwise, copy the remaining file
       memcpy(buf, curr_dblock, file_remaining);
-      file_remaining -= file_remaining;
       bytes_read += file_remaining;
+      file_remaining -= file_remaining;
     }
 
   // now we can loop until we have no more of the file remaining
@@ -112,14 +118,14 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
     // if file_remaining is greater than this block, copy the whole block
     if (file_remaining > BLOCK_SIZE) {
-      memcpy(buf, curr_dblock, BLOCK_SIZE);
-      file_remaining -= BLOCK_SIZE;
+      memcpy(buf + bytes_read, curr_dblock, BLOCK_SIZE);
       bytes_read += BLOCK_SIZE;
+      file_remaining -= BLOCK_SIZE;
     } else {
       // otherwise, copy the remaining file
-      memcpy(buf, curr_dblock, file_remaining);
-      file_remaining -= file_remaining;
+      memcpy(buf + bytes_read, curr_dblock, file_remaining);
       bytes_read += file_remaining;
+      file_remaining -= file_remaining;
     }
 
     // check if we're out of range of the curr_dblock
@@ -166,9 +172,9 @@ int32_t file_open (const uint8_t* fname){
 int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
   // call some helper function in order to read the data in the file
   dentry_t dentry;
+  int32_t inode_num = curr_pcb->file_descs[fd].inode;
   
-  if(read_dentry_by_name((uint8_t *)fd, &dentry) == -1)
-  {
+  if(read_dentry_by_index(inode_num, &dentry) == -1) { // nvm this is incorrect
     return -1;
   }
   /* If the file exists, copy the data into the buffer and returns bytes read of file*/
@@ -185,7 +191,7 @@ int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
  *         num_b -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t file_write (int32_t fd, void* buf, int32_t nbytes){
+int32_t file_write (int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 
@@ -208,6 +214,10 @@ int32_t file_close (int32_t fd){
  * OUTPUTS: 0 if successful, -1 otherwise
  */
 int32_t dir_open (const uint8_t* fname){
+  // Check null pointers
+  if (fname == NULL) {
+    return -1;
+  }
   curr_directory = 0;
   return 0;
 }
@@ -231,6 +241,9 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
       ((int8_t*)(buf))[i] = '\0';
     }
     int32_t length = strlen((int8_t*)dentry.file_name);
+    if (length > MAX_DIRNAME_LEN) {
+      length = MAX_DIRNAME_LEN;
+    }
     strncpy((int8_t*)buf, (int8_t*)dentry.file_name, length);
     //printf(buf);
     curr_directory++;
@@ -252,7 +265,7 @@ int32_t dir_read (int32_t fd, void* buf, int32_t nbytes){
  *         nbytes -- number of bytes to read
  * OUTPUTS: Always -1 because this is a read only file system
  */  
-int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
+int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 
@@ -264,6 +277,9 @@ int32_t dir_write (int32_t fd, void* buf, int32_t nbytes){
  * OUTPUTS: 0 if successful, -1 otherwise
  */  
 int32_t dir_close (int32_t fd){
+  if (fd == NULL) {
+    return -1;
+  }
   curr_directory = 0;
   return 0;
 }

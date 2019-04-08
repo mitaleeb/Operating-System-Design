@@ -17,6 +17,7 @@
 /* definitions for the beginning of certain segments */
 #define KERNEL_ADDR 0x400000
 #define VIDEO_ADDR 0xB8000
+#define PROG_VADDR 0x08000000
 
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
@@ -29,6 +30,7 @@ static page_table_t page_table_1 __attribute__ ((aligned (PAGE_4KB)));
 /* static function declarations */
 static void add_page_dir_entry(void* phys_addr, void* virtual_addr, uint32_t flags);
 static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flags);
+static void page_flushtlb();
 
 /**
  * page_init()
@@ -75,6 +77,32 @@ void page_init()
         : "g" (&page_directory)
         : "%eax", "memory"
     );
+}
+
+void add_program_page(void* phys_addr, int adding) {
+    uint32_t flags = USER_LEVEL | PAGE_4MB | READ_WRITE;
+    if (adding) {
+        // we are adding the page, so set it to present
+        flags = flags | PRESENT;
+    }
+
+    // call our static helper function to allocate the page dir entry
+    add_page_dir_entry(phys_addr, (void*) PROG_VADDR, flags);
+
+    page_flushtlb(); // flush the tlb
+}
+
+/**
+ * page_flushtlb()
+ * 
+ * DESCRIPTION: flushes the TLB. Necessary when changes made to paging
+ */
+static void page_flushtlb() {
+    /* according to wiki.osdev.org/TLB, we can flush the TLB by simply writing
+       to the PDBR (CR3) */
+    asm volatile ("movl %%cr3, %%eax;"
+                  "movl %%eax, %%cr3;"
+                  : : : "%eax");
 }
 
 /**
