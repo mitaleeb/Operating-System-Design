@@ -59,4 +59,4 @@ typedef struct _pcb {
 
 /* hold variables regarding processes */
 pcb_t* curr_pcb; // pointer to the current pcb
-int num_procs; // number of currently open processes
+// int num_procs; // number of currently open processes

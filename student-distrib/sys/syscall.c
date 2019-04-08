@@ -24,6 +24,7 @@
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
 int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
+int num_procs = 0;
 
 /* static definitions of certain file operations */
 static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
