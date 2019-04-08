@@ -60,3 +60,13 @@ typedef struct _pcb {
 /* hold variables regarding processes */
 pcb_t* curr_pcb; // pointer to the current pcb
 // int num_procs; // number of currently open processes
+
+
+/* declare some garbage operations that return -1 */
+int32_t garbage_read(int32_t fd, void* buf, int32_t nbytes);
+
+int32_t garbage_write(int32_t fd, const void* buf, int32_t nbytes);
+
+int32_t garbage_open(const uint8_t* filename);
+
+int32_t garbage_close(int32_t fd);

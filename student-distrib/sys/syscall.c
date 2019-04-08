@@ -27,8 +27,8 @@ int process_array[MAX_PROCS] = {0, 0};
 int num_procs = 0;
 
 /* static definitions of certain file operations */
-static fops_t stdin_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
-static fops_t stdout_fops = {&terminal_read, &terminal_write, &terminal_open, &terminal_close};
+static fops_t stdin_fops = {&terminal_read, &garbage_write, &terminal_open, &terminal_close};
+static fops_t stdout_fops = {&garbage_read, &terminal_write, &terminal_open, &terminal_close};
 static fops_t rtc_fops = {&rtc_read, &rtc_write, &rtc_open, &rtc_close};
 static fops_t dir_fops = {&dir_read, &dir_write, &dir_open, &dir_close};
 static fops_t file_fops = {&file_read, &file_write, &file_open, &file_close};
