@@ -320,7 +320,7 @@ extern void backspace_buffer(void) {
 		putc(' ');
 		//update_cursor();
 		decrement_position();
-		//update_cursor();
+		update_cursor();
 		column_index--;
 	}
 	backspace_flag = 0;

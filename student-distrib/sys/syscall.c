@@ -18,12 +18,12 @@
 #define MB_128      0x08000000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
-#define MAX_PROCS   6
+#define MAX_PROCS   2
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
+int process_array[MAX_PROCS] = {0, 0};
 int num_procs = 0;
 
 /* static definitions of certain file operations */
@@ -70,6 +70,10 @@ int32_t system_execute(const uint8_t* command) {
       space_flag = 1;
       break; // finished finding filename
     }
+  }
+
+  if ((i - filename_idx) > MAX_DIRNAME_LEN) {
+    return -1; // filename too long
   }
 
   // copy the info into our local variables
