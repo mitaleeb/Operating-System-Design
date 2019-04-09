@@ -18,12 +18,12 @@
 #define MB_128      0x08000000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
-#define MAX_PROCS   2
+#define MAX_PROCS   6 // maximum number of processes
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-int process_array[MAX_PROCS] = {0, 0};
+int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
 int num_procs = 0;
 
 /* static definitions of certain file operations */
@@ -32,7 +32,7 @@ static fops_t stdout_fops = {&garbage_read, &terminal_write, &terminal_open, &te
 static fops_t rtc_fops = {&rtc_read, &rtc_write, &rtc_open, &rtc_close};
 static fops_t dir_fops = {&dir_read, &dir_write, &dir_open, &dir_close};
 static fops_t file_fops = {&file_read, &file_write, &file_open, &file_close};
-static fops_t null_fops = {NULL, NULL, NULL, NULL};
+static fops_t null_fops = {&garbage_read, &garbage_write, &garbage_open, &garbage_close};
 
 /* the magic numbers at the beginning of executables */
 static uint8_t ELF[4] = {0x7f, 0x45, 0x4c, 0x46};
@@ -48,10 +48,10 @@ int32_t system_execute(const uint8_t* command) {
   }
 
   /***** 1. Parse Command *****/
-  int8_t filename[32];
-  int8_t arguments[128];
+  int8_t filename[MAX_DIRNAME_LEN];
+  int8_t arguments[MAXBUFFER];
   int32_t filename_idx = 0, space_flag = 0;
-  int32_t new_pid = -1;
+  int new_pid = -1;
   int cmd_len = (int) strlen((int8_t*)command);
 
   // skip the leading spaces in command
@@ -72,6 +72,9 @@ int32_t system_execute(const uint8_t* command) {
     return -1; // filename too long
   }
 
+  // Initialize arguments to the empty string
+  arguments[0] = '\0';
+  
   // copy the info into our local variables
   if (space_flag) {
     // copy the filename
