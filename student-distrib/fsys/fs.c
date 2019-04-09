@@ -171,18 +171,21 @@ int32_t file_open (const uint8_t* fname){
  */
 int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
   // call some helper function in order to read the data in the file
+  if (curr_pcb->file_descs[fd].flags == FD_NOT_IN_USE) {
+    return -1; // our file is not open
+  }
   dentry_t dentry;
   int32_t inode_num = curr_pcb->file_descs[fd].inode;
   int32_t offset = curr_pcb->file_descs[fd].file_position;
-  curr_pcb->file_descs[fd].flags = FD_IN_USE;
-  if(read_dentry_by_index(inode_num, &dentry) == -1) { // nvm this is incorrect
-    return -1;
-  }
+
+  // if(read_dentry_by_index(inode_num, &dentry) == -1) { // nvm this is incorrect
+  //   return -1;
+  // }
   /* If the file exists, copy the data into the buffer and returns bytes read of file*/
   //read_dentry_by_name((uint8_t *)fd, &dentry);
 
   int32_t bytes_read = read_data(inode_num, offset, buf, nbytes);
-  curr_pcb->file_descs[fd].file_position+= bytes_read;
+  curr_pcb->file_descs[fd].file_position += bytes_read;
   return bytes_read;
 }
 

@@ -74,7 +74,7 @@ int32_t system_execute(const uint8_t* command) {
 
   // Initialize arguments to the empty string
   arguments[0] = '\0';
-  
+
   // copy the info into our local variables
   if (space_flag) {
     // copy the filename
@@ -372,7 +372,22 @@ int32_t system_close(int32_t fd) {
 }
 
 int32_t system_getargs(uint8_t* buf, int32_t nbytes) {
-  return -1;
+  // remove leading whitespace
+  int i;
+  for (i = 0; (curr_pcb->arg_buf[i] == ' '); i++);
+
+  // make sure nbytes is less than the remaining buffer
+  int32_t remaining_buf = MAXBUFFER - i;
+  int32_t bytes_to_copy = nbytes;
+  if (remaining_buf < nbytes) {
+    // copy remaining_buf instead of nbytes
+    bytes_to_copy = remaining_buf;
+  }
+
+  // copy to the buffer
+  memcpy(buf, &(curr_pcb->arg_buf[i]), bytes_to_copy);
+  buf[bytes_to_copy] = '\0';
+  return 0;
 }
 
 int32_t system_vidmap(uint8_t** screen_start) {
