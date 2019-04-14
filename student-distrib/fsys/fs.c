@@ -30,10 +30,17 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     return -1;
   }
 
+  // add 1 so that we make sure we compare the entire string (including null
+  // char) but if we have a length of MAX_DIRNAME_LEN we compare that many bytes
+  // (no null char)
+  if (fname_len < MAX_DIRNAME_LEN) {
+    fname_len++;
+  }
+
   // loop through all the dentries until we find one with a name that matches
   int i;
   for (i = 0; i < num_dentries; i++) {
-    if (!strncmp((int8_t*)(bootblock->dentries[i].file_name), (int8_t*)fname, fname_len + 1)) {
+    if (!strncmp((int8_t*)(bootblock->dentries[i].file_name), (int8_t*)fname, fname_len)) {
       // copy the dentry struct from here into the dentry_t parameter
       // we know the dentry struct is DENTRY_SIZE bytes, so we can just use memcpy
       memcpy(dentry, &(bootblock->dentries[i]), DENTRY_SIZE);
@@ -171,18 +178,15 @@ int32_t file_open (const uint8_t* fname){
  */
 int32_t file_read (int32_t fd, void* buf, int32_t nbytes){
   // call some helper function in order to read the data in the file
-  dentry_t dentry;
+  if (curr_pcb->file_descs[fd].flags == FD_NOT_IN_USE) {
+    return -1; // our file is not open
+  }
+  
   int32_t inode_num = curr_pcb->file_descs[fd].inode;
   int32_t offset = curr_pcb->file_descs[fd].file_position;
-  curr_pcb->file_descs[fd].flags = FD_IN_USE;
-  if(read_dentry_by_index(inode_num, &dentry) == -1) { // nvm this is incorrect
-    return -1;
-  }
-  /* If the file exists, copy the data into the buffer and returns bytes read of file*/
-  //read_dentry_by_name((uint8_t *)fd, &dentry);
 
   int32_t bytes_read = read_data(inode_num, offset, buf, nbytes);
-  curr_pcb->file_descs[fd].file_position+= bytes_read;
+  curr_pcb->file_descs[fd].file_position += bytes_read;
   return bytes_read;
 }
 
