@@ -13,9 +13,11 @@
 #include "syscall.h"
 
 #define EIGHT_MB    0x00800000
+#define TWELVE_MB   0x00C00000
 #define FOUR_MB     0x00400000
 #define EIGHT_KB    0x00002000
 #define MB_128      0x08000000
+#define MB_132      0x08400000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
 #define MAX_PROCS   6 // maximum number of processes
@@ -391,7 +393,16 @@ int32_t system_getargs(uint8_t* buf, int32_t nbytes) {
 }
 
 int32_t system_vidmap(uint8_t** screen_start) {
-  return -1;
+   // Need to check if screen_start is in range
+  if((uint32_t)screen_start >= MB_132 || (uint32_t)screen_start <= MB_128){
+    return -1;
+  }
+    int32_t phys_addr = TWELVE_MB + (new_pid * FOUR_MB);
+    add_user_level_page((void*)phys_addr, 1);
+    // set the screen start address      
+    *screen_start = (uint8_t*)
+    return 0;
+  
 }
 
 int32_t system_sethandler(int32_t signum, void* handler_address) {
