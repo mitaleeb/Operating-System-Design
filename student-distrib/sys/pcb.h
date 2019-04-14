@@ -9,6 +9,8 @@
 #define FD_IN_USE     1
 #define FD_NOT_IN_USE 0
 
+#define ARG_BUF_SIZE  128
+
 /**
  * fops_t - a struct to hold the file operation jump table
  * 
@@ -56,7 +58,7 @@ typedef struct _pcb {
   struct _pcb* parent_pcb;
   uint32_t parent_esp;
   uint32_t parent_ebp;
-  int8_t arg_buf[128];
+  int8_t arg_buf[ARG_BUF_SIZE];
 } pcb_t;
 
 /* hold variables regarding processes */

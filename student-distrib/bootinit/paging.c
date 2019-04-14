@@ -18,6 +18,8 @@
 #define KERNEL_ADDR 0x400000
 #define VIDEO_ADDR 0xB8000
 #define PROG_VADDR 0x08000000
+#define VIRT_VIDEO_ADDR 0x08400000
+
 
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
@@ -26,10 +28,11 @@
 /* static variables to hold certain paging items */
 static page_directory_t page_directory __attribute__ ((aligned (PAGE_4KB)));
 static page_table_t page_table_1 __attribute__ ((aligned (PAGE_4KB)));
+static page_table_t page_table_2 __attribute__ ((aligned (PAGE_4KB)));
 
 /* static function declarations */
 static void add_page_dir_entry(void* phys_addr, void* virtual_addr, uint32_t flags);
-static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flags);
+static void add_page_table_entry(page_table_t * page_table, void* phys_addr, void* virt_addr, uint32_t flags);
 static void page_flushtlb();
 
 /**
@@ -46,19 +49,30 @@ void page_init()
     for (i = 0; i < MAX_ENTRIES; i++) {
         page_directory.page_directory_entries[i] = 0;
         page_table_1.page_table_entries[i] = 0;
+        page_table_2.page_table_entries[i] = 0;
     }
 
     /* add the first page table (governing pages 0 - 4MB) to the directory */
-    uint32_t flags = READ_WRITE | PRESENT;
-    add_page_dir_entry(&(page_table_1), 0, flags);
+    uint32_t flags_kernel = READ_WRITE | PRESENT; 
+    add_page_dir_entry(&(page_table_1), 0, flags_kernel);
 
     /* add the 4MB Kernel page to the page directory */
-    flags = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
-    add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags);
+    flags_kernel = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
+    add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags_kernel);
 
     /* add a page table entry for video memory into the page table */
-    flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
-    add_page_table_entry((void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags);
+    flags_kernel = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags_kernel);
+
+    /* User level page table */
+    uint32_t flags_user = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; 
+    add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags_user);
+
+    /* add a page table entry for video memory into the page table */
+    flags_user = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)VIRT_VIDEO_ADDR, flags_user);
+
+
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
@@ -141,7 +155,7 @@ static void add_page_dir_entry(void* phys_addr, void* virt_addr, uint32_t flags)
  *                 entry
  * SIDE-EFFECTS: writes to the page_table_1 structure present in this file.
  */
-static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flags) {
+static void add_page_table_entry(page_table_t* page_table, void* phys_addr, void* virt_addr, uint32_t flags) {
     // Make sure we check if our physical address was null
     if (phys_addr == NULL)
         return;
@@ -150,7 +164,7 @@ static void add_page_table_entry(void* phys_addr, void* virt_addr, uint32_t flag
     int pt_idx = PT_IDX((uint32_t) virt_addr);
 
     // add the entry
-    page_table_1.page_table_entries[pt_idx] = ((int)phys_addr | flags);
+    page_table->page_table_entries[pt_idx] = ((int)phys_addr | flags);
 }
 
 /**

@@ -50,7 +50,6 @@ void page_init();
  * OUTPUTS: none
  */
 void add_program_page(void* phys_addr, int adding);
-
 /**
  * paging_tester()
  *
