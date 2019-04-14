@@ -106,18 +106,6 @@ void add_program_page(void* phys_addr, int adding) {
     page_flushtlb(); // flush the tlb
 }
 
-void add_user_level_page(void* phys_addr, int adding) {
-    uint32_t flags = USER_LEVEL | PAGE_4MB | READ_WRITE;
-    if (adding) {
-        // we are adding the page, so set it to present
-        flags = flags | PRESENT;
-    }
-
-    // call our static helper function to allocate the page dir entry
-    add_page_dir_entry(phys_addr, (void*) VIDEO_ADDR, flags);
-
-    page_flushtlb(); // flush the tlb
-}
 
 /**
  * page_flushtlb()
