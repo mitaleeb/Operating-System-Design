@@ -55,9 +55,10 @@ int32_t system_execute(const uint8_t* command) {
   int32_t filename_idx = 0, space_flag = 0;
   int new_pid = -1;
   int cmd_len = (int) strlen((int8_t*)command);
-  uint8_t* new_command = command;
+  int8_t new_command[cmd_len];
+
   //create a copy of command to allow us to modify the string
-  strcpy(new_command, command);
+  strcpy(new_command, (int8_t*) command);
 
   //check to see if the traling character is a new line character
   if(new_command[cmd_len - 1] == '\n') {
