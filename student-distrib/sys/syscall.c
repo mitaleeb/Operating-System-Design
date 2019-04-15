@@ -39,11 +39,23 @@ static fops_t null_fops = {&garbage_read, &garbage_write, &garbage_open, &garbag
 /* the magic numbers at the beginning of executables */
 static uint8_t ELF[4] = {0x7f, 0x45, 0x4c, 0x46};
 
+/**
+ * run_shell()
+ *
+ * DESCRIPTION: literally runs system_execute with argument "shell"
+ */
 int32_t run_shell() {
   char com[6] = "shell";
   return system_execute((uint8_t*)com);
 }
 
+/**
+ * system_execute
+ *
+ * DESCRIPTION: corresponds to system call 2. Executes the given command.
+ * INPUTS: command - the command and arguments to the command, space separated.
+ * OUTPUTS: the return status, if successful. -1 otherwise.
+ */
 int32_t system_execute(const uint8_t* command) {
   if (command == NULL) {
     return -1;
@@ -232,6 +244,14 @@ int32_t system_execute(const uint8_t* command) {
   return -1; // we should never actually reach this specific return statment
 }
 
+/**
+ * system_halt
+ *
+ * DESCRIPTION: corresponds to system call 1. Halts the program and returns
+ *              control the parent.
+ * INPUTS: status - the return status for the program
+ * OUTPUTS: nothing, should jump to execute return.
+ */
 int32_t system_halt(uint8_t status) {
   /* close relevant fds */
   int i;
@@ -276,6 +296,16 @@ int32_t system_halt(uint8_t status) {
   return -1; // we should never get here
 }
 
+/**
+ * system_read
+ *
+ * DESCRIPTION: corresponds to system call 3. Executes the read function of the
+ *              specified file descriptor.
+ * INPUTS: fd - the file descriptor to read
+ *         buf - the buffer to read to
+ *         nbytes - the number of bytes to read.
+ * OUTPUTS: return value of the specific read call if successful, -1 otherwise.
+ */
 int32_t system_read(int32_t fd, void* buf, int32_t nbytes) {
   /* check if the file descriptor is valid */
   if (fd < 0 || fd >= MAX_FDS) {
@@ -293,6 +323,16 @@ int32_t system_read(int32_t fd, void* buf, int32_t nbytes) {
   return -1; // if we get here, we return error
 }
 
+/**
+ * system_write
+ *
+ * DESCRIPTION: corresponds to system call 4. Executes the write function of the
+ *              specified file descriptor.
+ * INPUTS: fd - the file descriptor to write to
+ *         buf - the buffer to write from
+ *         nbytes - the number of bytes to write.
+ * OUTPUTS: return value of the specific write call if successful, -1 otherwise.
+ */
 int32_t system_write(int32_t fd, const void* buf, int32_t nbytes) {
   /* check if the file descriptor is valid */
   if (fd < 0 || fd >= MAX_FDS) {
@@ -308,6 +348,14 @@ int32_t system_write(int32_t fd, const void* buf, int32_t nbytes) {
   return -1; // if we get here, we return error
 }
 
+/**
+ * system_open
+ *
+ * DESCRIPTION: corresponds to system call 5. Opens the specified file, making
+ *              sure to call the open function of the right type of file.
+ * INPUTS: filename - the filename of the file to open
+ * OUTPUTS: the file descriptor allocated to this file
+ */
 int32_t system_open(const uint8_t* filename) {
   // find the correspondingly named file
   dentry_t dir_entry;
@@ -359,6 +407,14 @@ int32_t system_open(const uint8_t* filename) {
   return i; // return the file descriptor
 }
 
+/**
+ * system_close
+ *
+ * DESCRIPTION: corresponds to system call 6. Closes the specified file
+ *              descriptor.
+ * INPUTS: fd - the file descriptor to close
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
 int32_t system_close(int32_t fd) {
 
   /* check if valid file descriptor. note that the user should never be allowed
@@ -383,6 +439,14 @@ int32_t system_close(int32_t fd) {
   return 0;
 }
 
+/**
+ * system_getargs
+ *
+ * DESCRIPTION: gets program arguments
+ * INPUTS: buf- buffer to copy arguments to
+ *         nbytes- bytes to copy
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
 int32_t system_getargs(uint8_t* buf, int32_t nbytes) {
   // remove leading whitespace
   int i;
@@ -402,6 +466,13 @@ int32_t system_getargs(uint8_t* buf, int32_t nbytes) {
   return 0;
 }
 
+/**
+ * system_vidmap
+ *
+ * DESCRIPTION: set virtual memory to video memory
+ * INPUTS: screen_start- pointer to starting location in video memorty
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
 int32_t system_vidmap(uint8_t** screen_start) {
    // Need to check if screen_start is in range
   if((uint32_t)screen_start > MB_132 || (uint32_t)screen_start <= MB_128){

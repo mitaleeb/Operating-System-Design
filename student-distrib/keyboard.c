@@ -43,6 +43,7 @@ static int control_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
 static int term_buffer_index = 0;
+static int old_tbi = 0;
 static int term_flag = 0;
 static int column_index = 0;
 
@@ -125,10 +126,10 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	while(!term_flag) {}
 
 	/* read from input to old terminal buffer */
-	if (length <= MAXBUFFER) {
+	if (length <= old_tbi) {
 	 	memcpy(buf, &(old_term_buffer), length);
 	} else {
-	 	memcpy(buf, &(old_term_buffer), MAXBUFFER);
+	 	memcpy(buf, &(old_term_buffer), old_tbi);
 	}
 
 	/* clear new terminal buffer */
@@ -140,10 +141,10 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	term_flag = 0;
 
 	/* return number of bytes read */
-	if (length < MAXBUFFER) {
+	if (length < old_tbi) {
 		return length;
 	} else {
-		return MAXBUFFER;
+		return old_tbi;
 	}
 }
 
@@ -292,7 +293,7 @@ void handle_keyboard_interrupt() {
  */
 extern void write_to_buffer(uint8_t k) {
 	/* check if end of buffer has been reached */
-	if(term_buffer_index >= MAXBUFFER - 2) {
+	if(term_buffer_index >= MAXBUFFER - 2 && k != '\n') {
 		return;
 	}
 	/* if max length is reached, start new line */
@@ -342,6 +343,7 @@ extern void backspace_buffer(void) {
 		 /* clear new buff */
 		 new_term_buffer[i] = '\0';
 	 }
+	 old_tbi = term_buffer_index;
 	 term_buffer_index = 0;
 	 column_index = 0;
 	 //enter_position();
