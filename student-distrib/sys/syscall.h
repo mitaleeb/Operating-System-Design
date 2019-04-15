@@ -18,7 +18,7 @@ extern int32_t syscall_linker(); // prototype for assembly linkage
 
 /**
  * run_shell()
- * 
+ *
  * DESCRIPTION: literally runs system_execute with argument "shell"
  */
 int32_t run_shell();
@@ -27,7 +27,7 @@ int32_t run_shell();
 
 /**
  * system_halt
- * 
+ *
  * DESCRIPTION: corresponds to system call 1. Halts the program and returns
  *              control the parent.
  * INPUTS: status - the return status for the program
@@ -37,7 +37,7 @@ int32_t system_halt(uint8_t status);
 
 /**
  * system_execute
- * 
+ *
  * DESCRIPTION: corresponds to system call 2. Executes the given command.
  * INPUTS: command - the command and arguments to the command, space separated.
  * OUTPUTS: the return status, if successful. -1 otherwise.
@@ -46,7 +46,7 @@ int32_t system_execute(const uint8_t* command);
 
 /**
  * system_read
- * 
+ *
  * DESCRIPTION: corresponds to system call 3. Executes the read function of the
  *              specified file descriptor.
  * INPUTS: fd - the file descriptor to read
@@ -58,7 +58,7 @@ int32_t system_read(int32_t fd, void* buf, int32_t nbytes);
 
 /**
  * system_write
- * 
+ *
  * DESCRIPTION: corresponds to system call 4. Executes the write function of the
  *              specified file descriptor.
  * INPUTS: fd - the file descriptor to write to
@@ -70,7 +70,7 @@ int32_t system_write(int32_t fd, const void* buf, int32_t nbytes);
 
 /**
  * system_open
- * 
+ *
  * DESCRIPTION: corresponds to system call 5. Opens the specified file, making
  *              sure to call the open function of the right type of file.
  * INPUTS: filename - the filename of the file to open
@@ -80,7 +80,7 @@ int32_t system_open(const uint8_t* filename);
 
 /**
  * system_close
- * 
+ *
  * DESCRIPTION: corresponds to system call 6. Closes the specified file
  *              descriptor.
  * INPUTS: fd - the file descriptor to close
