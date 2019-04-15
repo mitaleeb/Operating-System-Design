@@ -1,6 +1,6 @@
 /**
  * syscall.c
- * 
+ *
  * This file holds the implementations of the files declared in syscall.h.
  */
 
@@ -13,17 +13,19 @@
 #include "syscall.h"
 
 #define EIGHT_MB    0x00800000
+#define TWELVE_MB   0x00C00000
 #define FOUR_MB     0x00400000
 #define EIGHT_KB    0x00002000
 #define MB_128      0x08000000
+#define MB_132      0x08400000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
-#define MAX_PROCS   2
+#define MAX_PROCS   6 // maximum number of processes
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
 // static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-int process_array[MAX_PROCS] = {0, 0};
+int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
 int num_procs = 0;
 
 /* static definitions of certain file operations */
@@ -32,7 +34,7 @@ static fops_t stdout_fops = {&garbage_read, &terminal_write, &terminal_open, &te
 static fops_t rtc_fops = {&rtc_read, &rtc_write, &rtc_open, &rtc_close};
 static fops_t dir_fops = {&dir_read, &dir_write, &dir_open, &dir_close};
 static fops_t file_fops = {&file_read, &file_write, &file_open, &file_close};
-static fops_t null_fops = {NULL, NULL, NULL, NULL};
+static fops_t null_fops = {&garbage_read, &garbage_write, &garbage_open, &garbage_close};
 
 /* the magic numbers at the beginning of executables */
 static uint8_t ELF[4] = {0x7f, 0x45, 0x4c, 0x46};
@@ -48,21 +50,31 @@ int32_t system_execute(const uint8_t* command) {
   }
 
   /***** 1. Parse Command *****/
-  int8_t filename[32];
-  int8_t arguments[128];
+  int8_t filename[MAX_DIRNAME_LEN];
+  int8_t arguments[MAXBUFFER];
   int32_t filename_idx = 0, space_flag = 0;
-  int32_t new_pid = -1;
+  int new_pid = -1;
   int cmd_len = (int) strlen((int8_t*)command);
+  int8_t new_command[cmd_len];
+
+  //create a copy of command to allow us to modify the string
+  strcpy(new_command, (int8_t*) command);
+
+  //check to see if the traling character is a new line character
+  if(new_command[cmd_len - 1] == '\n') {
+    new_command[cmd_len - 1] = '\0';
+    cmd_len--;
+  }
 
   // skip the leading spaces in command
-  while (command[filename_idx] == ' ') {
+  while (new_command[filename_idx] == ' ') {
     filename_idx++;
   }
 
   int i;
   // find the first space
   for (i = filename_idx; i < cmd_len; i++) {
-    if (command[i] == ' ') {
+    if (new_command[i] == ' ') {
       space_flag = 1;
       break; // finished finding filename
     }
@@ -72,22 +84,25 @@ int32_t system_execute(const uint8_t* command) {
     return -1; // filename too long
   }
 
+  // Initialize arguments to the empty string
+  arguments[0] = '\0';
+
   // copy the info into our local variables
   if (space_flag) {
     // copy the filename
-    strncpy(filename, (int8_t*) (command + filename_idx), (i - filename_idx));
+    strncpy(filename, (int8_t*) (new_command + filename_idx), (i - filename_idx));
     filename[i] = '\0'; // null terminate the filename
     i++;
 
     /* put the rest of the arguments into a different string */
-    strcpy(arguments, (int8_t*)(command + i));
+    strcpy(arguments, (int8_t*)(new_command + i));
   } else {
     // just copy the filename
-    strcpy(filename, (int8_t*) (command + filename_idx));
+    strcpy(filename, (int8_t*) (new_command + filename_idx));
   }
 
   /***** 2. Executable Check *****/
-  
+
   dentry_t dir_entry;
 	/* check if valid file */
   if(read_dentry_by_name((uint8_t *) filename, &dir_entry) < 0)
@@ -98,11 +113,11 @@ int32_t system_execute(const uint8_t* command) {
   read_data(dir_entry.inode_num, 0, buf, 4);
   if(buf[0] !=  ELF[0] || buf[1] != ELF[1] || buf[2] != ELF[2] || buf[3] != ELF[3])
     return -1;
-  
+
   /* find entry point by getting 4-byte unsigned integer in bytes 24-27 */
   read_data(dir_entry.inode_num, 24, buf, 4);
   uint32_t entry_point = *((uint32_t*)buf);
-  
+
   /* check PCB array for next process since
   * we must support up to 6 in kernel */
   for (i = 0; i < MAX_PROCS; i++) {
@@ -116,15 +131,15 @@ int32_t system_execute(const uint8_t* command) {
   // make sure we found a pid available
   if (new_pid < 0)
     return -1;
-    
+
 
   /***** 3. Set Up Program Paging *****/
-  /* 
+  /*
    * The program image itself is linked to execute at virtual address
 	 * 0x08048000. The way to get this working is to set up a single 4 MB page
 	 * directory entry that maps virtual address 0x08000000 (128 MB) to the right
 	 * physical memory address (either 8 MB or 12 MB). Then, the program image
-	 * must be copied to the correct offset (0x00048000) within that page. 
+	 * must be copied to the correct offset (0x00048000) within that page.
    */
 
   int32_t phys_addr = EIGHT_MB + (new_pid * FOUR_MB);
@@ -158,7 +173,7 @@ int32_t system_execute(const uint8_t* command) {
 	strcpy((int8_t*) (curr_pcb->arg_buf), arguments);
 
   /* set up the file descriptor tables */
-  
+
   // first set the stdin/out fops
   curr_pcb->file_descs[0].fops_table = &stdin_fops;
   curr_pcb->file_descs[0].inode = dir_entry.inode_num;
@@ -191,7 +206,7 @@ int32_t system_execute(const uint8_t* command) {
     : // inputs
     : "memory" // clobbered registers
   );
-  
+
   // switch to ring 3. This code is based on code from wiki.osdev.org
   asm volatile(
     "cli;"
@@ -232,7 +247,7 @@ int32_t system_halt(uint8_t status) {
   process_array[curr_pcb->pid] = 0;
   curr_pcb = curr_pcb->parent_pcb;
   num_procs--;
-  
+
   // if we are out of processes, execute another shell
   if (num_procs == 0) {
     run_shell();
@@ -289,7 +304,7 @@ int32_t system_write(int32_t fd, const void* buf, int32_t nbytes) {
     /* invoke the correct write call */
     return (curr_pcb->file_descs[fd]).fops_table->write(fd, buf, nbytes);
   }
-    
+
   return -1; // if we get here, we return error
 }
 
@@ -309,7 +324,7 @@ int32_t system_open(const uint8_t* filename) {
       break;
     }
   }
-  
+
   // make sure we found an empty file descriptor
   if (i == MAX_FDS) {
     return -1;
@@ -318,7 +333,7 @@ int32_t system_open(const uint8_t* filename) {
   // initialize the file descriptor
   curr_pcb->file_descs[i].inode = dir_entry.inode_num;
   curr_pcb->file_descs[i].file_position = 0;
-  
+
   // set up the proper jump table and open the file
   switch(dir_entry.file_type) {
     case FT_RTC: // rtc
@@ -369,11 +384,33 @@ int32_t system_close(int32_t fd) {
 }
 
 int32_t system_getargs(uint8_t* buf, int32_t nbytes) {
-  return -1;
+  // remove leading whitespace
+  int i;
+  for (i = 0; (curr_pcb->arg_buf[i] == ' '); i++);
+
+  // make sure nbytes is less than the remaining buffer
+  int32_t remaining_buf = MAXBUFFER - i;
+  int32_t bytes_to_copy = nbytes;
+  if (remaining_buf < nbytes) {
+    // copy remaining_buf instead of nbytes
+    bytes_to_copy = remaining_buf;
+  }
+
+  // copy to the buffer
+  memcpy(buf, &(curr_pcb->arg_buf[i]), bytes_to_copy);
+  buf[bytes_to_copy] = '\0';
+  return 0;
 }
 
 int32_t system_vidmap(uint8_t** screen_start) {
-  return -1;
+   // Need to check if screen_start is in range
+  if((uint32_t)screen_start > MB_132 || (uint32_t)screen_start <= MB_128){
+    return -1;
+  }
+
+  // set the screen start address
+  *screen_start = (uint8_t*)VIRT_VIDEO_ADDR;
+  return 0;
 }
 
 int32_t system_sethandler(int32_t signum, void* handler_address) {

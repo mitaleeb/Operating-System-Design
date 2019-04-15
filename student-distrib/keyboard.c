@@ -251,8 +251,10 @@ void handle_keyboard_interrupt() {
 					else if(backspace_flag)
 						backspace_buffer();
 					/* if enter is pressed */
-					else if(enter_flag)
+					else if(enter_flag) {
+						write_to_buffer('\n');
 						enter_buffer();
+					}
 					/*if shift and caps */
 					else if(shift_flag && caps_flag) {
 						if (keyboard_output4[c] != '\0')
@@ -342,7 +344,7 @@ extern void backspace_buffer(void) {
 	 }
 	 term_buffer_index = 0;
 	 column_index = 0;
-	 enter_position();
+	 //enter_position();
 	 //update_cursor();
 	 enter_flag = 0;
  }
