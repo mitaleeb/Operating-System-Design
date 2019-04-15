@@ -18,7 +18,6 @@
 #define KERNEL_ADDR 0x400000
 #define VIDEO_ADDR 0xB8000
 #define PROG_VADDR 0x08000000
-#define VIRT_VIDEO_ADDR 0x08400000
 
 
 /* definitions for some useful macros for indexing the page directory */

@@ -13,6 +13,9 @@
 /* definition for alignment at 4KB */
 #define PAGE_4KB 4096
 
+/* definition for certain addresses in virtual memory */
+#define VIRT_VIDEO_ADDR 0x08400000
+
 /**
  * page_directory_t
  * 
