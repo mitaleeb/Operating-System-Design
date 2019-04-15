@@ -21,7 +21,6 @@
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
 #define MAX_PROCS   6 // maximum number of processes
-#define VIRT_VIDEO_ADDR 0x08400000
 
 /* declare the array holding the syscall function pointers */
 /* unnecessary since the assembly table works (allows variable params) */
@@ -395,12 +394,13 @@ int32_t system_getargs(uint8_t* buf, int32_t nbytes) {
 
 int32_t system_vidmap(uint8_t** screen_start) {
    // Need to check if screen_start is in range
-  if((uint32_t)screen_start >= MB_132 || (uint32_t)screen_start <= MB_128){
+  if((uint32_t)screen_start > MB_132 || (uint32_t)screen_start <= MB_128){
     return -1;
   }
-    // set the screen start address      
-    *screen_start = (uint8_t*)VIRT_VIDEO_ADDR;
-    return 0;
+
+  // set the screen start address      
+  *screen_start = (uint8_t*)VIRT_VIDEO_ADDR;
+  return 0;
 }
 
 int32_t system_sethandler(int32_t signum, void* handler_address) {
