@@ -66,8 +66,14 @@ void page_init()
     flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; 
     add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags);
 
-    /* set up paging for video memory */
+    /* set up the kernel level video memory page */
     switch_video_page(1); // initially start in terminal 1
+
+    /* set user-level vid mem pointers */
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR1, (void*)VIRT_VIDEO_ADDR, flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR2, (void*)(VIRT_VIDEO_ADDR + PAGE_4KB), flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR3, (void*)(VIRT_VIDEO_ADDR + 2 * PAGE_4KB), flags);
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
@@ -113,8 +119,8 @@ void add_program_page(void* phys_addr, int adding) {
 /**
  * switch_video_page()
  * 
- * DESCRIPTION: switches both the user and kernel's video memory pages to be
- *              pointing to the specified terminal's physical video memory.
+ * DESCRIPTION: switches the kernel's video memory page to be pointing to the
+ *              specified terminal's physical video memory.
  * INPUTS: term_index - the terminal number to switch to (1-3)
  * OUTPUTS: 0 if successful, -1 otherwise
  */
@@ -133,14 +139,25 @@ int switch_video_page(int term_index) {
 
     // switch the kernel-level page to point to the correct terminal's video
     uint32_t flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
-    add_page_table_entry(&(page_table_1), (void*)vaddr, (void*)VIDEO_ADDR, flags);
-
-    // switch the user-level page to point to the correct terminal's video
-    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
-    add_page_table_entry(&(page_table_2), (void*)vaddr, (void*)VIRT_VIDEO_ADDR, flags);
-    
+    add_page_table_entry(&(page_table_1), (void*)vaddr, (void*)VIDEO_ADDR, flags); 
     page_flushtlb(); // flush the tlb
     return 0; // success
+}
+
+/**
+ * request_user_video()
+ * 
+ * DESCRIPTION: returns the user-level pointer to video memory for the specified
+ *              terminal index.
+ * INPUTS: term_index - the terminal number
+ * OUTPUTS: the user-level video pointer. 0 if unsuccessful.
+ */
+uint8_t* request_user_video(int term_index) {
+    if (term_index > 0 && term_index < 4) {
+        return (uint8_t*)VIRT_VIDEO_ADDR + (term_index - 1) * PAGE_4KB;
+    }
+
+    return NULL; // term index was incorrect
 }
 
 /**

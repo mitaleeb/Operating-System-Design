@@ -174,8 +174,10 @@ int32_t system_execute(const uint8_t* command) {
   if (curr_pcb == NULL) {
     // we are executing the first process
     new_pcb->parent_pcb = NULL;
+    new_pcb->term_index = 1; // @TODO: this is probably incorrect
   } else {
     new_pcb->parent_pcb = curr_pcb;
+    new_pcb->term_index = curr_pcb->term_index;
   }
 
   // set the current pcb to be the new pcb
@@ -479,8 +481,14 @@ int32_t system_vidmap(uint8_t** screen_start) {
     return -1;
   }
 
+  // request from paging what our user-level video memory pointer is
+  uint8_t* vaddr = request_user_video(curr_pcb->term_index);
+  if (vaddr == NULL) {
+    return -1;
+  }
+
   // set the screen start address
-  *screen_start = (uint8_t*)VIRT_VIDEO_ADDR;
+  *screen_start = vaddr;
   return 0;
 }
 
