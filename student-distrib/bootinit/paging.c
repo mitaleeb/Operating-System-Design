@@ -154,7 +154,7 @@ int switch_video_page(int term_index) {
  */
 uint8_t* request_user_video(int term_index) {
     if (term_index > 0 && term_index < 4) {
-        return (uint8_t*)VIRT_VIDEO_ADDR + (term_index - 1) * PAGE_4KB;
+        return (uint8_t*)(VIRT_VIDEO_ADDR + (term_index - 1) * PAGE_4KB);
     }
 
     return NULL; // term index was incorrect
