@@ -53,6 +53,17 @@ void page_init();
  * OUTPUTS: none
  */
 void add_program_page(void* phys_addr, int adding);
+
+/**
+ * switch_video_page()
+ * 
+ * DESCRIPTION: switches both the user and kernel's video memory pages to be
+ *              pointing to the specified terminal's physical video memory.
+ * INPUTS: term_index - the terminal number to switch to (1-3)
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
+int switch_video_page(int term_index);
+
 /**
  * paging_tester()
  *

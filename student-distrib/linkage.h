@@ -5,6 +5,4 @@ extern void keyboard_linkage();
 
 extern void rtc_linkage();
 
-extern void systemcall_linkage();
-
 #endif

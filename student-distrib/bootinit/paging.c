@@ -16,8 +16,11 @@
 
 /* definitions for the beginning of certain segments */
 #define KERNEL_ADDR 0x400000
-#define VIDEO_ADDR 0xB8000
-#define PROG_VADDR 0x08000000
+#define VIDEO_ADDR  0xB8000
+#define VIDEO_ADDR1 (VIDEO_ADDR)
+#define VIDEO_ADDR2 (VIDEO_ADDR1 + PAGE_4KB)
+#define VIDEO_ADDR3 (VIDEO_ADDR2 + PAGE_4KB)
+#define PROG_VADDR  0x08000000
 
 
 /* definitions for some useful macros for indexing the page directory */
@@ -52,26 +55,19 @@ void page_init()
     }
 
     /* add the first page table (governing pages 0 - 4MB) to the directory */
-    uint32_t flags_kernel = READ_WRITE | PRESENT; 
-    add_page_dir_entry(&(page_table_1), 0, flags_kernel);
+    uint32_t flags = READ_WRITE | PRESENT; 
+    add_page_dir_entry(&(page_table_1), 0, flags);
 
     /* add the 4MB Kernel page to the page directory */
-    flags_kernel = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
-    add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags_kernel);
+    flags = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
+    add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags);
 
-    /* add a page table entry for video memory into the page table */
-    flags_kernel = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
-    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags_kernel);
+    /* create a user-level page table that maps to video memory */
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; 
+    add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags);
 
-    /* User level page table */
-    uint32_t flags_user = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; 
-    add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags_user);
-
-    /* add a page table entry for video memory into the page table */
-    flags_user = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
-    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)VIRT_VIDEO_ADDR, flags_user);
-
-
+    /* set up paging for video memory */
+    switch_video_page(1); // initially start in terminal 1
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
@@ -92,6 +88,15 @@ void page_init()
     );
 }
 
+/**
+ * add_program_page()
+ * 
+ * DESCRIPTION: adds or removes a 4 MB page to our page directory for a program
+ * (shell or executed by shell) Maps to 128 MB
+ * INPUTS: phys_addr - pointer to the physical address to be mapped
+ *         adding - 1 if we want to add the page, 0 if we want to remove
+ * OUTPUTS: none
+ */
 void add_program_page(void* phys_addr, int adding) {
     uint32_t flags = USER_LEVEL | PAGE_4MB | READ_WRITE;
     if (adding) {
@@ -103,6 +108,39 @@ void add_program_page(void* phys_addr, int adding) {
     add_page_dir_entry(phys_addr, (void*) PROG_VADDR, flags);
 
     page_flushtlb(); // flush the tlb
+}
+
+/**
+ * switch_video_page()
+ * 
+ * DESCRIPTION: switches both the user and kernel's video memory pages to be
+ *              pointing to the specified terminal's physical video memory.
+ * INPUTS: term_index - the terminal number to switch to (1-3)
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
+int switch_video_page(int term_index) {
+    // figure out which terminal we are switching to
+    uint32_t vaddr;
+    if (term_index == 1) {
+        vaddr = VIDEO_ADDR1;
+    } else if (term_index == 2) {
+        vaddr = VIDEO_ADDR2;
+    } else if (term_index == 3) {
+        vaddr = VIDEO_ADDR3;
+    } else {
+        return -1;
+    }
+
+    // switch the kernel-level page to point to the correct terminal's video
+    uint32_t flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
+    add_page_table_entry(&(page_table_1), (void*)vaddr, (void*)VIDEO_ADDR, flags);
+
+    // switch the user-level page to point to the correct terminal's video
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
+    add_page_table_entry(&(page_table_2), (void*)vaddr, (void*)VIRT_VIDEO_ADDR, flags);
+    
+    page_flushtlb(); // flush the tlb
+    return 0; // success
 }
 
 /**
@@ -197,10 +235,10 @@ int paging_tester() {
         result++;
     }
 
-    if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x60) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x40) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x20)) {
+    if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x60) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x40) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x20)) {
         result++;
     }
 

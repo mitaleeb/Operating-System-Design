@@ -87,8 +87,8 @@ static uint8_t keyboard_output4[128] = {
 
 /*
 * int32_t terminal_open()
-*   Inputs: none
-*   Return Value: 0
+*   Inputs: filename - Doesn't matter
+*   Return Value: 0 if successful, -1 otherwise
 *		Function: open terminal driver
 */
 int32_t terminal_open(const uint8_t* filename){
@@ -97,7 +97,7 @@ int32_t terminal_open(const uint8_t* filename){
 
 /*
 * int32_t terminal_close()
-*   Inputs: none
+*   Inputs: fd - file descriptor to close (doesn't matter)
 *   Return Value: 0
 *		Function: close terminal driver
 */
@@ -351,15 +351,3 @@ extern void backspace_buffer(void) {
 	 enter_flag = 0;
  }
 
-
-
-
-/* void handle_systemcall_interrupt()
- * Inputs: none
- * Return Value: none
- * Function: Function to handle systemcall interrupt
- */
-void handle_systemcall_interrupt() {
-	/* acknowledge systemcall interrupt() */
-	printf("System call successful! \n");
-}

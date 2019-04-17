@@ -24,9 +24,6 @@ extern void init_keyboard();
 /* Function to handle keyboard interrupt */
 extern void handle_keyboard_interrupt();
 
-/* Function to handle systemcall interrupt */
-extern void handle_systemcall_interrupt();
-
 /* Function to write to buffer from keyboard input */
 extern void write_to_buffer(uint8_t k);
 
