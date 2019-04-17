@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "terminal.h"
 
 #define VIDEO       0xB8000
 #define NUM_COLS    80
@@ -88,6 +89,41 @@ void clear(void) {
 
     	outb(0x0E, 0x3D4);
     	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
+    }
+
+    /*
+      * void set_terminal_position()
+      *   Inputs: current terminal number
+      *   Return Value: none
+      *	 Function: set x position, y position of terminal struct
+      */
+    void set_terminal_position(uint8_t term_num) {
+        terminal[term_num].term_screen_x = screen_x;
+      	terminal[term_num].term_screen_y = screen_y;
+    }
+
+    /*
+      * void set_terminal_position()
+      *   Inputs: current terminal number
+      *   Return Value: none
+      *	 Function: set x position, y position of screen
+      */
+    void update_screen(uint8_t term_num) {
+    	if (terminal[term_num].term_screen_x >= NUM_COLS) {
+    		enter_position();
+    		update_cursor();
+    		return;
+    	}
+      screen_x = terminal[term_num].term_screen_x;
+
+    	if (terminal[term_num].term_screen_y >= NUM_ROWS) {
+        scroll_up();
+    		screen_y = NUM_ROWS - 1;
+        update_cursor();
+      } else {
+        screen_y = terminal[term_num].term_screen_y;
+        update_cursor();
+    	}
     }
 
 

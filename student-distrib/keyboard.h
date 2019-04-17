@@ -13,6 +13,7 @@
 #define MAXBUFFER 128
 uint8_t old_term_buffer[MAXBUFFER];
 uint8_t new_term_buffer[MAXBUFFER];
+int term_buffer_index;
 
 /**
  * Function Declarations

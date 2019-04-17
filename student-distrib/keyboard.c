@@ -10,7 +10,7 @@
 #include "lib.h"
 #include "bootinit/idt.h"
 #include "keyboard.h"
-
+#include "terminal.h"
 
 #define MASTER_PORT_A 0x20
 #define SLAVE_PORT_A 0xA0
@@ -36,13 +36,19 @@
 #define ENTER_PRESS 0x1C
 #define BACKSPACE_PRESS 0x0E
 
+#define ALT_PRESS		0x38
+#define ALT_RELEASE	0xB8
+#define F1_PRESS		0x3B
+#define F2_PRESS		0x3C
+#define F3_PRESS		0x3D
 
 static int caps_flag = 0;
 static int shift_flag = 0;
 static int control_flag = 0;
+static int alt_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-static int term_buffer_index = 0;
+term_buffer_index = 0;
 static int old_tbi = 0;
 static int term_flag = 0;
 static int column_index = 0;
@@ -217,6 +223,8 @@ void handle_keyboard_interrupt() {
 						shift_flag = 0;
 					else if(c == CONTROL_RELEASE)
 						control_flag = 0;
+					else if(c == ALT_RELEASE)
+						alt_flag = 0;
 					/* check for capslock toggle */
 					else if(c == CAPS_PRESS)
 						caps_flag ^= 1;
@@ -235,8 +243,32 @@ void handle_keyboard_interrupt() {
 					}
 					else if(c == CONTROL_PRESS)
 						control_flag = 1;
+					else if(c == ALT_PRESS)
+						alt_flag = 1;
 					else if(c == LEFT_SHIFT_PRESS || c == RIGHT_SHIFT_PRESS)
 						shift_flag = 1;
+
+
+					/* if cntrl-l is pressed, clear screen */
+					if(control_flag && c == L_PRESS) {
+						clear();
+						reset_position();
+						//update_cursor();
+						column_index = 0;
+					}
+					/* if ALT-F1 is pressed, launch terminal 1 */
+					else if(alt_flag && c == F1_PRESS) {
+						launch_term(0);
+					}
+					/* if ALT-F2 is pressed, launch terminal 2 */
+					else if(alt_flag && c == F2_PRESS) {
+						launch_term(1);
+					}
+					/* if ALT-F3 is pressed, launch terminal 3 */
+					else if(alt_flag && c == F3_PRESS) {
+						launch_term(2);
+					}
+
 
 					/* if cntrl-l is pressed, clear screen */
 					if(control_flag && c == L_PRESS) {
@@ -350,4 +382,3 @@ extern void backspace_buffer(void) {
 	 //update_cursor();
 	 enter_flag = 0;
  }
-

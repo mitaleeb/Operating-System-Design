@@ -160,6 +160,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     init_keyboard();
     init_rtc();
+    init_term();
 
     // initialize the pcb global data
     curr_pcb = NULL;
