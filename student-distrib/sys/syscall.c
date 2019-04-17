@@ -67,26 +67,16 @@ int32_t system_execute(const uint8_t* command) {
   int32_t filename_idx = 0, space_flag = 0;
   int new_pid = -1;
   int cmd_len = (int) strlen((int8_t*)command);
-  int8_t new_command[cmd_len];
-
-  //create a copy of command to allow us to modify the string
-  strcpy(new_command, (int8_t*) command);
-
-  //check to see if the traling character is a new line character
-  if(new_command[cmd_len - 1] == '\n') {
-    new_command[cmd_len - 1] = '\0';
-    cmd_len--;
-  }
 
   // skip the leading spaces in command
-  while (new_command[filename_idx] == ' ') {
+  while (command[filename_idx] == ' ') {
     filename_idx++;
   }
 
   int i;
   // find the first space
   for (i = filename_idx; i < cmd_len; i++) {
-    if (new_command[i] == ' ') {
+    if (command[i] == ' ') {
       space_flag = 1;
       break; // finished finding filename
     }
@@ -102,15 +92,15 @@ int32_t system_execute(const uint8_t* command) {
   // copy the info into our local variables
   if (space_flag) {
     // copy the filename
-    strncpy(filename, (int8_t*) (new_command + filename_idx), (i - filename_idx));
+    strncpy(filename, (int8_t*) (command + filename_idx), (i - filename_idx));
     filename[i] = '\0'; // null terminate the filename
     i++;
 
     /* put the rest of the arguments into a different string */
-    strcpy(arguments, (int8_t*)(new_command + i));
+    strcpy(arguments, (int8_t*)(command + i));
   } else {
     // just copy the filename
-    strcpy(filename, (int8_t*) (new_command + filename_idx));
+    strcpy(filename, (int8_t*) (command + filename_idx));
   }
 
   /***** 2. Executable Check *****/
