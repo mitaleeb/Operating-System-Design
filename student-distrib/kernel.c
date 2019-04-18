@@ -15,6 +15,7 @@
 #include "fsys/fs.h"
 #include "sys/syscall.h"
 #include "sys/pcb.h"
+#include "terminal.h"
 #define RUN_TESTS
 
 /* Macros. */
