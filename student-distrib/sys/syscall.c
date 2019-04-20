@@ -164,7 +164,7 @@ int32_t system_execute(const uint8_t* command) {
   if (curr_pcb == NULL) {
     // we are executing the first process
     new_pcb->parent_pcb = NULL;
-    new_pcb->term_index = 1; // @TODO: this is probably incorrect
+    new_pcb->term_index = 0; // @TODO: this is probably incorrect
   } else {
     new_pcb->parent_pcb = curr_pcb;
     new_pcb->term_index = curr_pcb->term_index;

@@ -4,6 +4,7 @@
  * Implementation of the functions required for paging.
  */
 
+#include "../lib.h"
 #include "paging.h"
 
 /* definitions for the flags for page table and directory entires */
@@ -17,15 +18,17 @@
 /* definitions for the beginning of certain segments */
 #define KERNEL_ADDR 0x400000
 #define VIDEO_ADDR  0xB8000
-#define VIDEO_ADDR1 (VIDEO_ADDR)
+#define VIDEO_ADDR1 (VIDEO_ADDR + PAGE_4KB)
 #define VIDEO_ADDR2 (VIDEO_ADDR1 + PAGE_4KB)
 #define VIDEO_ADDR3 (VIDEO_ADDR2 + PAGE_4KB)
 #define PROG_VADDR  0x08000000
 
-
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
 #define PT_IDX(x) ((x >> 12) & 0x03FF)
+
+/* macro to get each terminal's virtual memory pointer */
+#define TERM_VADDR(x) (VIRT_VIDEO_ADDR + (PAGE_4KB * x))
 
 /* static variables to hold certain paging items */
 static page_directory_t page_directory __attribute__ ((aligned (PAGE_4KB)));
@@ -66,14 +69,20 @@ void page_init()
     flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; 
     add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags);
 
-    /* set up the kernel level video memory page */
-    switch_video_page(1); // initially start in terminal 1
+    /* set up the kernel level video memory pages */
+    flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags);
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR1, flags);
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR2, (void*)VIDEO_ADDR2, flags);
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR3, (void*)VIDEO_ADDR3, flags);
 
     /* set user-level vid mem pointers */
     flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
-    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR1, (void*)VIRT_VIDEO_ADDR, flags);
-    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR2, (void*)(VIRT_VIDEO_ADDR + PAGE_4KB), flags);
-    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR3, (void*)(VIRT_VIDEO_ADDR + 2 * PAGE_4KB), flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)TERM_VADDR(0), flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR2, (void*)TERM_VADDR(1), flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR3, (void*)TERM_VADDR(2), flags);
+
+    // note that for above we started with terminal 0 (1) pointing to video memory
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
@@ -121,25 +130,57 @@ void add_program_page(void* phys_addr, int adding) {
  * 
  * DESCRIPTION: switches the kernel's video memory page to be pointing to the
  *              specified terminal's physical video memory.
- * INPUTS: term_index - the terminal number to switch to (1-3)
+ * INPUTS: term_to - the terminal number to switch to (0-2)
+ *         term_from - the terminal number switching from
  * OUTPUTS: 0 if successful, -1 otherwise
  */
-int switch_video_page(int term_index) {
+int switch_video_page(int term_to, int term_from) {
+    // quick return if we don't need to do anything
+    if (term_to == term_from)
+        return 0; // technically a success
+
     // figure out which terminal we are switching to
-    uint32_t vaddr;
-    if (term_index == 1) {
-        vaddr = VIDEO_ADDR1;
-    } else if (term_index == 2) {
-        vaddr = VIDEO_ADDR2;
-    } else if (term_index == 3) {
-        vaddr = VIDEO_ADDR3;
+    uint32_t to_vaddr;
+    if (term_to == 0) {
+        to_vaddr = VIDEO_ADDR1;
+    } else if (term_to == 1) {
+        to_vaddr = VIDEO_ADDR2;
+    } else if (term_to == 2) {
+        to_vaddr = VIDEO_ADDR3;
     } else {
         return -1;
     }
 
-    // switch the kernel-level page to point to the correct terminal's video
-    uint32_t flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
-    add_page_table_entry(&(page_table_1), (void*)vaddr, (void*)VIDEO_ADDR, flags); 
+    // figure out which terminal we are switching from
+    uint32_t from_vaddr;
+    if (term_from == 0) {
+        from_vaddr = VIDEO_ADDR1;
+    } else if (term_from == 1) {
+        from_vaddr = VIDEO_ADDR2;
+    } else if (term_from == 2) {
+        from_vaddr = VIDEO_ADDR3;
+    } else {
+        return -1;
+    }
+
+    // map the virtual memory addresses of the previous terminal to their own video memory
+    uint32_t flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
+    add_page_table_entry(&(page_table_1), (void*)from_vaddr, (void*)from_vaddr, flags); 
+
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; // user level
+    add_page_table_entry(&(page_table_2), (void*)from_vaddr, (void*)TERM_VADDR(term_from), flags);
+
+    // copy the data to and from physical video memory
+    memcpy((void*)from_vaddr, (void*)VIDEO_ADDR, PAGE_4KB);
+    memcpy((void*)VIDEO_ADDR, (void*)to_vaddr, PAGE_4KB);
+
+    // map the virtual video memory addresses to point to physical video memory
+    flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)to_vaddr, flags); 
+
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; // user level
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)TERM_VADDR(term_to), flags);
+
     page_flushtlb(); // flush the tlb
     return 0; // success
 }
@@ -153,8 +194,8 @@ int switch_video_page(int term_index) {
  * OUTPUTS: the user-level video pointer. 0 if unsuccessful.
  */
 uint8_t* request_user_video(int term_index) {
-    if (term_index > 0 && term_index < 4) {
-        return (uint8_t*)(VIRT_VIDEO_ADDR + (term_index - 1) * PAGE_4KB);
+    if (term_index >= 0 && term_index < 3) {
+        return (uint8_t*)(TERM_VADDR(term_index));
     }
 
     return NULL; // term index was incorrect

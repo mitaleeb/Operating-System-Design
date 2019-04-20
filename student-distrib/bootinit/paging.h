@@ -62,10 +62,11 @@ void add_program_page(void* phys_addr, int adding);
  * 
  * DESCRIPTION: switches the kernel's video memory page to be pointing to the
  *              specified terminal's physical video memory.
- * INPUTS: term_index - the terminal number to switch to (1-3)
+ * INPUTS: term_to - the terminal number to switch to (0-2)
+ *         term_from - the terminal number switching from (0-2)
  * OUTPUTS: 0 if successful, -1 otherwise
  */
-int switch_video_page(int term_index);
+int switch_video_page(int term_to, int term_from);
 
 /**
  * request_user_video()

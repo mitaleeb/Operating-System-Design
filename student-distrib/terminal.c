@@ -119,8 +119,9 @@ uint32_t launch_term(uint32_t switch_to) {
   update_screen(switch_to);
 
   /* save current video memory before switching to new terminal */
-  memcpy((uint8_t*)terminal[curr_terminal].video_mem, (uint8_t*)VIDEO, (2 * NUM_ROWS * NUM_COLS));
-  memcpy((uint8_t*)VIDEO, (uint8_t*)terminal[switch_to].video_mem, (2 * NUM_ROWS * NUM_COLS));
+  // memcpy((uint8_t*)terminal[curr_terminal].video_mem, (uint8_t*)VIDEO, (2 * NUM_ROWS * NUM_COLS));
+  // memcpy((uint8_t*)VIDEO, (uint8_t*)terminal[switch_to].video_mem, (2 * NUM_ROWS * NUM_COLS));
+	switch_video_page(switch_to, curr_terminal);
 
   /* update current terminal number and mark it as running */
   curr_terminal = switch_to;
