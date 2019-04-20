@@ -23,6 +23,11 @@
 #define VIDEO_ADDR3 (VIDEO_ADDR2 + PAGE_4KB)
 #define PROG_VADDR  0x08000000
 
+/* definitions for color, etc in video memory (for initialization) */
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define ATTRIB      0x7
+
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
 #define PT_IDX(x) ((x >> 12) & 0x03FF)
@@ -75,6 +80,17 @@ void page_init()
     add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR1, flags);
     add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR2, (void*)VIDEO_ADDR2, flags);
     add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR3, (void*)VIDEO_ADDR3, flags);
+
+    // set the video memories to be white
+    int32_t i;
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(VIDEO_ADDR1 + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_ADDR1 + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(VIDEO_ADDR2 + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_ADDR2 + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(VIDEO_ADDR3 + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_ADDR3 + (i << 1) + 1) = ATTRIB;
+    }
 
     /* set user-level vid mem pointers */
     flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
@@ -170,9 +186,13 @@ int switch_video_page(int term_to, int term_from) {
     flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; // user level
     add_page_table_entry(&(page_table_2), (void*)from_vaddr, (void*)TERM_VADDR(term_from), flags);
 
+    page_flushtlb();
+
     // copy the data to and from physical video memory
+    cli();
     memcpy((void*)from_vaddr, (void*)VIDEO_ADDR, PAGE_4KB);
     memcpy((void*)VIDEO_ADDR, (void*)to_vaddr, PAGE_4KB);
+    sti();
 
     // map the virtual video memory addresses to point to physical video memory
     flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
