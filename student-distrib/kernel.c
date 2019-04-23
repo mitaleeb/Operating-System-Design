@@ -153,18 +153,18 @@ void entry(unsigned long magic, unsigned long addr) {
     /* turn on paging */
     page_init();
 
-    /* Init the PIC */
+    /* initialize the pic */
     i8259_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
 
+    /* initialize the hardware devices */
     init_keyboard();
     init_rtc();
-    init_term();
 
-    // initialize the pcb global data
-    curr_pcb = NULL;
+    /* initialize the process data */
+    init_pcb();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
