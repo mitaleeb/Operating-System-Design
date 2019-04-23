@@ -165,6 +165,10 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* initialize the process data */
     init_pcb();
+    executing_initial_shell = 1;
+
+    /* initialize the terminal structures */
+    init_terminal();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
