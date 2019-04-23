@@ -8,12 +8,10 @@
 #include "i8259.h"
 #include "keyboard.h"
 #include "lib.h"
-#include "bootinit/paging.h"
-#include "sys/pcb.h"
-//#include "scheduling.h"
 #include "sys/syscall.h"
 #include "terminal.h"
 #include "types.h"
+#include "scheduler.h"
 
 #define EIGHT_MB    0x00800000
 #define FOUR_MB     0x00400000
@@ -41,7 +39,7 @@ void init_terminal() {
 		}
 	}
 	// Initialize terminal struct and flags
-	for(i = 0; i < 3; i++) {
+	for(i = 0; i < MAX_TERMS; i++) {
 		terminal[i].term_buffer_index = 0;
 		terminal[i].term_screen_x = 0;
 		terminal[i].term_screen_y = 0;
@@ -62,9 +60,11 @@ void init_terminal() {
  * OUTPUTS: NONE
  */
 void launch_terminal() {
-	// TODO: context switch function call 
-
 	terminal[visible_terminal].is_started = 1;
+
+	// TODO: context switch function call (double check this)
+	context_switch(curr_pcb->pid, -1);
+
 	run_shell();
 }
 
@@ -77,7 +77,7 @@ void launch_terminal() {
  */
 int switch_terminal(int32_t switch_to) {
 	int i;
-	if (switch_to < 0 || switch_to > 2)
+	if (switch_to < 0 || switch_to >= MAX_TERMS)
 		return -1;
 	if (switch_to == visible_terminal)
 		return 0;
