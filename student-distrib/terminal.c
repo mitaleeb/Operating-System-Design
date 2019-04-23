@@ -75,7 +75,8 @@ void launch_terminal() {
 		: "memory"
 	);
 	executing_initial_shell = 1;
-	run_shell();
+	system_execute((uint8_t*)"shell");
+	// run_shell();
 }
 
 /**

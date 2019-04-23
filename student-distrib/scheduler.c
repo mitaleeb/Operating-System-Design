@@ -33,7 +33,7 @@ int find_next_pid() {
 // here maybe temporarily for debug purposes
 void context_switch(int pid_from, int pid_to) {
   // error checking
-  if (pid_from < -1 || pid_from >= MAX_PROCS || pid_to < -1 || pid_to >= MAX_PROCS) {
+  if (pid_from < 0 || pid_from >= MAX_PROCS || pid_to < 0 || pid_to >= MAX_PROCS) {
     return;
   }
 
