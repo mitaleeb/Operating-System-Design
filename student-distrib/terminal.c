@@ -51,6 +51,7 @@ void init_terminal() {
 // Initiailize first terminal as visible and started
 	terminal[0].is_started = 1;
 	terminal[0].is_visible = 1;
+	visible_terminal = 0;
 }
 
 /**
