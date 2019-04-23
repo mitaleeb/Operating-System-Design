@@ -133,7 +133,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	while(!term_flag) {}
 
 	/* read from input to old terminal buffer */
-	if (length <= old_tbi) {
+	if (length < old_tbi) {
 	 	memcpy(buf, &(old_term_buffer), length);
 	} else {
 	 	memcpy(buf, &(old_term_buffer), old_tbi);
@@ -173,7 +173,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 
 	/* check to ensure buf.size > length, otherwise reassign length */
 	int buflen = strlen((int8_t*) buf);
-	//printf("buflen is %d", buflen);
 	if(buflen < length)
 		length = buflen;
   /* print each buffer value to terminal */
@@ -211,8 +210,7 @@ void handle_keyboard_interrupt() {
   	/* clear interrupts */
 		disable_irq(IRQ_KEYBOARD);
 		send_eoi(IRQ_KEYBOARD);
-    /* 0x21 vector in the IDT was set to
-     * handle_keyboard_interrupt */
+		
     uint8_t c = 0x00;
 	  do {
 			  /* read from 0x60 = data port from keyboard controller */
