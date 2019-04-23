@@ -60,7 +60,7 @@ void init_terminal() {
  * INPUTS: NONE
  * OUTPUTS: NONE
  */
-int32_t launch_terminal() {
+void launch_terminal() {
 	terminal[visible_terminal].is_started = 1;
 	run_shell();
 }
@@ -73,6 +73,7 @@ int32_t launch_terminal() {
  * OUTPUTS: 0 if successful, -1 otherwise
  */
 int switch_terminal(int32_t switch_to) {
+	int i;
 	if (switch_to < 0 || switch_to > 2)
 		return -1;
 	if (switch_to == visible_terminal)
@@ -92,6 +93,9 @@ int switch_terminal(int32_t switch_to) {
 
   set_terminal_position(visible_terminal);
   update_screen(switch_to);
+
+	// Update video page
+	switch_video_page(switch_to, visible_terminal);
 
 	/* Update visibility of terminal */
 	cli();

@@ -15,6 +15,8 @@ void init_pcb() {
   for (i = 0; i < MAX_TERMS; i++) {
     terminal_pcbs[i] = NULL;
   }
+  // initialize number of processes
+  num_procs = 0;
 
   // set the first pcb to be null to indicate we have no executed process
   curr_pcb = NULL;

@@ -14,8 +14,8 @@
 
 /**
  * fops_t - a struct to hold the file operation jump table
- * 
- * The data is: 
+ *
+ * The data is:
  *    read - a function pointer to the read function
  *    write - a function pointer to the write function
  *    open - a function pointer to the open function
@@ -30,7 +30,7 @@ typedef struct {
 
 /**
  * fd_entry_t - a struct to hold the data for a file descriptor
- * 
+ *
  * The data is:
  *    fops_table - a pointer to the fops_t struct for this fd
  *    inode - the inode number of this file
@@ -46,7 +46,7 @@ typedef struct {
 
 /**
  * pcb_t - a struct to hold data for the pcb
- * 
+ *
  * The data is:
  *    file_descs - the array of MAX_FDS file descriptors
  *    pid - the process id of this process
@@ -71,7 +71,7 @@ typedef struct _pcb {
 
 /* hold variables regarding processes */
 pcb_t* curr_pcb; // pointer to the current pcb
-int num_procs = 0; // the total number of running processes
+int num_procs; // the total number of running processes
 
 int process_array[MAX_PROCS]; // an array that holds the pid statuses
 pcb_t* terminal_pcbs[MAX_TERMS];
@@ -79,7 +79,7 @@ pcb_t* terminal_pcbs[MAX_TERMS];
 
 /**
  * init_pcb()
- * 
+ *
  * DESCRIPTION: the function called during the boot process to initialize the
  * pcb structures.
  */

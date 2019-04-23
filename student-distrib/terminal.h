@@ -33,7 +33,7 @@ terminal_t terminal[3];
 
 /*Function Definitions */
 void init_terminal(void);
-int32_t launch_terminal();
+void launch_terminal();
 int32_t switch_terminal(int32_t switch_to);
 
 #endif
