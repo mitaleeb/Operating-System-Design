@@ -14,9 +14,21 @@
 
 // here maybe temporarily for debug purposes
 void context_switch(int pid_from, int pid_to) {
+  pcb_t* pcb_from;
+  pcb_t* pcb_to;
+  
   // do math to get the pcb pointers 
-  pcb_t* pcb_from = (pcb_t*) (EIGHT_MB - (pid_from + 1) * EIGHT_KB);
-  pcb_t* pcb_to = (pcb_t*) (EIGHT_MB - (pid_to + 1) * EIGHT_KB);
+  if (pid_from == -1) {
+    pcb_from = &root_pcb; 
+  } else {
+    pcb_from = (pcb_t*) (EIGHT_MB - (pid_from + 1) * EIGHT_KB);
+  }
+
+  if (pid_to == -1) {
+    pcb_to = &root_pcb;
+  } else {
+    pcb_to = (pcb_t*) (EIGHT_MB - (pid_to + 1) * EIGHT_KB);
+  }
 
   // switch the program page
   int32_t phys_addr = EIGHT_MB + (pid_to * FOUR_MB);
