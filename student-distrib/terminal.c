@@ -63,8 +63,18 @@ void launch_terminal() {
 	terminal[visible_terminal].is_started = 1;
 
 	// TODO: context switch function call (double check this)
-	context_switch(curr_pcb->pid, -1);
-
+	// context_switch(curr_pcb->pid, -1);
+	
+	// instead of doing a context switch to the root process, just go back to the
+	// idea of holding a flag and letting execute know that this is an initial
+	// process AFTER SAVING THE STACK POINTERS HERE
+	asm volatile(
+		"movl %%esp, %0;"
+		"movl %%ebp, %1;"
+		: "=g" (curr_pcb->my_esp), "=g" (curr_pcb->my_ebp) : 
+		: "memory"
+	);
+	executing_initial_shell = 1;
 	run_shell();
 }
 

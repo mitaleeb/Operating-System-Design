@@ -10,6 +10,9 @@
 /* the number of system calls */
 #define NUM_SYSCALLS 6
 
+/* global variable to indicate that we are executing an initial shell */
+int executing_initial_shell;
+
 /* functions to help us set up the ability to receive a syscall */
 extern int32_t syscall_linker(); // prototype for assembly linkage
 

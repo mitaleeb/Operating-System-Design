@@ -14,6 +14,11 @@
 
 // here maybe temporarily for debug purposes
 void context_switch(int pid_from, int pid_to) {
+  // error checking
+  if (pid_from < -1 || pid_from >= MAX_PROCS || pid_to < -1 || pid_to >= MAX_PROCS) {
+    return;
+  }
+
   pcb_t* pcb_from;
   pcb_t* pcb_to;
   
@@ -30,9 +35,11 @@ void context_switch(int pid_from, int pid_to) {
     pcb_to = (pcb_t*) (EIGHT_MB - (pid_to + 1) * EIGHT_KB);
   }
 
-  // switch the program page
-  int32_t phys_addr = EIGHT_MB + (pid_to * FOUR_MB);
-  add_program_page((void*)phys_addr, 1);
+  if (pid_to > -1) {
+    // switch the program page
+    int32_t phys_addr = EIGHT_MB + (pid_to * FOUR_MB);
+    add_program_page((void*)phys_addr, 1);
+  }
 
   // change the relevant variables in the TSS
   tss.ss0 = KERNEL_DS;
@@ -42,8 +49,10 @@ void context_switch(int pid_from, int pid_to) {
   asm volatile (
     "movl %%esp, %0;"
     "movl %%ebp, %1;"
+    "cli;"
     "movl %2, %%esp;"
     "movl %3, %%ebp;"
+    "sti;"
     :"=g" (pcb_from->my_esp), "=g"(pcb_from->my_ebp)
     : "g" (pcb_to->my_esp), "g"(pcb_to->my_ebp)
     : "memory"

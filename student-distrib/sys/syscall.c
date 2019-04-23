@@ -155,17 +155,18 @@ int32_t system_execute(const uint8_t* command) {
   pcb_t* new_pcb = (pcb_t*) (EIGHT_MB - (new_pid + 1) * EIGHT_KB);
   new_pcb->pid = new_pid; // set the pid, indexed at 0
 
-  if (curr_pcb == &root_pcb) {
+  if (executing_initial_shell || curr_pcb == NULL) {
     // we are executing an initial shell
-    new_pcb->parent_pcb = curr_pcb;
-    new_pcb->term_index = visible_terminal; // @TODO: this is probably incorrect
+    new_pcb->parent_pcb = NULL;
+    new_pcb->term_index = visible_terminal;
+    executing_initial_shell = 0;
   } else {
     new_pcb->parent_pcb = curr_pcb;
     new_pcb->term_index = curr_pcb->term_index;
   }
 
   // save a pointer to the old pcb
-  pcb_t* old_pcb = curr_pcb; // should never be null
+  // pcb_t* old_pcb = curr_pcb; // should never be null
   // set the current pcb to be the new pcb
   curr_pcb = new_pcb;
 
@@ -202,10 +203,7 @@ int32_t system_execute(const uint8_t* command) {
   asm volatile(
     "movl %%esp, %0;"
     "movl %%ebp, %1;"
-    "movl %%esp, %2;"
-    "movl %%ebp, %3;"
-    :"=g" (curr_pcb->parent_esp), "=g" (curr_pcb->parent_ebp),
-     "=g" (old_pcb->my_esp), "=g" (old_pcb->my_ebp) // outputs
+    :"=g" (curr_pcb->parent_esp), "=g" (curr_pcb->parent_ebp) // outputs
     : // inputs
     : "memory" // clobbered registers
   );
@@ -259,8 +257,9 @@ int32_t system_halt(uint8_t status) {
   curr_pcb = curr_pcb->parent_pcb;
   num_procs--;
 
-  // if we are out of processes, execute another shell
-  if (num_procs == 0) {
+  // if we are trying to exit an initial shell, restart shell
+  if (curr_pcb == NULL || num_procs == 0) {
+    executing_initial_shell = 1;
     run_shell();
   }
 
