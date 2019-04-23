@@ -11,6 +11,7 @@
 #include "bootinit/idt.h"
 #include "keyboard.h"
 #include "terminal.h"
+#include "scheduler.h" // TODO: remove this later
 
 #define MASTER_PORT_A 0x20
 #define SLAVE_PORT_A 0xA0
@@ -268,6 +269,13 @@ void handle_keyboard_interrupt() {
 					else if(alt_flag && c == F3_PRESS) {
 						switch_terminal(2);
 					}
+					
+					// TODO: REMOVE THIS/TEST THIS
+					// if (!control_flag && c == 0x02) { // should be the 1 key
+					// 	// manual task switching
+					// 	int next_pid = find_next_pid();
+					// 	context_switch(curr_pcb->pid, next_pid);
+					// }
 
 
 					/* if cntrl-l is pressed, clear screen */

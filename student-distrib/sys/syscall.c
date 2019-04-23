@@ -170,6 +170,9 @@ int32_t system_execute(const uint8_t* command) {
   // set the current pcb to be the new pcb
   curr_pcb = new_pcb;
 
+  // update the tail of the pcb list for this terminal
+  terminal_pcbs[curr_pcb->term_index] = curr_pcb;
+
   // copy parsed argument to the buffer in current PCB
 	strcpy((int8_t*) (curr_pcb->arg_buf), arguments);
 
