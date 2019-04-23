@@ -273,9 +273,11 @@ int32_t system_halt(uint8_t status) {
 
   // restore the saved stack, and perform execute's return
   asm volatile(
+    "cli;"
     "movl %2, %%esp;"
     "movl %1, %%ebp;"
     "movl %0, %%eax;"
+    "sti;"
     "leave;" // execute's return
     "ret;"
     : // output
