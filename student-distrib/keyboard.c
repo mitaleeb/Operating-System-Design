@@ -210,7 +210,7 @@ void handle_keyboard_interrupt() {
   	/* clear interrupts */
 		disable_irq(IRQ_KEYBOARD);
 		send_eoi(IRQ_KEYBOARD);
-		
+
     uint8_t c = 0x00;
 	  do {
 			  /* read from 0x60 = data port from keyboard controller */
@@ -256,17 +256,17 @@ void handle_keyboard_interrupt() {
 						//update_cursor();
 						column_index = 0;
 					}
-					/* if ALT-F1 is pressed, launch terminal 1 */
+					/* if ALT-F1 is pressed, switch to terminal 1 */
 					else if(alt_flag && c == F1_PRESS) {
-						launch_term(0);
+						switch_terminal(0);
 					}
-					/* if ALT-F2 is pressed, launch terminal 2 */
+					/* if ALT-F2 is pressed, switch to terminal 2 */
 					else if(alt_flag && c == F2_PRESS) {
-						launch_term(1);
+						switch_terminal(1);
 					}
-					/* if ALT-F3 is pressed, launch terminal 3 */
+					/* if ALT-F3 is pressed, switch to terminal 3 */
 					else if(alt_flag && c == F3_PRESS) {
-						launch_term(2);
+						switch_terminal(2);
 					}
 
 

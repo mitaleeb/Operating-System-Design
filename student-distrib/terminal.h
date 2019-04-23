@@ -12,10 +12,9 @@
 #include "keyboard.h"
 
 typedef struct {
-  uint8_t term_num;
-	uint8_t curr_process_num;
-  uint8_t flag;
-  uint8_t shell_flag;
+  /* flags */
+  int32_t is_started;
+  int32_t is_visible;
 
   /* similar to keyboard.c */
   uint8_t old_term_buffer[MAXBUFFER];
@@ -25,18 +24,16 @@ typedef struct {
   /* position - similar to screen_x, screen_y in lib.c */
   uint32_t term_screen_x;
   uint32_t term_screen_y;
-
-  /* video memory pointer */
-  uint8_t video_mem[4000];
 } terminal_t;
 
 /* Global Variables - used to update terminal */
-uint8_t curr_terminal;
-uint8_t next_terminal;
+int32_t visible_terminal;
+int32_t next_terminal;
 terminal_t terminal[3];
 
 /*Function Definitions */
-extern void init_term(void);
-extern uint32_t launch_term(uint32_t num);
+void init_terminal(void);
+int32_t launch_terminal();
+int32_t switch_terminal(int32_t switch_to);
 
 #endif

@@ -103,27 +103,15 @@ void clear(void) {
     }
 
     /*
-      * void set_terminal_position()
+      * void update_screen()
       *   Inputs: current terminal number
       *   Return Value: none
-      *	 Function: set x position, y position of screen
+      *	 Function: Updates cursor on terminal window
       */
     void update_screen(uint8_t term_num) {
-    	if (terminal[term_num].term_screen_x >= NUM_COLS) {
-    		enter_position();
-    		update_cursor();
-    		return;
-    	}
       screen_x = terminal[term_num].term_screen_x;
-
-    	if (terminal[term_num].term_screen_y >= NUM_ROWS) {
-        scroll_up();
-    		screen_y = NUM_ROWS - 1;
-        update_cursor();
-      } else {
-        screen_y = terminal[term_num].term_screen_y;
-        update_cursor();
-    	}
+      screen_y = terminal[term_num].term_screen_y;
+      update_cursor();
     }
 
 
