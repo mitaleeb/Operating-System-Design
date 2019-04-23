@@ -20,13 +20,6 @@
 #define MB_132      0x08400000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
-#define MAX_PROCS   6 // maximum number of processes
-
-/* declare the array holding the syscall function pointers */
-/* unnecessary since the assembly table works (allows variable params) */
-// static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
-int num_procs = 0;
 
 /* static definitions of certain file operations */
 static fops_t stdin_fops = {&terminal_read, &garbage_write, &terminal_open, &terminal_close};

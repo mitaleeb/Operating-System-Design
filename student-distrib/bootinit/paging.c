@@ -179,6 +179,7 @@ int switch_video_page(int term_to, int term_from) {
         return -1;
     }
 
+    cli();
     // map the virtual memory addresses of the previous terminal to their own video memory
     uint32_t flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
     add_page_table_entry(&(page_table_1), (void*)from_vaddr, (void*)from_vaddr, flags); 
@@ -189,10 +190,8 @@ int switch_video_page(int term_to, int term_from) {
     page_flushtlb();
 
     // copy the data to and from physical video memory
-    cli();
     memcpy((void*)from_vaddr, (void*)VIDEO_ADDR, PAGE_4KB);
     memcpy((void*)VIDEO_ADDR, (void*)to_vaddr, PAGE_4KB);
-    sti();
 
     // map the virtual video memory addresses to point to physical video memory
     flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
@@ -202,6 +201,7 @@ int switch_video_page(int term_to, int term_from) {
     add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)TERM_VADDR(term_to), flags);
 
     page_flushtlb(); // flush the tlb
+    sti();
     return 0; // success
 }
 

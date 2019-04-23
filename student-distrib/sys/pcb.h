@@ -5,11 +5,12 @@
 #include "../types.h"
 
 /* defines to make our code more readable */
-#define MAX_FDS       8
+#define MAX_FDS       8    // maximum number of file descriptors
 #define FD_IN_USE     1
 #define FD_NOT_IN_USE 0
-
-#define ARG_BUF_SIZE  128
+#define ARG_BUF_SIZE  128  // size in characters of arg buff
+#define MAX_PROCS     6    // maximum number of processes
+#define MAX_TERMS (MAX_PROCS / 2) // each term needs to run at least 2 procs
 
 /**
  * fops_t - a struct to hold the file operation jump table
@@ -50,6 +51,10 @@ typedef struct {
  *    file_descs - the array of MAX_FDS file descriptors
  *    pid - the process id of this process
  *    parent_pcb - a pointer to the parent pcb
+ *    parent_esp - the esp to return to upon halting
+ *    parent_ebp - the ebp to return to upon halting
+ *    my_esp - the pcb's current esp upon leaving it's context
+ *    my_ebp - the pcb's curren ebp upon leaving it's context
  *    arg_buf - a buffer to hold the text arguments (space separated)
  */
 typedef struct _pcb {
@@ -59,13 +64,26 @@ typedef struct _pcb {
   struct _pcb* parent_pcb;
   uint32_t parent_esp;
   uint32_t parent_ebp;
+  uint32_t my_esp;
+  uint32_t my_ebp;
   int8_t arg_buf[ARG_BUF_SIZE];
 } pcb_t;
 
 /* hold variables regarding processes */
 pcb_t* curr_pcb; // pointer to the current pcb
-// int num_procs; // number of currently open processes
+int num_procs = 0; // the total number of running processes
 
+int process_array[MAX_PROCS]; // an array that holds the pid statuses
+pcb_t* terminal_pcbs[MAX_TERMS];
+
+
+/**
+ * init_pcb()
+ * 
+ * DESCRIPTION: the function called during the boot process to initialize the
+ * pcb structures.
+ */
+void init_pcb();
 
 /* declare some garbage operations that return -1 */
 int32_t garbage_read(int32_t fd, void* buf, int32_t nbytes);

@@ -48,11 +48,12 @@ static int control_flag = 0;
 static int alt_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-term_buffer_index = 0;
 static int old_tbi = 0;
 static int term_flag = 0;
 static int column_index = 0;
 
+// PS2 keyboard scancode can be seen here:
+// http://www.quadibloc.com/comp/scan.htm
 
 /* keyboard_output1 for regular input */
 static uint8_t keyboard_output1[128] = {
@@ -195,6 +196,7 @@ void init_keyboard() {
 			new_term_buffer[i] = '\0';
 		}
 		term_flag = 0;
+		term_buffer_index = 0;
 
 		/* keyboard is on IR1 of master PIC */
     enable_irq(IRQ_KEYBOARD);
