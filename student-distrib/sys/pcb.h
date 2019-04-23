@@ -73,6 +73,7 @@ typedef struct _pcb {
 pcb_t* curr_pcb; // pointer to the current pcb
 int num_procs; // the total number of running processes
 
+pcb_t root_pcb; // root of pcb tree which will hvae terminal_pcbs as children
 int process_array[MAX_PROCS]; // an array that holds the pid statuses
 pcb_t* terminal_pcbs[MAX_TERMS];
 

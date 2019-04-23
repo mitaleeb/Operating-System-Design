@@ -62,6 +62,8 @@ void init_terminal() {
  * OUTPUTS: NONE
  */
 void launch_terminal() {
+	// TODO: context switch function call 
+
 	terminal[visible_terminal].is_started = 1;
 	run_shell();
 }
