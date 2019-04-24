@@ -80,6 +80,9 @@ void disable_irq(uint32_t irq_num) {
         slave_mask |= mask; // apply the 1 to the global mask
         outb(slave_mask, SLAVE_8259_PORT + 1);
     } else {
+        for (i = 0; i < irq_num; i++) {
+            mask = (mask << 1);
+        }
         master_mask |= mask; // apply the 1 to the global mask
         outb(master_mask, MASTER_8259_PORT + 1);
     }
