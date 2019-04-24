@@ -45,12 +45,8 @@ void i8259_init(void) {
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
 
-    unsigned int mask=0xFE; 		// Initializes mask as 1111 1110 to use bit zero as irq mask
+    unsigned int mask = 0xFE; 		// Initializes mask as 1111 1110 to use bit zero as irq mask
 	int i;							// Variable used for bit shifting in loop
-	//mask = 1 << irq_num;
-
-	/* clear interrupts */
-	//cli();
 
 	/* determine if PIC is master or slave */
 	if (irq_num > 7) {
@@ -65,47 +61,35 @@ void enable_irq(uint32_t irq_num) {
 			mask = (mask << 1) + 1;
 		}
 	    master_mask &= mask;
-	    //master_mask = ~master_mask;
 		outb(master_mask, MASTER_8259_PORT + 1);
 	}
-	// uint32_t a = inb(MASTER_8259_PORT + 1);
-	// printf("mask is: %x\n",a);
-	/* set interrupts */
-	//sti();
 }
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
-    /* decrement to bits 0-7 if on slave pic */
-    if (irq_num > 7)
-        irq_num -= 8;
 
-    unsigned int mask=0x01;				// Disable IRQ line mask with '1' bit
-	//mask = 1 << irq_num;
-
-	/* clear interrupts */
-	//cli();
+    unsigned int mask = 0x01;				// Disable IRQ line mask with '1' bit
+	int i;
 
 	/* determine if PIC is master or slave */
 	if (irq_num > 7) {
-	    // OR if active low
-	    slave_mask |= mask;
+		irq_num -= 8; // decrement to get the slave idx
+		for (i = 0; i < irq_num; i++) {
+			mask = (mask << 1);
+		}
+	    slave_mask |= mask; // apply the 1 to the global mask
 		outb(slave_mask, SLAVE_8259_PORT + 1);
 	} else {
-		master_mask |= mask;
+		master_mask |= mask; // apply the 1 to the global mask
 		outb(master_mask, MASTER_8259_PORT + 1);
 	}
-
-	/* set interrupts */
-	//sti();
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    //printf("end of interrupt %i\n", irq_num);
     /* determine if PIC is master or slave */
 	if(irq_num > 7) {
-		irq_num -= 8;
+		irq_num -= 8; // decrement to get the slave idx
 		outb((EOI | irq_num), SLAVE_8259_PORT);     /* send EOI to slave */
 		outb((EOI + 2), MASTER_8259_PORT);          /* send EOI to master */
 	} else {
