@@ -60,10 +60,9 @@ void handle_pit_interrupt() {
 
   // send end of interrupt
   send_eoi(IRQ_PIT);
+  enable_irq(IRQ_PIT);
 
   // perform task switching
-  // int next_pid = find_next_pid();
-  // context_switch(curr_pcb->pid, next_pid);
-
-  enable_irq(IRQ_PIT);
+  int next_pid = find_next_pid();
+  context_switch(curr_pcb->pid, next_pid);
 }

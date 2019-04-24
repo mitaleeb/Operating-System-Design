@@ -61,6 +61,7 @@ void init_terminal() {
  */
 void launch_terminal() {
 	terminal[visible_terminal].is_started = 1;
+	enable_irq(IRQ_KEYBOARD);
 
 	// TODO: context switch function call (double check this)
 	// context_switch(curr_pcb->pid, -1);

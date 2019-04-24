@@ -6,8 +6,8 @@
 #include "lib.h"
 
 /* Interrupt masks to determine which interrupts are enabled and disabled */
-uint8_t master_mask = 0xff; /* IRQs 0-7  */
-uint8_t slave_mask = 0xff;  /* IRQs 8-15 */
+uint8_t master_mask; /* IRQs 0-7  */
+uint8_t slave_mask;  /* IRQs 8-15 */
 
 
 /* Initialize the 8259 PIC */
@@ -18,9 +18,10 @@ void i8259_init(void) {
     //short saved_A1 =  inb(0xA1);
 
     /* mask interrupts on all PICS */
-    // cli();
-    outb(0xff, MASTER_8259_PORT + 1);
-    outb(0xff, SLAVE_8259_PORT + 1);
+    master_mask = 0xff;
+    slave_mask = 0xff;
+    outb(master_mask, MASTER_8259_PORT + 1);
+    outb(slave_mask, SLAVE_8259_PORT + 1);
 
     /* initialize 4 ICWs for master PIC */
     outb(ICW1, MASTER_8259_PORT);               /* ICW1: select 8259A-1 init */
@@ -35,11 +36,10 @@ void i8259_init(void) {
     outb(ICW4, SLAVE_8259_PORT + 1);            /* ICW4: normal EOI */
 
 
-    outb(0xff, MASTER_8259_PORT + 1);        /* restore master IRQ mask */
-    outb(0xff, SLAVE_8259_PORT + 1);         /* restore slave IRQ mask */
+    outb(master_mask, MASTER_8259_PORT + 1);    /* restore master IRQ mask */
+    outb(slave_mask, SLAVE_8259_PORT + 1);      /* restore slave IRQ mask */
 
-    enable_irq(2);								 /* enable slave irq 2 on PIC */
-
+    enable_irq(IRQ_SLAVE);						/* enable slave irq on PIC */
 }
 
 /* Enable (unmask) the specified IRQ */
@@ -94,7 +94,7 @@ void send_eoi(uint32_t irq_num) {
     if(irq_num > 7) {
         irq_num -= 8; // decrement to get the slave idx
         outb((EOI | irq_num), SLAVE_8259_PORT);     /* send EOI to slave */
-        outb((EOI + 2), MASTER_8259_PORT);          /* send EOI to master */
+        outb((EOI | IRQ_SLAVE), MASTER_8259_PORT);  /* send EOI to master */
     } else {
         outb((EOI | irq_num), MASTER_8259_PORT);    /* send EOI to master */
     }
