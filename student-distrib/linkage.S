@@ -1,6 +1,6 @@
 .text
 
-.global keyboard_linkage, rtc_linkage, systemcall_linkage
+.global keyboard_linkage, rtc_linkage, pit_linkage
 
 keyboard_linkage:
   #cld
@@ -50,6 +50,37 @@ rtc_linkage:
 	pushl %eax
 
 	call handle_rtc_interrupt
+
+	popl %eax          /* restore registers from stack */
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %ds
+	popl %es
+	popl %fs
+	popl %gs
+	popf
+
+	iret
+
+pit_linkage:
+	pushf              /* save registers on stack */
+	pushl %gs
+	pushl %fs
+	pushl %es
+	pushl %ds
+	pushl %esi         /* save callee saved regs too, since callee func does not */
+	pushl %edi
+	pushl %ebp
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	pushl %eax
+
+	call handle_pit_interrupt
 
 	popl %eax          /* restore registers from stack */
 	popl %ebx
