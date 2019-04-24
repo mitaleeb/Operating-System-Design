@@ -68,19 +68,30 @@ void context_switch(int pid_from, int pid_to) {
 
   // change the relevant variables in the TSS
   tss.ss0 = KERNEL_DS;
-  tss.esp0 = EIGHT_MB - (pid_to * EIGHT_KB) + 4;
+  tss.esp0 = EIGHT_MB - (pid_to * EIGHT_KB) - 4;
+
+
+  // save the esp and ebp
+  // I think we have to do this in a separate asm block because
+  // the context switch will not have outputted to the output values
+  // before we context switch if we leave them together
+  asm volatile (
+    "movl %%esp, %0;"
+    "movl %%ebp, %1;"
+    : "=m" (pcb_from->my_esp), "=m"(pcb_from->my_ebp)
+  );
 
   // context switch like in execute... do we need to do ring 3 conversion?
   // do we need to save all registers?
   asm volatile (
-    "movl %%esp, %0;"
-    "movl %%ebp, %1;"
     "cli;"
-    "movl %2, %%esp;"
-    "movl %3, %%ebp;"
+    "movl %0, %%esp;"
+    "movl %1, %%ebp;"
+    "movl %%cr3, %%eax;"
+    "movl %%eax, %%cr3;" // flush the tlb
     "sti;"
-    :"=g" (pcb_from->my_esp), "=g"(pcb_from->my_ebp)
-    : "g" (pcb_to->my_esp), "g"(pcb_to->my_ebp)
-    : "memory"
+    : 
+    :"m" (pcb_to->my_esp), "m"(pcb_to->my_ebp)
+    :"memory", "%eax"
   );
 }
