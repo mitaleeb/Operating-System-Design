@@ -271,7 +271,7 @@ void handle_keyboard_interrupt() {
 					}
 					
 					// TODO: REMOVE THIS/TEST THIS
-					if (!alt_flag && !control_flag && c == 0x02) { // should be the 1 key
+					if (alt_flag && !control_flag && c == 0x0B) { // should be alt + 0
 						// manual task switching
 						int next_pid = find_next_pid();
 						context_switch(curr_pcb->pid, next_pid);

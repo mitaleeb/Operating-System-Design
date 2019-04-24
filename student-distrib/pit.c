@@ -56,7 +56,7 @@ void init_pit() {
 void handle_pit_interrupt() {
   disable_irq(IRQ_PIT);
 
-  
+  // putc('p');
 
   // send end of interrupt
   send_eoi(IRQ_PIT);
