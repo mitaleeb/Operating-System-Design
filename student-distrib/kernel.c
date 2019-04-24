@@ -16,6 +16,7 @@
 #include "sys/syscall.h"
 #include "sys/pcb.h"
 #include "terminal.h"
+#include "pit.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -162,6 +163,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* initialize the hardware devices */
     init_keyboard();
     init_rtc();
+    init_pit();
 
     /* initialize the process data */
     init_pcb();

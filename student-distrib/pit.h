@@ -8,13 +8,25 @@
 #ifndef _PIT_H
 #define _PIT_H
 
-/* function to initialize PIT */
-extern void init_pit(void);
+#include "constants.h"
+#include "types.h"
 
-/* function to handle PIT interrupts */
-extern void handle_pit_interrupt(void);
+/* defines to improve readability */
+#define IRQ_PIT 0
 
-extern int curr_terminal_active;
-extern int next_terminal_active;
+/**
+ * init_pit()
+ * 
+ * DESCRIPTION: initializes the pit
+ */
+void init_pit();
+
+/**
+ * handle_pit_interrupt()
+ * 
+ * DESCRIPTION: handles a pit interrupt to perform what we need to happen during
+ * one of these - namely, running the scheduling sequence.
+ */
+void handle_pit_interrupt();
 
 #endif
