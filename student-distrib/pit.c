@@ -4,6 +4,7 @@
 
 #include "lib.h"
 #include "scheduler.h"
+#include "i8259.h"
 #include "pit.h"
 
 #define DATA_PORT 0x40
