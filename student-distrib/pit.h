@@ -1,12 +1,12 @@
 /**
- * scheduling.h
+ * pit.h
  *
  * h file that holds definitions of functions, including all the
- * functions in scheduling.c
+ * functions in pit.c
  */
 
-#ifndef _SCHEDULING_H
-#define _SCHEDULING_H
+#ifndef _PIT_H
+#define _PIT_H
 
 /* function to initialize PIT */
 extern void init_pit(void);

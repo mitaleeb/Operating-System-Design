@@ -1,5 +1,5 @@
 /**
- * scheduling.c
+ * pit.c
  *
  * A file that holds functions for scheduling
  * and handling PIT interrupts.
