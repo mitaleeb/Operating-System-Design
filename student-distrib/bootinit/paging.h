@@ -3,6 +3,8 @@
  * 
  * Header file for the declarations for all things paging.
  */
+#ifndef _PAGING_H
+#define _PAGING_H
 
 #include "../lib.h"
 
@@ -87,3 +89,5 @@ uint8_t* request_user_video(int term_index);
  * OUTPUTS: 1 if successful, 0 otherwise
  */
 int paging_tester();
+
+#endif

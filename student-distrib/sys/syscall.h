@@ -1,6 +1,8 @@
 /**
  * syscall.h
  */
+#ifndef _SYSCALL_H
+#define _SYSCALL_H
 
 #include "../types.h"
 
@@ -98,3 +100,5 @@ int32_t system_vidmap(uint8_t** screen_start);
 int32_t system_sethandler(int32_t signum, void* handler_address);
 
 int32_t system_sigreturn(void);
+
+#endif
