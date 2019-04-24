@@ -6,6 +6,7 @@
 
 #include "../lib.h"
 #include "paging.h"
+#include "../constants.h"
 
 /* definitions for the flags for page table and directory entires */
 #define GLOBAL              0x00000100
@@ -84,11 +85,11 @@ void page_init()
     // set the video memories to be white
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(VIDEO_ADDR1 + (i << 1)) = ' ';
-        *(uint8_t *)(VIDEO_ADDR1 + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(VIDEO_ADDR1 + (i << 1) + 1) = CURSOR1;
         *(uint8_t *)(VIDEO_ADDR2 + (i << 1)) = ' ';
-        *(uint8_t *)(VIDEO_ADDR2 + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(VIDEO_ADDR2 + (i << 1) + 1) = CURSOR2;
         *(uint8_t *)(VIDEO_ADDR3 + (i << 1)) = ' ';
-        *(uint8_t *)(VIDEO_ADDR3 + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(VIDEO_ADDR3 + (i << 1) + 1) = CURSOR3;
     }
 
     /* set user-level vid mem pointers */

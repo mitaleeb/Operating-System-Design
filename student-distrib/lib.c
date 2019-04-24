@@ -3,6 +3,9 @@
 
 #include "lib.h"
 #include "terminal.h"
+#include "constants.h"
+#include "terminal.h"
+#include "scheduler.h"
 
 #define VIDEO       0xB8000
 #define NUM_COLS    80
@@ -21,7 +24,12 @@ void clear(void) {
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        if (visible_terminal == FIRST_TERM)
+            *(uint8_t *)(video_mem + (i << 1) + 1) = CURSOR1;
+        if (visible_terminal == SECOND_TERM)
+            *(uint8_t *)(video_mem + (i << 1) + 1) = CURSOR2;
+        if (visible_terminal == THIRD_TERM)
+            *(uint8_t *)(video_mem + (i << 1) + 1) = CURSOR3;
     }
 }
 
@@ -268,7 +276,12 @@ void putc(uint8_t c) {
       screen_x = 0;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        if (visible_terminal == FIRST_TERM)
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR1;
+        if (visible_terminal == SECOND_TERM)
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR2;
+        if (visible_terminal == THIRD_TERM)
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR3;
         screen_x++;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
         screen_x %= NUM_COLS;

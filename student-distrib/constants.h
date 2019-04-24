@@ -19,4 +19,13 @@
 #define LO_BYTE_MASK  0x00FF
 #define HI_BYTE_MASK  0xFF00
 
+/* text colors for each terminal */
+#define CURSOR1			0xe
+#define CURSOR2			0xc
+#define CURSOR3			0xb
+/* numbers of each terminal */
+#define FIRST_TERM		0
+#define SECOND_TERM		1
+#define THIRD_TERM		2
+
 #endif
