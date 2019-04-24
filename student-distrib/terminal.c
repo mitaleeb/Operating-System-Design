@@ -95,22 +95,6 @@ int switch_terminal(int32_t switch_to) {
 	if (switch_to == visible_terminal)
 		return 0;
 
-	/* save and restore new keyboard buffer */
-	// for (i = 0; i < MAXBUFFER; i++) {
-	// 	terminal[visible_terminal].new_term_buffer[i] = new_term_buffer[i];
-	// 	new_term_buffer[i] = terminal[switch_to].new_term_buffer[i];
-	// 	/* save and restore old term keyboard buffer */
-	// 	terminal[visible_terminal].old_term_buffer[i] = old_term_buffer[i];
-	// 	old_term_buffer[i] = terminal[switch_to].old_term_buffer[i];
-	// }
-  // /* Updating position of buffer position in terminal */
-	// terminal[visible_terminal].term_buffer_index = term_buffer_index;
-  // term_buffer_index = terminal[switch_to].term_buffer_index;
-	//
-	// /*update read_ready flag */
-	// terminal[visible_terminal].read_ready = read_flag;
-	// read_flag = terminal[switch_to].read_ready;
-
   set_terminal_position(visible_terminal);
   update_screen(switch_to);
 
