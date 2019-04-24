@@ -2,19 +2,22 @@
  * scheduler.c - 
  */
 
+#include "constants.h"
 #include "scheduler.h"
 
 
-#define EIGHT_MB    0x00800000
-#define TWELVE_MB   0x00C00000
-#define FOUR_MB     0x00400000
-#define EIGHT_KB    0x00002000
-#define MB_128      0x08000000
-#define MB_132      0x08400000
-
-
-
 int find_next_pid() {
+  // no next pid if only one terminal is open
+  int i, count;
+  for (i = 0, count = 0; i < MAX_TERMS; i++) {
+    count += terminal[i].is_started;
+  }
+
+  if (count <= 1) {
+    return -1;
+  }
+  
+  // find the next pid (the next terminal's bottom most proc)
   int next_term = (curr_pcb->term_index + 1) % MAX_TERMS;
   // make sure the next terminal we found is running
   while (terminal[next_term].is_started == 0) {
