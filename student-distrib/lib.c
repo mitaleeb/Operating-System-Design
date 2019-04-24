@@ -74,45 +74,45 @@ void clear(void) {
     screen_y--;
   }
 
+/*
+  REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
+  * void update_cursor()
+  *   Inputs: none
+  *   Return Value: none
+  *	 Function: update the cursor position in screen
+  */
+  void update_cursor(void) {
+  	unsigned short pos = (screen_y * 80) + screen_x;
+
+  	outb(0x0F, 0x3D4);
+  	outb((unsigned char)(pos & 0xFF), 0x3D5);
+
+  	outb(0x0E, 0x3D4);
+  	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
+  }
+
   /*
-    REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
-    * void update_cursor()
-    *   Inputs: none
+    * void set_terminal_position()
+    *   Inputs: current terminal number
     *   Return Value: none
-    *	 Function: update the cursor position in screen
+    *	 Function: set x position, y position of terminal struct
     */
-    void update_cursor(void) {
-    	unsigned short pos = (screen_y * 80) + screen_x;
+  void set_terminal_position(uint8_t term_num) {
+      terminal[term_num].term_screen_x = screen_x;
+    	terminal[term_num].term_screen_y = screen_y;
+  }
 
-    	outb(0x0F, 0x3D4);
-    	outb((unsigned char)(pos & 0xFF), 0x3D5);
-
-    	outb(0x0E, 0x3D4);
-    	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
-    }
-
-    /*
-      * void set_terminal_position()
-      *   Inputs: current terminal number
-      *   Return Value: none
-      *	 Function: set x position, y position of terminal struct
-      */
-    void set_terminal_position(uint8_t term_num) {
-        terminal[term_num].term_screen_x = screen_x;
-      	terminal[term_num].term_screen_y = screen_y;
-    }
-
-    /*
-      * void update_screen()
-      *   Inputs: current terminal number
-      *   Return Value: none
-      *	 Function: Updates cursor on terminal window
-      */
-    void update_screen(uint8_t term_num) {
-      screen_x = terminal[term_num].term_screen_x;
-      screen_y = terminal[term_num].term_screen_y;
-      update_cursor();
-    }
+  /*
+    * void update_screen()
+    *   Inputs: current terminal number
+    *   Return Value: none
+    *	 Function: Updates cursor on terminal window
+    */
+  void update_screen(uint8_t term_num) {
+    screen_x = terminal[term_num].term_screen_x;
+    screen_y = terminal[term_num].term_screen_y;
+    update_cursor();
+  }
 
 
 /* Standard printf().
