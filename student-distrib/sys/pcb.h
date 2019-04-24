@@ -1,6 +1,8 @@
 /**
  * pcb.h - defines structs regarding the pcb
  */
+#ifndef _PCB_H
+#define _PCB_H
 
 #include "../types.h"
 
@@ -94,3 +96,5 @@ int32_t garbage_write(int32_t fd, const void* buf, int32_t nbytes);
 int32_t garbage_open(const uint8_t* filename);
 
 int32_t garbage_close(int32_t fd);
+
+#endif

@@ -257,6 +257,7 @@ int32_t system_halt(uint8_t status) {
   int32_t saved_esp = curr_pcb->parent_esp;
   int32_t saved_ebp = curr_pcb->parent_ebp;
   process_array[curr_pcb->pid] = 0;
+  terminal_pcbs[curr_pcb->term_index] = curr_pcb->parent_pcb;
   curr_pcb = curr_pcb->parent_pcb;
   num_procs--;
 

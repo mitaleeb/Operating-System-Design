@@ -19,7 +19,6 @@
 #define SLAVE_START_INTERRUPT 0x28
 #define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
 #define PIC_ACK     0x20
-#define IRQ_KEYBOARD 	1
 #define KEYBOARD_PORT 0x60
 #define HIGH_BITMASK 0x80
 #define TERM_COLS 80
@@ -260,7 +259,7 @@ void handle_keyboard_interrupt() {
 					}
 
 					// TODO: REMOVE THIS/TEST THIS
-					// if (!alt_flag && !control_flag && c == 0x02) { // should be the 1 key
+					// if (alt_flag && !control_flag && c == 0x0B) { // should be alt + 0
 					// 	// manual task switching
 					// 	int next_pid = find_next_pid();
 					// 	context_switch(curr_pcb->pid, next_pid);
