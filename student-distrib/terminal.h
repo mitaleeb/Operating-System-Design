@@ -15,11 +15,13 @@ typedef struct {
   /* flags */
   int32_t is_started;
   int32_t is_visible;
+  int32_t read_ready;
 
   /* similar to keyboard.c */
   uint8_t old_term_buffer[MAXBUFFER];
   uint8_t new_term_buffer[MAXBUFFER];
   uint8_t term_buffer_index;
+  uint8_t old_tbi;
 
   /* position - similar to screen_x, screen_y in lib.c */
   uint32_t term_screen_x;

@@ -48,9 +48,6 @@ static int control_flag = 0;
 static int alt_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-static int old_tbi = 0;
-static int term_flag = 0;
-static int column_index = 0;
 
 // PS2 keyboard scancode can be seen here:
 // http://www.quadibloc.com/comp/scan.htm
@@ -124,34 +121,36 @@ int32_t terminal_close(int32_t fd){
 */
 int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	int i;
-
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
 		return 0;
 
 	/* return unless buffer is ready to be read */
-	while(!term_flag) {}
+	/* I'm pretty sure it doesnt matter which read_flag we read bc they technically should be the same */
+	while(!terminal[curr_pcb->term_index].read_ready) { }
 
 	/* read from input to old terminal buffer */
-	if (length < old_tbi) {
-	 	memcpy(buf, &(old_term_buffer), length);
+	cli();
+	if (length < terminal[curr_pcb->term_index].old_tbi) {
+		memcpy(buf, &(terminal[curr_pcb->term_index].old_term_buffer), length);
 	} else {
-	 	memcpy(buf, &(old_term_buffer), old_tbi);
+		memcpy(buf, &(terminal[curr_pcb->term_index].old_term_buffer), terminal[curr_pcb->term_index].old_tbi);
 	}
+	sti();
 
 	/* clear new terminal buffer */
 	for(i = 0; i < MAXBUFFER; i++) {
-		new_term_buffer[i] = '\0';
+		terminal[curr_pcb->term_index].new_term_buffer[i] = '\0';
 	}
 
 	/* reset flag so terminal is not ready to be read */
-	term_flag = 0;
+	terminal[curr_pcb->term_index].read_ready = 0;
 
 	/* return number of bytes read */
-	if (length < old_tbi) {
+	if (length < terminal[curr_pcb->term_index].old_tbi) {
 		return length;
 	} else {
-		return old_tbi;
+		return terminal[curr_pcb->term_index].old_tbi;
 	}
 }
 
@@ -189,14 +188,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
  * Function: initialize keyboard device by masking IRQ line
  */
 void init_keyboard() {
-		int i;
-		/* clear terminal buffer */
-		for(i = 0; i < MAXBUFFER; i++) {
-			new_term_buffer[i] = '\0';
-		}
-		term_flag = 0;
-		term_buffer_index = 0;
-
 		/* keyboard is on IR1 of master PIC */
     enable_irq(IRQ_KEYBOARD);
 }
@@ -239,7 +230,6 @@ void handle_keyboard_interrupt() {
 						backspace_flag = 1;
 					else if(c == ENTER_PRESS) {
 						enter_flag = 1;
-						term_flag = 1;
 					}
 					else if(c == CONTROL_PRESS)
 						control_flag = 1;
@@ -254,7 +244,6 @@ void handle_keyboard_interrupt() {
 						clear();
 						reset_position();
 						//update_cursor();
-						column_index = 0;
 					}
 					/* if ALT-F1 is pressed, switch to terminal 1 */
 					else if(alt_flag && c == F1_PRESS) {
@@ -268,7 +257,7 @@ void handle_keyboard_interrupt() {
 					else if(alt_flag && c == F3_PRESS) {
 						switch_terminal(2);
 					}
-					
+
 					// TODO: REMOVE THIS/TEST THIS
 					// if (alt_flag && !control_flag && c == 0x0B) { // should be alt + 0
 					// 	// manual task switching
@@ -282,7 +271,6 @@ void handle_keyboard_interrupt() {
 						clear();
 						reset_position();
 						//update_cursor();
-						column_index = 0;
 					}
 					/* if control is held down, do not print any characters */
 					else if(control_flag)
@@ -294,6 +282,7 @@ void handle_keyboard_interrupt() {
 					else if(enter_flag) {
 						write_to_buffer('\n');
 						enter_buffer();
+						terminal[visible_terminal].read_ready = 1;
 					}
 					/*if shift and caps */
 					else if(shift_flag && caps_flag) {
@@ -332,20 +321,14 @@ void handle_keyboard_interrupt() {
  */
 extern void write_to_buffer(uint8_t k) {
 	/* check if end of buffer has been reached */
-	if(term_buffer_index >= MAXBUFFER - 2 && k != '\n') {
+	if(terminal[visible_terminal].term_buffer_index >= MAXBUFFER - 2 && k != '\n') {
 		return;
 	}
-	/* if max length is reached, start new line */
-	if(column_index > TERM_COLS - 1) {
-		//update_cursor();
-		column_index = 0;
-	}
+
 	/* If it hasnt, write to terminal */
-	new_term_buffer[term_buffer_index] = k;
+	terminal[visible_terminal].new_term_buffer[terminal[visible_terminal].term_buffer_index] = k;
 	putc(k);
-	//update_cursor();
-	term_buffer_index++;
-	column_index++;
+	terminal[visible_terminal].term_buffer_index++;
 }
 
 /* void backspace_buffer(void)
@@ -355,15 +338,13 @@ extern void write_to_buffer(uint8_t k) {
  */
 extern void backspace_buffer(void) {
 	/* check to ensure beginning of line is not reached */
-	if(term_buffer_index > 0) {
-		term_buffer_index--;
-		new_term_buffer[term_buffer_index] = '\0';
+	if(terminal[visible_terminal].term_buffer_index > 0) {
+		terminal[visible_terminal].term_buffer_index--;
+		terminal[visible_terminal].new_term_buffer[terminal[visible_terminal].term_buffer_index] = '\0';
 		decrement_position();
 		putc(' ');
-		//update_cursor();
 		decrement_position();
 		update_cursor();
-		column_index--;
 	}
 	backspace_flag = 0;
 }
@@ -378,13 +359,12 @@ extern void backspace_buffer(void) {
 	 for(i = 0; i < MAXBUFFER; i++)
 	 {
 		 /*copy new buff into old buff */
-		 old_term_buffer[i] = new_term_buffer[i];
+		 terminal[visible_terminal].old_term_buffer[i] = terminal[visible_terminal].new_term_buffer[i];
 		 /* clear new buff */
-		 new_term_buffer[i] = '\0';
+		 terminal[visible_terminal].new_term_buffer[i] = '\0';
 	 }
-	 old_tbi = term_buffer_index;
-	 term_buffer_index = 0;
-	 column_index = 0;
+	 terminal[visible_terminal].old_tbi = terminal[visible_terminal].term_buffer_index;
+	 terminal[visible_terminal].term_buffer_index = 0;
 	 //enter_position();
 	 //update_cursor();
 	 enter_flag = 0;
