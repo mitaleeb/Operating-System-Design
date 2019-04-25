@@ -149,6 +149,26 @@ void clear(void) {
     update_cursor();
   }
 
+  /*
+    * void term_update_screeen()
+    *   Inputs: none
+    *   Return Value: none
+    *	 Function: set x position, y position of buffer
+    *             for current terminal
+    */
+  // void term_update_screeen() {
+  //   if (terminal[curr_terminal_active].term_screen_x >= NUM_COLS) {
+  //     term_enter_position();
+  //     return;
+  //   }
+  //   ++(terminal[curr_terminal_active].term_screen_x);
+  //
+  //   if (terminal[curr_terminal_active].term_screen_y >= NUM_ROWS) {
+  //     term_scroll_up();
+  //     terminal[curr_terminal_active].term_screen_y = NUM_ROWS - 1;
+  //   }
+  // }
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character
@@ -343,6 +363,7 @@ void term_putc(uint8_t c) {
           + (terminal[curr_pcb->term_index].term_screen_x / NUM_COLS)) % NUM_ROWS;
       terminal[curr_pcb->term_index].term_screen_x %= NUM_COLS;
   }
+  // term_update_screen();
 }
 
 
