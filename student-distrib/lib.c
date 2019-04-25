@@ -76,6 +76,22 @@ void clear(void) {
      }
    }
 
+   /* void term_enter_position(void);
+    * Inputs: void
+    * Return Value: none
+    * Function: increments y position */
+    void term_enter_position(void) {
+      if(terminal[curr_pcb->term_index].term_screen_y < NUM_ROWS - 1) {
+        (terminal[curr_pcb->term_index].term_screen_y)++;
+        terminal[curr_pcb->term_index].term_screen_x = 0;
+      }
+      else {
+        term_scroll_up();
+        (terminal[curr_pcb->term_index].term_screen_y)++;
+        terminal[curr_pcb->term_index].term_screen_x = 0;
+      }
+    }
+
  /*
   * void scroll_up(void)
   * 	Inputs: none
@@ -156,18 +172,18 @@ void clear(void) {
     *	 Function: set x position, y position of buffer
     *             for current terminal
     */
-  // void term_update_screeen() {
-  //   if (terminal[curr_terminal_active].term_screen_x >= NUM_COLS) {
-  //     term_enter_position();
-  //     return;
-  //   }
-  //   ++(terminal[curr_terminal_active].term_screen_x);
-  //
-  //   if (terminal[curr_terminal_active].term_screen_y >= NUM_ROWS) {
-  //     term_scroll_up();
-  //     terminal[curr_terminal_active].term_screen_y = NUM_ROWS - 1;
-  //   }
-  // }
+  void term_update_screen(void) {
+    if (terminal[curr_pcb->term_index].term_screen_x >= NUM_COLS) {
+      term_enter_position();
+      return;
+    }
+    ++(terminal[curr_pcb->term_index].term_screen_x);
+
+    if (terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS) {
+      term_scroll_up();
+      terminal[curr_pcb->term_index].term_screen_y = NUM_ROWS - 1;
+    }
+  }
 
 /* Standard printf().
  * Only supports the following format strings:
@@ -363,7 +379,6 @@ void term_putc(uint8_t c) {
           + (terminal[curr_pcb->term_index].term_screen_x / NUM_COLS)) % NUM_ROWS;
       terminal[curr_pcb->term_index].term_screen_x %= NUM_COLS;
   }
-  // term_update_screen();
 }
 
 
