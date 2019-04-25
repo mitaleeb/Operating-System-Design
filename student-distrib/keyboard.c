@@ -176,8 +176,13 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 		length = buflen;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-		putc(((uint8_t*)buf)[i]);
+		if (visible_terminal == curr_pcb->term_index) {
+			putc(((uint8_t*)buf)[i]);
+		} else {
+			term_putc(((uint8_t*)buf)[i]);
+		}
 	}
+
 	/*return the copied length, if successful */
 	return length;
 }
