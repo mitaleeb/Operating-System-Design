@@ -11,7 +11,9 @@
 #include "bootinit/idt.h"
 #include "keyboard.h"
 #include "terminal.h"
-#include "scheduler.h" // TODO: remove this later
+#include "scheduler.h"
+#include "sys/pcb.h"
+#include "constants.h"
 
 #define MASTER_PORT_A 0x20
 #define SLAVE_PORT_A 0xA0
@@ -23,7 +25,6 @@
 #define HIGH_BITMASK 0x80
 #define TERM_COLS 80
 #define TERM_ROWS 25
-
 
 #define CAPS_PRESS 0x3A
 #define LEFT_SHIFT_PRESS 0x2A
@@ -250,28 +251,22 @@ void handle_keyboard_interrupt() {
 					if(control_flag && c == L_PRESS) {
 						clear();
 						reset_position();
-						//update_cursor();
 					}
 					/* if ALT-F1 is pressed, switch to terminal 1 */
 					else if(alt_flag && c == F1_PRESS) {
-						switch_terminal(0);
+						if (num_procs < MAX_PROCS || terminal[FIRST_TERM].is_started == 1)
+							switch_terminal(FIRST_TERM);
 					}
 					/* if ALT-F2 is pressed, switch to terminal 2 */
 					else if(alt_flag && c == F2_PRESS) {
-						switch_terminal(1);
+						if (num_procs < MAX_PROCS || terminal[SECOND_TERM].is_started == 1)
+							switch_terminal(SECOND_TERM);
 					}
 					/* if ALT-F3 is pressed, switch to terminal 3 */
 					else if(alt_flag && c == F3_PRESS) {
-						switch_terminal(2);
+						if (num_procs < MAX_PROCS || terminal[THIRD_TERM].is_started == 1)
+							switch_terminal(THIRD_TERM);
 					}
-
-					// TODO: REMOVE THIS/TEST THIS
-					// if (alt_flag && !control_flag && c == 0x0B) { // should be alt + 0
-					// 	// manual task switching
-					// 	int next_pid = find_next_pid();
-					// 	context_switch(curr_pcb->pid, next_pid);
-					// }
-
 
 					/* if cntrl-l is pressed, clear screen */
 					if(control_flag && c == L_PRESS) {
