@@ -1,6 +1,8 @@
 /**
  * syscall.h
  */
+#ifndef _SYSCALL_H
+#define _SYSCALL_H
 
 #include "../types.h"
 
@@ -9,6 +11,9 @@
 
 /* the number of system calls */
 #define NUM_SYSCALLS 6
+
+/* global variable to indicate that we are executing an initial shell */
+int executing_initial_shell;
 
 /* functions to help us set up the ability to receive a syscall */
 extern int32_t syscall_linker(); // prototype for assembly linkage
@@ -95,3 +100,5 @@ int32_t system_vidmap(uint8_t** screen_start);
 int32_t system_sethandler(int32_t signum, void* handler_address);
 
 int32_t system_sigreturn(void);
+
+#endif

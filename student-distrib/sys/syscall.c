@@ -11,6 +11,7 @@
 #include "../rtc.h"
 #include "../x86_desc.h"
 #include "syscall.h"
+#include "../terminal.h"
 
 #define EIGHT_MB    0x00800000
 #define TWELVE_MB   0x00C00000
@@ -20,13 +21,6 @@
 #define MB_132      0x08400000
 #define NEW_ESP     (MB_128 + FOUR_MB - 4)
 #define PROG_VADDR  0x08048000
-#define MAX_PROCS   6 // maximum number of processes
-
-/* declare the array holding the syscall function pointers */
-/* unnecessary since the assembly table works (allows variable params) */
-// static int32_t (*syscall_table[NUM_SYSCALLS])(int32_t, int32_t, int32_t);
-int process_array[MAX_PROCS] = {0, 0, 0, 0, 0, 0};
-int num_procs = 0;
 
 /* static definitions of certain file operations */
 static fops_t stdin_fops = {&terminal_read, &garbage_write, &terminal_open, &terminal_close};
@@ -67,26 +61,16 @@ int32_t system_execute(const uint8_t* command) {
   int32_t filename_idx = 0, space_flag = 0;
   int new_pid = -1;
   int cmd_len = (int) strlen((int8_t*)command);
-  int8_t new_command[cmd_len];
-
-  //create a copy of command to allow us to modify the string
-  strcpy(new_command, (int8_t*) command);
-
-  //check to see if the traling character is a new line character
-  if(new_command[cmd_len - 1] == '\n') {
-    new_command[cmd_len - 1] = '\0';
-    cmd_len--;
-  }
 
   // skip the leading spaces in command
-  while (new_command[filename_idx] == ' ') {
+  while (command[filename_idx] == ' ') {
     filename_idx++;
   }
 
   int i;
   // find the first space
   for (i = filename_idx; i < cmd_len; i++) {
-    if (new_command[i] == ' ') {
+    if (command[i] == ' ') {
       space_flag = 1;
       break; // finished finding filename
     }
@@ -102,15 +86,15 @@ int32_t system_execute(const uint8_t* command) {
   // copy the info into our local variables
   if (space_flag) {
     // copy the filename
-    strncpy(filename, (int8_t*) (new_command + filename_idx), (i - filename_idx));
+    strncpy(filename, (int8_t*) (command + filename_idx), (i - filename_idx));
     filename[i] = '\0'; // null terminate the filename
     i++;
 
     /* put the rest of the arguments into a different string */
-    strcpy(arguments, (int8_t*)(new_command + i));
+    strcpy(arguments, (int8_t*)(command + i));
   } else {
     // just copy the filename
-    strcpy(filename, (int8_t*) (new_command + filename_idx));
+    strcpy(filename, (int8_t*) (command + filename_idx));
   }
 
   /***** 2. Executable Check *****/
@@ -171,15 +155,23 @@ int32_t system_execute(const uint8_t* command) {
   pcb_t* new_pcb = (pcb_t*) (EIGHT_MB - (new_pid + 1) * EIGHT_KB);
   new_pcb->pid = new_pid; // set the pid, indexed at 0
 
-  if (curr_pcb == NULL) {
-    // we are executing the first process
+  if (executing_initial_shell || curr_pcb == NULL) {
+    // we are executing an initial shell
     new_pcb->parent_pcb = NULL;
+    new_pcb->term_index = visible_terminal;
+    executing_initial_shell = 0;
   } else {
     new_pcb->parent_pcb = curr_pcb;
+    new_pcb->term_index = curr_pcb->term_index;
   }
 
+  // save a pointer to the old pcb
+  // pcb_t* old_pcb = curr_pcb; // should never be null
   // set the current pcb to be the new pcb
   curr_pcb = new_pcb;
+
+  // update the tail of the pcb list for this terminal
+  terminal_pcbs[curr_pcb->term_index] = curr_pcb;
 
   // copy parsed argument to the buffer in current PCB
 	strcpy((int8_t*) (curr_pcb->arg_buf), arguments);
@@ -265,11 +257,13 @@ int32_t system_halt(uint8_t status) {
   int32_t saved_esp = curr_pcb->parent_esp;
   int32_t saved_ebp = curr_pcb->parent_ebp;
   process_array[curr_pcb->pid] = 0;
+  terminal_pcbs[curr_pcb->term_index] = curr_pcb->parent_pcb;
   curr_pcb = curr_pcb->parent_pcb;
   num_procs--;
 
-  // if we are out of processes, execute another shell
-  if (num_procs == 0) {
+  // if we are trying to exit an initial shell, restart shell
+  if (curr_pcb == NULL || num_procs == 0) {
+    executing_initial_shell = 1;
     run_shell();
   }
 
@@ -283,9 +277,11 @@ int32_t system_halt(uint8_t status) {
 
   // restore the saved stack, and perform execute's return
   asm volatile(
+    "cli;"
     "movl %2, %%esp;"
     "movl %1, %%ebp;"
     "movl %0, %%eax;"
+    "sti;"
     "leave;" // execute's return
     "ret;"
     : // output
@@ -479,8 +475,14 @@ int32_t system_vidmap(uint8_t** screen_start) {
     return -1;
   }
 
+  // request from paging what our user-level video memory pointer is
+  uint8_t* vaddr = request_user_video(curr_pcb->term_index);
+  if (vaddr == NULL) {
+    return -1;
+  }
+
   // set the screen start address
-  *screen_start = (uint8_t*)VIRT_VIDEO_ADDR;
+  *screen_start = vaddr;
   return 0;
 }
 
