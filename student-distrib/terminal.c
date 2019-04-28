@@ -89,6 +89,7 @@ void launch_terminal() {
  * OUTPUTS: 0 if successful, -1 otherwise
  */
 int switch_terminal(int32_t switch_to) {
+	cli();
 	if (switch_to < 0 || switch_to >= MAX_TERMS)
 		return -1;
 	if (switch_to == visible_terminal)
@@ -101,7 +102,6 @@ int switch_terminal(int32_t switch_to) {
   	update_screen(switch_to);
 	
 	/* Update visibility of terminal */
-	cli();
 	terminal[visible_terminal].is_visible = 0;
 	visible_terminal = switch_to;
 	terminal[visible_terminal].is_visible = 1;
