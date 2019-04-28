@@ -10,7 +10,8 @@
 #include "lib.h"
 #include "bootinit/idt.h"
 #include "keyboard.h"
-
+#include "terminal.h"
+#include "scheduler.h" // TODO: remove this later
 
 #define MASTER_PORT_A 0x20
 #define SLAVE_PORT_A 0xA0
@@ -18,7 +19,6 @@
 #define SLAVE_START_INTERRUPT 0x28
 #define SLAVE_END_INTERRUPT   SLAVE_START_INTERRUPT + 7
 #define PIC_ACK     0x20
-#define IRQ_KEYBOARD 	1
 #define KEYBOARD_PORT 0x60
 #define HIGH_BITMASK 0x80
 #define TERM_COLS 80
@@ -36,17 +36,21 @@
 #define ENTER_PRESS 0x1C
 #define BACKSPACE_PRESS 0x0E
 
+#define ALT_PRESS		0x38
+#define ALT_RELEASE	0xB8
+#define F1_PRESS		0x3B
+#define F2_PRESS		0x3C
+#define F3_PRESS		0x3D
 
 static int caps_flag = 0;
 static int shift_flag = 0;
 static int control_flag = 0;
+static int alt_flag = 0;
 static int enter_flag = 0;
 static int backspace_flag = 0;
-static int term_buffer_index = 0;
-static int old_tbi = 0;
-static int term_flag = 0;
-static int column_index = 0;
 
+// PS2 keyboard scancode can be seen here:
+// http://www.quadibloc.com/comp/scan.htm
 
 /* keyboard_output1 for regular input */
 static uint8_t keyboard_output1[128] = {
@@ -87,8 +91,8 @@ static uint8_t keyboard_output4[128] = {
 
 /*
 * int32_t terminal_open()
-*   Inputs: none
-*   Return Value: 0
+*   Inputs: filename - Doesn't matter
+*   Return Value: 0 if successful, -1 otherwise
 *		Function: open terminal driver
 */
 int32_t terminal_open(const uint8_t* filename){
@@ -97,7 +101,7 @@ int32_t terminal_open(const uint8_t* filename){
 
 /*
 * int32_t terminal_close()
-*   Inputs: none
+*   Inputs: fd - file descriptor to close (doesn't matter)
 *   Return Value: 0
 *		Function: close terminal driver
 */
@@ -117,34 +121,36 @@ int32_t terminal_close(int32_t fd){
 */
 int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 	int i;
-
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
 		return 0;
 
 	/* return unless buffer is ready to be read */
-	while(!term_flag) {}
+	/* I'm pretty sure it doesnt matter which read_flag we read bc they technically should be the same */
+	while(!terminal[curr_pcb->term_index].read_ready) { }
 
 	/* read from input to old terminal buffer */
-	if (length <= old_tbi) {
-	 	memcpy(buf, &(old_term_buffer), length);
+	cli();
+	if (length < terminal[curr_pcb->term_index].old_tbi) {
+		memcpy(buf, &(terminal[curr_pcb->term_index].old_term_buffer), length);
 	} else {
-	 	memcpy(buf, &(old_term_buffer), old_tbi);
+		memcpy(buf, &(terminal[curr_pcb->term_index].old_term_buffer), terminal[curr_pcb->term_index].old_tbi);
 	}
+	sti();
 
 	/* clear new terminal buffer */
 	for(i = 0; i < MAXBUFFER; i++) {
-		new_term_buffer[i] = '\0';
+		terminal[curr_pcb->term_index].new_term_buffer[i] = '\0';
 	}
 
 	/* reset flag so terminal is not ready to be read */
-	term_flag = 0;
+	terminal[curr_pcb->term_index].read_ready = 0;
 
 	/* return number of bytes read */
-	if (length < old_tbi) {
+	if (length < terminal[curr_pcb->term_index].old_tbi) {
 		return length;
 	} else {
-		return old_tbi;
+		return terminal[curr_pcb->term_index].old_tbi;
 	}
 }
 
@@ -166,13 +172,19 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 
 	/* check to ensure buf.size > length, otherwise reassign length */
 	int buflen = strlen((int8_t*) buf);
-	//printf("buflen is %d", buflen);
 	if(buflen < length)
 		length = buflen;
   /* print each buffer value to terminal */
 	for(i = 0; i < length; i ++) {
-		putc(((uint8_t*)buf)[i]);
+		cli();
+		if (visible_terminal == curr_pcb->term_index) {
+			putc(((uint8_t*)buf)[i]);
+		} else {
+			term_putc(((uint8_t*)buf)[i]);
+		}
+		sti();
 	}
+
 	/*return the copied length, if successful */
 	return length;
 }
@@ -183,13 +195,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
  * Function: initialize keyboard device by masking IRQ line
  */
 void init_keyboard() {
-		int i;
-		/* clear terminal buffer */
-		for(i = 0; i < MAXBUFFER; i++) {
-			new_term_buffer[i] = '\0';
-		}
-		term_flag = 0;
-
 		/* keyboard is on IR1 of master PIC */
     enable_irq(IRQ_KEYBOARD);
 }
@@ -203,8 +208,7 @@ void handle_keyboard_interrupt() {
   	/* clear interrupts */
 		disable_irq(IRQ_KEYBOARD);
 		send_eoi(IRQ_KEYBOARD);
-    /* 0x21 vector in the IDT was set to
-     * handle_keyboard_interrupt */
+
     uint8_t c = 0x00;
 	  do {
 			  /* read from 0x60 = data port from keyboard controller */
@@ -217,6 +221,8 @@ void handle_keyboard_interrupt() {
 						shift_flag = 0;
 					else if(c == CONTROL_RELEASE)
 						control_flag = 0;
+					else if(c == ALT_RELEASE)
+						alt_flag = 0;
 					/* check for capslock toggle */
 					else if(c == CAPS_PRESS)
 						caps_flag ^= 1;
@@ -231,19 +237,47 @@ void handle_keyboard_interrupt() {
 						backspace_flag = 1;
 					else if(c == ENTER_PRESS) {
 						enter_flag = 1;
-						term_flag = 1;
 					}
 					else if(c == CONTROL_PRESS)
 						control_flag = 1;
+					else if(c == ALT_PRESS)
+						alt_flag = 1;
 					else if(c == LEFT_SHIFT_PRESS || c == RIGHT_SHIFT_PRESS)
 						shift_flag = 1;
+
 
 					/* if cntrl-l is pressed, clear screen */
 					if(control_flag && c == L_PRESS) {
 						clear();
 						reset_position();
 						//update_cursor();
-						column_index = 0;
+					}
+					/* if ALT-F1 is pressed, switch to terminal 1 */
+					else if(alt_flag && c == F1_PRESS) {
+						switch_terminal(0);
+					}
+					/* if ALT-F2 is pressed, switch to terminal 2 */
+					else if(alt_flag && c == F2_PRESS) {
+						switch_terminal(1);
+					}
+					/* if ALT-F3 is pressed, switch to terminal 3 */
+					else if(alt_flag && c == F3_PRESS) {
+						switch_terminal(2);
+					}
+
+					// TODO: REMOVE THIS/TEST THIS
+					// if (alt_flag && !control_flag && c == 0x0B) { // should be alt + 0
+					// 	// manual task switching
+					// 	int next_pid = find_next_pid();
+					// 	context_switch(curr_pcb->pid, next_pid);
+					// }
+
+
+					/* if cntrl-l is pressed, clear screen */
+					if(control_flag && c == L_PRESS) {
+						clear();
+						reset_position();
+						//update_cursor();
 					}
 					/* if control is held down, do not print any characters */
 					else if(control_flag)
@@ -255,6 +289,7 @@ void handle_keyboard_interrupt() {
 					else if(enter_flag) {
 						write_to_buffer('\n');
 						enter_buffer();
+						terminal[visible_terminal].read_ready = 1;
 					}
 					/*if shift and caps */
 					else if(shift_flag && caps_flag) {
@@ -293,20 +328,14 @@ void handle_keyboard_interrupt() {
  */
 extern void write_to_buffer(uint8_t k) {
 	/* check if end of buffer has been reached */
-	if(term_buffer_index >= MAXBUFFER - 2 && k != '\n') {
+	if(terminal[visible_terminal].term_buffer_index >= MAXBUFFER - 2 && k != '\n') {
 		return;
 	}
-	/* if max length is reached, start new line */
-	if(column_index > TERM_COLS - 1) {
-		//update_cursor();
-		column_index = 0;
-	}
+
 	/* If it hasnt, write to terminal */
-	new_term_buffer[term_buffer_index] = k;
+	terminal[visible_terminal].new_term_buffer[terminal[visible_terminal].term_buffer_index] = k;
 	putc(k);
-	//update_cursor();
-	term_buffer_index++;
-	column_index++;
+	terminal[visible_terminal].term_buffer_index++;
 }
 
 /* void backspace_buffer(void)
@@ -316,15 +345,13 @@ extern void write_to_buffer(uint8_t k) {
  */
 extern void backspace_buffer(void) {
 	/* check to ensure beginning of line is not reached */
-	if(term_buffer_index > 0) {
-		term_buffer_index--;
-		new_term_buffer[term_buffer_index] = '\0';
+	if(terminal[visible_terminal].term_buffer_index > 0) {
+		terminal[visible_terminal].term_buffer_index--;
+		terminal[visible_terminal].new_term_buffer[terminal[visible_terminal].term_buffer_index] = '\0';
 		decrement_position();
 		putc(' ');
-		//update_cursor();
 		decrement_position();
 		update_cursor();
-		column_index--;
 	}
 	backspace_flag = 0;
 }
@@ -339,27 +366,13 @@ extern void backspace_buffer(void) {
 	 for(i = 0; i < MAXBUFFER; i++)
 	 {
 		 /*copy new buff into old buff */
-		 old_term_buffer[i] = new_term_buffer[i];
+		 terminal[visible_terminal].old_term_buffer[i] = terminal[visible_terminal].new_term_buffer[i];
 		 /* clear new buff */
-		 new_term_buffer[i] = '\0';
+		 terminal[visible_terminal].new_term_buffer[i] = '\0';
 	 }
-	 old_tbi = term_buffer_index;
-	 term_buffer_index = 0;
-	 column_index = 0;
+	 terminal[visible_terminal].old_tbi = terminal[visible_terminal].term_buffer_index;
+	 terminal[visible_terminal].term_buffer_index = 0;
 	 //enter_position();
 	 //update_cursor();
 	 enter_flag = 0;
  }
-
-
-
-
-/* void handle_systemcall_interrupt()
- * Inputs: none
- * Return Value: none
- * Function: Function to handle systemcall interrupt
- */
-void handle_systemcall_interrupt() {
-	/* acknowledge systemcall interrupt() */
-	printf("System call successful! \n");
-}

@@ -1,10 +1,12 @@
 /**
  * paging.c
- * 
+ *
  * Implementation of the functions required for paging.
  */
 
+#include "../lib.h"
 #include "paging.h"
+#include "../constants.h"
 
 /* definitions for the flags for page table and directory entires */
 #define GLOBAL              0x00000100
@@ -16,13 +18,23 @@
 
 /* definitions for the beginning of certain segments */
 #define KERNEL_ADDR 0x400000
-#define VIDEO_ADDR 0xB8000
-#define PROG_VADDR 0x08000000
+#define VIDEO_ADDR  0xB8000
+#define VIDEO_ADDR1 (VIDEO_ADDR + PAGE_4KB)
+#define VIDEO_ADDR2 (VIDEO_ADDR1 + PAGE_4KB)
+#define VIDEO_ADDR3 (VIDEO_ADDR2 + PAGE_4KB)
+#define PROG_VADDR  0x08000000
 
+/* definitions for color, etc in video memory (for initialization) */
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define ATTRIB      0x7
 
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
 #define PT_IDX(x) ((x >> 12) & 0x03FF)
+
+/* macro to get each terminal's virtual memory pointer */
+#define TERM_VADDR(x) (VIRT_VIDEO_ADDR + (PAGE_4KB * x))
 
 /* static variables to hold certain paging items */
 static page_directory_t page_directory __attribute__ ((aligned (PAGE_4KB)));
@@ -39,7 +51,7 @@ static void page_flushtlb();
  *
  * DESCRIPTION: Initializes the page table according to our specifications. This
  * means allocating 4KB pages for addresses 0-4 MB, and one 4 MB page for the
- * kernel at address 4 MB. The rest will be set to be uninitialized for now. 
+ * kernel at address 4 MB. The rest will be set to be uninitialized for now.
  */
 void page_init()
 {
@@ -52,26 +64,41 @@ void page_init()
     }
 
     /* add the first page table (governing pages 0 - 4MB) to the directory */
-    uint32_t flags_kernel = READ_WRITE | PRESENT; 
-    add_page_dir_entry(&(page_table_1), 0, flags_kernel);
+    uint32_t flags = READ_WRITE | PRESENT;
+    add_page_dir_entry(&(page_table_1), 0, flags);
 
     /* add the 4MB Kernel page to the page directory */
-    flags_kernel = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
-    add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags_kernel);
+    flags = GLOBAL | PAGE_4MB | READ_WRITE | PRESENT;
+    add_page_dir_entry((void*)KERNEL_ADDR, (void*)KERNEL_ADDR, flags);
 
-    /* add a page table entry for video memory into the page table */
-    flags_kernel = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
-    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags_kernel);
+    /* create a user-level page table that maps to video memory */
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE;
+    add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags);
 
-    /* User level page table */
-    uint32_t flags_user = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; 
-    add_page_dir_entry(&(page_table_2), (void*)VIRT_VIDEO_ADDR, flags_user);
+    /* set up the kernel level video memory pages */
+    flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR, flags);
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)VIDEO_ADDR1, flags);
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR2, (void*)VIDEO_ADDR2, flags);
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR3, (void*)VIDEO_ADDR3, flags);
 
-    /* add a page table entry for video memory into the page table */
-    flags_user = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
-    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)VIRT_VIDEO_ADDR, flags_user);
+    // set the video memories to be white
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(VIDEO_ADDR1 + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_ADDR1 + (i << 1) + 1) = CURSOR1;
+        *(uint8_t *)(VIDEO_ADDR2 + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_ADDR2 + (i << 1) + 1) = CURSOR2;
+        *(uint8_t *)(VIDEO_ADDR3 + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_ADDR3 + (i << 1) + 1) = CURSOR3;
+    }
 
+    /* set user-level vid mem pointers */
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE ;
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)TERM_VADDR(0), flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR2, (void*)TERM_VADDR(1), flags);
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR3, (void*)TERM_VADDR(2), flags);
 
+    // note that for above we started with terminal 0 (1) pointing to video memory
 
     /* Turn on Paging in assembly. This is done in the following steps: */
     /* 1. Copy the page directory into cr3 */
@@ -86,12 +113,21 @@ void page_init()
         "movl %%cr0, %%eax;"
         "orl $0x80000001, %%eax;"
         "movl %%eax, %%cr0;"
-        : 
+        :
         : "g" (&page_directory)
         : "%eax", "memory"
     );
 }
 
+/**
+ * add_program_page()
+ *
+ * DESCRIPTION: adds or removes a 4 MB page to our page directory for a program
+ * (shell or executed by shell) Maps to 128 MB
+ * INPUTS: phys_addr - pointer to the physical address to be mapped
+ *         adding - 1 if we want to add the page, 0 if we want to remove
+ * OUTPUTS: none
+ */
 void add_program_page(void* phys_addr, int adding) {
     uint32_t flags = USER_LEVEL | PAGE_4MB | READ_WRITE;
     if (adding) {
@@ -106,8 +142,88 @@ void add_program_page(void* phys_addr, int adding) {
 }
 
 /**
+ * switch_video_page()
+ *
+ * DESCRIPTION: switches the kernel's video memory page to be pointing to the
+ *              specified terminal's physical video memory.
+ * INPUTS: term_to - the terminal number to switch to (0-2)
+ *         term_from - the terminal number switching from
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
+int switch_video_page(int term_to, int term_from) {
+    // quick return if we don't need to do anything
+    if (term_to == term_from)
+        return 0; // technically a success
+
+    // figure out which terminal we are switching to
+    uint32_t to_vaddr;
+    if (term_to == 0) {
+        to_vaddr = VIDEO_ADDR1;
+    } else if (term_to == 1) {
+        to_vaddr = VIDEO_ADDR2;
+    } else if (term_to == 2) {
+        to_vaddr = VIDEO_ADDR3;
+    } else {
+        return -1;
+    }
+
+    // figure out which terminal we are switching from
+    uint32_t from_vaddr;
+    if (term_from == 0) {
+        from_vaddr = VIDEO_ADDR1;
+    } else if (term_from == 1) {
+        from_vaddr = VIDEO_ADDR2;
+    } else if (term_from == 2) {
+        from_vaddr = VIDEO_ADDR3;
+    } else {
+        return -1;
+    }
+
+    cli();
+    // map the virtual memory addresses of the previous terminal to their own video memory
+    uint32_t flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
+    add_page_table_entry(&(page_table_1), (void*)from_vaddr, (void*)from_vaddr, flags);
+
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; // user level
+    add_page_table_entry(&(page_table_2), (void*)from_vaddr, (void*)TERM_VADDR(term_from), flags);
+
+    page_flushtlb();
+
+    // copy the data to and from physical video memory
+    memcpy((void*)from_vaddr, (void*)VIDEO_ADDR, PAGE_4KB);
+    memcpy((void*)VIDEO_ADDR, (void*)to_vaddr, PAGE_4KB);
+
+    // map the virtual video memory addresses to point to physical video memory
+    flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT; // kernel level
+    add_page_table_entry(&(page_table_1), (void*)VIDEO_ADDR, (void*)to_vaddr, flags);
+
+    flags = READ_WRITE | PRESENT | USER_LEVEL| PAGE_CACHE_DISABLE; // user level
+    add_page_table_entry(&(page_table_2), (void*)VIDEO_ADDR, (void*)TERM_VADDR(term_to), flags);
+
+    page_flushtlb(); // flush the tlb
+    sti();
+    return 0; // success
+}
+
+/**
+ * request_user_video()
+ *
+ * DESCRIPTION: returns the user-level pointer to video memory for the specified
+ *              terminal index.
+ * INPUTS: term_index - the terminal number
+ * OUTPUTS: the user-level video pointer. 0 if unsuccessful.
+ */
+uint8_t* request_user_video(int term_index) {
+    if (term_index >= 0 && term_index < 3) {
+        return (uint8_t*)(TERM_VADDR(term_index));
+    }
+
+    return NULL; // term index was incorrect
+}
+
+/**
  * page_flushtlb()
- * 
+ *
  * DESCRIPTION: flushes the TLB. Necessary when changes made to paging
  */
 static void page_flushtlb() {
@@ -120,10 +236,10 @@ static void page_flushtlb() {
 
 /**
  * add_page_dir_entry()
- * 
+ *
  * DESCRIPTION: static helper function to help us add a page directory entry to
  * the page directory. Parts of the code were referenced from
- * wiki.osdev.org/Paging. 
+ * wiki.osdev.org/Paging.
  * INPUTS: phys_addr - the physical address to map (usually a ptr to a table)
  *         virt_addr - the virtual address to map
  *         flags - a combination of the flags to pass into the lower 9 bits of
@@ -134,17 +250,17 @@ static void add_page_dir_entry(void* phys_addr, void* virt_addr, uint32_t flags)
     // Make sure we check if our physical address was null
     if (phys_addr == NULL)
         return;
-    
+
     // get the index in the page directory
     int pd_idx = PD_IDX((uint32_t) virt_addr);
-    
+
     // add the entry
     page_directory.page_directory_entries[pd_idx] = ((int)phys_addr | flags);
 }
 
 /**
  * add_page_table_entry()
- * 
+ *
  * DESCRIPTION: static helper function to help us add a page table entry to the
  * page directory. Like add_page_dir_entry, most of this code is based off
  * wiki.osdev.org/paging.
@@ -158,7 +274,7 @@ static void add_page_table_entry(page_table_t* page_table, void* phys_addr, void
     // Make sure we check if our physical address was null
     if (phys_addr == NULL)
         return;
-    
+
     // get the index in the page table
     int pt_idx = PT_IDX((uint32_t) virt_addr);
 
@@ -183,24 +299,24 @@ int paging_tester() {
     uint32_t tab_ent_vid_flags = PAGE_CACHE_DISABLE | READ_WRITE | PRESENT;
 
     // check the directory and table values
-    if (page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags) && 
+    if (page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags) &&
         page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x60) &&
         page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x40) &&
         page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x20)) {
         result++;
     }
 
-    if (page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags) && 
+    if (page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags) &&
         page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x60) &&
         page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x40) &&
         page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x20)) {
         result++;
     }
 
-    if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x60) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x40) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR)] != (int)(VIDEO_ADDR | tab_ent_vid_flags | 0x20)) {
+    if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x60) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x40) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x20)) {
         result++;
     }
 
