@@ -9,13 +9,14 @@
 uint8_t master_mask; /* IRQs 0-7  */
 uint8_t slave_mask;  /* IRQs 8-15 */
 
-
-/* Initialize the 8259 PIC */
+/**
+ * i8259_init()
+ *
+ * DESCRIPTION: Initializes the 8259 PIC
+ * INPUTS: none
+ * OUTPUTS: none
+ */
 void i8259_init(void) {
-    // unsigned long flags;
-    // i8259_auto_eoi = auto_eoi;
-    //short saved_21 =  inb(0x21);
-    //short saved_A1 =  inb(0xA1);
 
     /* mask interrupts on all PICS */
     master_mask = 0xff;
@@ -42,7 +43,13 @@ void i8259_init(void) {
     enable_irq(IRQ_SLAVE);						/* enable slave irq on PIC */
 }
 
-/* Enable (unmask) the specified IRQ */
+/**
+ * enable_irq()
+ *
+ * DESCRIPTION: Enable (unmask) the specified IRQ
+ * INPUTS: none
+ * OUTPUTS: none
+ */
 void enable_irq(uint32_t irq_num) {
 
     unsigned int mask = 0xFE; 		// Initializes mask as 1111 1110 to use bit zero as irq mask
@@ -65,7 +72,13 @@ void enable_irq(uint32_t irq_num) {
     }
 }
 
-/* Disable (mask) the specified IRQ */
+/**
+ * disable_irq()
+ *
+ * DESCRIPTION: Disable (mask) the specified IRQ
+ * INPUTS: none
+ * OUTPUTS: none
+ */
 void disable_irq(uint32_t irq_num) {
 
     unsigned int mask = 0x01;				// Disable IRQ line mask with '1' bit
@@ -88,7 +101,13 @@ void disable_irq(uint32_t irq_num) {
     }
 }
 
-/* Send end-of-interrupt signal for the specified IRQ */
+/**
+ * send_eoi()
+ *
+ * DESCRIPTION: Send end-of-interrupt signal for the specified IRQ
+ * INPUTS: none
+ * OUTPUTS: none
+ */
 void send_eoi(uint32_t irq_num) {
     /* determine if PIC is master or slave */
     if(irq_num > 7) {

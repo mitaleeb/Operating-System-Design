@@ -33,9 +33,33 @@ int32_t visible_terminal;
 int32_t next_terminal;
 terminal_t terminal[3];
 
-/*Function Definitions */
+/* Function Definitions */
+
+/**
+ * init_terminal()
+ *
+ * DESCRIPTION: constructor for terminal array (holds nultiple terminals)
+ * INPUTS: NONE
+ * OUTPUTS: NONE
+ */
 void init_terminal(void);
+
+/**
+ * launch_terminal()
+ *
+ * DESCRIPTION: launches a new terminal (never before opened)
+ * INPUTS: NONE
+ * OUTPUTS: NONE
+ */
 void launch_terminal();
+
+/**
+ * switch_terminal()
+ *
+ * DESCRIPTION: switches terminal based on key press
+ * INPUTS: the terminal number to switch to
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
 int32_t switch_terminal(int32_t switch_to);
 
 #endif

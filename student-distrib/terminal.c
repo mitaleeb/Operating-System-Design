@@ -65,9 +65,6 @@ void launch_terminal() {
 	terminal[visible_terminal].is_started = 1;
 	enable_irq(IRQ_KEYBOARD);
 
-	// TODO: context switch function call (double check this)
-	// context_switch(curr_pcb->pid, -1);
-
 	// instead of doing a context switch to the root process, just go back to the
 	// idea of holding a flag and letting execute know that this is an initial
 	// process AFTER SAVING THE STACK POINTERS HERE
@@ -100,7 +97,7 @@ int switch_terminal(int32_t switch_to) {
 
 	set_terminal_position(visible_terminal);
   	update_screen(switch_to);
-	
+
 	/* Update visibility of terminal */
 	terminal[visible_terminal].is_visible = 0;
 	visible_terminal = switch_to;

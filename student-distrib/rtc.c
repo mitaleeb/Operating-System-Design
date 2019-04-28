@@ -29,6 +29,11 @@
 #define RATE_512 0x07
 #define RATE_1024 0x06
 
+#define MAX_FREQ 1024
+#define OPENED 1
+#define NOT_OPENED 0
+#define NUM_BYTES 4
+
 // initialize flag to check if interrupt has occurred
 volatile uint32_t ticks;
 
@@ -49,7 +54,7 @@ extern void init_rtc() {
   outb(STATUS_REGISTER_B, OUT_RTC);     /* write to status register B */
   outb(a | 0x40, IN_RTC); /* turn on 6th bit of status register */
                         /* RTC is IR0 on slave PIC - irq num is 8 */
-  
+
   // @TODO: i just copied this in, look here first for bugs
   /* write to status register A, disable non-maskable interrupts */
   outb(STATUS_REGISTER_A, OUT_RTC);
@@ -98,8 +103,8 @@ extern void handle_rtc_interrupt() {
  */
 int32_t rtc_open (const uint8_t* filename) {
   // set per-process rtc information
-  curr_pcb->rtc_opened = 1;
-  curr_pcb->rtc_freq = 2;
+  curr_pcb->rtc_opened = OPENED;
+  curr_pcb->rtc_freq = RATE_2;
 
   return 0;
 }
@@ -113,7 +118,7 @@ int32_t rtc_open (const uint8_t* filename) {
  */
 int32_t rtc_close (int32_t fd) {
   // set per-process rtc information
-  curr_pcb->rtc_opened = 0;
+  curr_pcb->rtc_opened = NOT_OPENED;
   return 0;
 }
 
@@ -162,14 +167,13 @@ int32_t rtc_write (int32_t fd, const void* buf, int32_t nbytes) {
   int32_t freq;
   char rate;
   // make sure we're writing 4 bytes
-  if((int32_t)buf == NULL || nbytes != 4) {
+  if((int32_t)buf == NULL || nbytes != NUM_BYTES) {
     return -1;
   }
 
   freq = *((int32_t*)buf);
 
-  // @TODO: fix magic numbers
-  if (freq > 1024) {
+  if (freq > MAX_FREQ) {
     return -1;
   }
 
