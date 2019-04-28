@@ -79,7 +79,6 @@ void launch_terminal() {
 	);
 	executing_initial_shell = 1;
 	system_execute((uint8_t*)"shell");
-	// run_shell();
 }
 
 /**
@@ -95,12 +94,12 @@ int switch_terminal(int32_t switch_to) {
 	if (switch_to == visible_terminal)
 		return 0;
 
-  set_terminal_position(visible_terminal);
-  update_screen(switch_to);
-
 	/* Update video page */
 	switch_video_page(switch_to, visible_terminal);
 
+	set_terminal_position(visible_terminal);
+  	update_screen(switch_to);
+	
 	/* Update visibility of terminal */
 	cli();
 	terminal[visible_terminal].is_visible = 0;

@@ -15,26 +15,26 @@
 
 /**
  * init_pit()
- * 
+ *
  * DESCRIPTION: initializes the PIT
  */
 void init_pit() {
   /* Based on https://wiki.osdev.org/Programmable_Interval_Timer.
-   * The pit channel we want to use is channel 0, which is connected to the PIC at IRQ 0. 
-   * It generates interrupts at a set rate like RTC, but has the highest priority (which we want). 
+   * The pit channel we want to use is channel 0, which is connected to the PIC at IRQ 0.
+   * It generates interrupts at a set rate like RTC, but has the highest priority (which we want).
    * the Data I/O port for channel 0 is 0x40. The port for the mode register is 0x43.
-   * 
+   *
    * The mode register is the following 8-bit value:
    * Bits 7-6: Channel Select (we want 00)
    * Bits 5-4: Access Mode (we either want 01 or 11)
    * Bits 3-1: Mode Select (we want mode 2 or 3)
    * Bit    0: BCD/Binary Mode (we want binary mode, 0)
    * which is defined above.
-   * 
+   *
    * The oscillator has a frequency of ~1.193 MHz. We write a frequency divider
    * value to the data port to set the frequency we want. For our purposes, we
    * want around a 25 Hz signal, so using some math we have 1.193 MHz / 25 Hz =
-   * 47720. 
+   * 47720.
    */
 
   // write the mode to the mode register
@@ -50,7 +50,7 @@ void init_pit() {
 
 /**
  * handle_pit_interrupt
- * 
+ *
  * DESCRIPTION: handles an interrupt from the pit. In our case, schedules.
  */
 void handle_pit_interrupt() {
