@@ -80,7 +80,7 @@ extern void handle_rtc_interrupt() {
 
   // increment the ticks (with overflow logic)
   if (ticks == MAXUINT32) {
-    ticks = 0;
+    ticks = 1;
   } else {
     ticks++;
   }
@@ -128,12 +128,25 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes) {
   uint32_t curr_ticks = ticks;
   int proc_freq = curr_pcb->rtc_freq;
 
-  // TODO: this could fail in the case where curr_ticks is near MAXUINT32
-  uint32_t wanted_ticks = curr_ticks + global_rtc_freq / proc_freq;
+  // do some math to figure out the amount of ticks to get
+  uint32_t wanted_ticks = global_rtc_freq / proc_freq;
+  uint32_t target_ticks;
 
-  while (ticks < wanted_ticks) {
-    ; // don't do anything
+  // handle the case where ticks is near MAXUINT32
+  if (curr_ticks > MAXUINT32 - wanted_ticks) {
+    target_ticks = wanted_ticks - (MAXUINT32 - curr_ticks);
+    // What should we do in this case? We know the maximum frequency, so we can
+    // hard code a loop like this until we overflow
+    while (ticks > MAXUINT32 / 2) {
+      ; // do nothing
+    }
+  } else {
+    target_ticks = curr_ticks + wanted_ticks;
   }
+
+  while (ticks < target_ticks) {
+      ; // don't do anything
+    }
 
   return 0;
 }
