@@ -4,6 +4,14 @@
 
 #include "pcb.h"
 
+/**
+ * init_pcb()
+ *
+ * INPUTS: none
+ * OUTPUTS: none
+ * DESCRIPTION: the function called during the boot process to initialize the
+ * pcb structures.
+ */
 void init_pcb() {
   // instantiate the process array
   int i;
@@ -23,7 +31,6 @@ void init_pcb() {
   root_pcb.term_index = -1;
   root_pcb.parent_esp = NULL;
   root_pcb.parent_ebp = NULL;
-  //root_pcb.file_descs = NULL;
 }
 
 /* define some garbage read/write/open/close functions */

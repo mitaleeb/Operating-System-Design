@@ -1,6 +1,6 @@
 /**
  * paging.h
- * 
+ *
  * Header file for the declarations for all things paging.
  */
 #ifndef _PAGING_H
@@ -23,7 +23,7 @@
 
 /**
  * page_directory_t
- * 
+ *
  * DESCRIPTION: a struct that holds entries of page tables.
  */
 typedef struct page_directory_struct {
@@ -32,7 +32,7 @@ typedef struct page_directory_struct {
 
 /**
  * page_table_t
- * 
+ *
  * DESCRIPTION: a struct that holds entries of pages.
  */
 typedef struct page_table_struct {
@@ -41,7 +41,7 @@ typedef struct page_table_struct {
 
 /**
  * page_init()
- * 
+ *
  * DESCRIPTION: Initializes our pages. See the c file for more details
  * INPUTS: none
  * OUTPUTS: none
@@ -50,7 +50,7 @@ void page_init();
 
 /**
  * add_program_page()
- * 
+ *
  * DESCRIPTION: adds or removes a 4 MB page to our page directory for a program
  * (shell or executed by shell) Maps to 128 MB
  * INPUTS: phys_addr - pointer to the physical address to be mapped
@@ -61,7 +61,7 @@ void add_program_page(void* phys_addr, int adding);
 
 /**
  * switch_video_page()
- * 
+ *
  * DESCRIPTION: switches the kernel's video memory page to be pointing to the
  *              specified terminal's physical video memory.
  * INPUTS: term_to - the terminal number to switch to (0-2)
@@ -72,7 +72,7 @@ int switch_video_page(int term_to, int term_from);
 
 /**
  * request_user_video()
- * 
+ *
  * DESCRIPTION: returns the user-level pointer to video memory for the specified
  *              terminal index.
  * INPUTS: term_index - the terminal number
