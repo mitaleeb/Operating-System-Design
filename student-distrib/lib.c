@@ -114,7 +114,7 @@ void clear(void) {
  * 	Function: shift all characters up by one line
  */
  void term_scroll_up(void) {
-   memmove((VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)), (VIDEO + PAGE_4KB * (curr_pcb->term_index + 1))
+   memmove((char*)(VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)), (char*)(VIDEO + PAGE_4KB * (curr_pcb->term_index + 1))
       + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
 
    uint8_t i;
