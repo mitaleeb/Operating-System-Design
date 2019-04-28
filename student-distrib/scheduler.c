@@ -1,11 +1,18 @@
 /**
- * scheduler.c - 
+ * scheduler.c -
  */
 
 #include "constants.h"
 #include "scheduler.h"
 
-
+/**
+ * find_next_pid()
+ *
+ * DESCRIPTION: finds the next process to switch to and and continue executing
+ * INPUTS: NONE
+ * OUTPUTS: -1 - if unsuccessful
+ *          int - the number of the next process to switch to
+ */
 int find_next_pid() {
   // no next pid if only one terminal is open
   int i, count;
@@ -16,7 +23,7 @@ int find_next_pid() {
   if (count <= 1) {
     return -1;
   }
-  
+
   // find the next pid (the next terminal's bottom most proc)
   int next_term = (curr_pcb->term_index + 1) % MAX_TERMS;
   // make sure the next terminal we found is running
@@ -33,7 +40,14 @@ int find_next_pid() {
   return terminal_pcbs[next_term]->pid;
 }
 
-// here maybe temporarily for debug purposes
+/**
+ * context_switch(int pid_from, int pid_to)
+ *
+ * DESCRIPTION: context switch from one pid to another via saving and restoring/ saving esp ebp
+ * INPUTS: pid_from - pid we are switching from
+ *         pid_to - pid to switch to
+ * OUTPUTS: NONE
+ */
 void context_switch(int pid_from, int pid_to) {
   // error checking
   if (pid_from < 0 || pid_from >= MAX_PROCS || pid_to < 0 || pid_to >= MAX_PROCS) {
@@ -46,10 +60,10 @@ void context_switch(int pid_from, int pid_to) {
 
   pcb_t* pcb_from;
   pcb_t* pcb_to;
-  
-  // do math to get the pcb pointers 
+
+  // do math to get the pcb pointers
   if (pid_from == -1) {
-    pcb_from = &root_pcb; 
+    pcb_from = &root_pcb;
   } else {
     pcb_from = (pcb_t*) (EIGHT_MB - (pid_from + 1) * EIGHT_KB);
   }
@@ -84,8 +98,6 @@ void context_switch(int pid_from, int pid_to) {
     : "=m" (pcb_from->my_esp), "=m"(pcb_from->my_ebp)
   );
 
-  // context switch like in execute... do we need to do ring 3 conversion?
-  // do we need to save all registers?
   asm volatile (
     "cli;"
     "movl %0, %%esp;"
@@ -93,7 +105,7 @@ void context_switch(int pid_from, int pid_to) {
     "movl %%cr3, %%eax;"
     "movl %%eax, %%cr3;" // flush the tlb
     "sti;"
-    : 
+    :
     :"m" (pcb_to->my_esp), "m"(pcb_to->my_ebp)
     :"memory", "%eax"
   );

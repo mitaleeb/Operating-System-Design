@@ -29,6 +29,10 @@
 #define NUM_ROWS    25
 #define ATTRIB      0x7
 
+#define FLAGS1      0x20
+#define FLAGS2      0x40
+#define FLAGS3      0x60
+
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
 #define PT_IDX(x) ((x >> 12) & 0x03FF)
@@ -157,11 +161,11 @@ int switch_video_page(int term_to, int term_from) {
 
     // figure out which terminal we are switching to
     uint32_t to_vaddr;
-    if (term_to == 0) {
+    if (term_to == FIRST_TERM) {
         to_vaddr = VIDEO_ADDR1;
-    } else if (term_to == 1) {
+    } else if (term_to == SECOND_TERM) {
         to_vaddr = VIDEO_ADDR2;
-    } else if (term_to == 2) {
+    } else if (term_to == THIRD_TERM) {
         to_vaddr = VIDEO_ADDR3;
     } else {
         return -1;
@@ -169,11 +173,11 @@ int switch_video_page(int term_to, int term_from) {
 
     // figure out which terminal we are switching from
     uint32_t from_vaddr;
-    if (term_from == 0) {
+    if (term_from == FIRST_TERM) {
         from_vaddr = VIDEO_ADDR1;
-    } else if (term_from == 1) {
+    } else if (term_from == SECOND_TERM) {
         from_vaddr = VIDEO_ADDR2;
-    } else if (term_from == 2) {
+    } else if (term_from == THIRD_TERM) {
         from_vaddr = VIDEO_ADDR3;
     } else {
         return -1;
@@ -214,7 +218,7 @@ int switch_video_page(int term_to, int term_from) {
  * OUTPUTS: the user-level video pointer. 0 if unsuccessful.
  */
 uint8_t* request_user_video(int term_index) {
-    if (term_index >= 0 && term_index < 3) {
+    if (term_index >= 0 && term_index < NUM_TERMS) {
         return (uint8_t*)(TERM_VADDR(term_index));
     }
 
@@ -300,23 +304,23 @@ int paging_tester() {
 
     // check the directory and table values
     if (page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags) &&
-        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x60) &&
-        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x40) &&
-        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x20)) {
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | FLAGS3) &&
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | FLAGS2) &&
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | FLAGS1)) {
         result++;
     }
 
     if (page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags) &&
-        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x60) &&
-        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x40) &&
-        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x20)) {
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | FLAGS3) &&
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | FLAGS2) &&
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | FLAGS1)) {
         result++;
     }
 
     if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x60) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x40) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x20)) {
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | FLAGS3) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | FLAGS2) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | FLAGS1)) {
         result++;
     }
 

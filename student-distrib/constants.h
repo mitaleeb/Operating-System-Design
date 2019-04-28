@@ -28,6 +28,7 @@
 #define FIRST_TERM		0
 #define SECOND_TERM		1
 #define THIRD_TERM		2
+#define NUM_TERMS     3
 
 /* various maximums */
 #define MAXUINT32     0xFFFFFFFF
