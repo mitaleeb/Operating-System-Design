@@ -98,7 +98,7 @@ int switch_terminal(int32_t switch_to) {
 	switch_video_page(switch_to, visible_terminal);
 
 	set_terminal_position(visible_terminal);
-  update_screen(switch_to);
+  	update_screen(switch_to);
 	
 	/* Update visibility of terminal */
 	cli();
