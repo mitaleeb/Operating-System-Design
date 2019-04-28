@@ -10,14 +10,6 @@
 #include "i8259.h"
 #include "lib.h"
 
-#define MASTER_PORT_A 0x20
-#define SLAVE_PORT_A 0xA0
-#define MASTER_START_INTERRUPT 0x20
-#define SLAVE_START_INTERRUPT 0x28
-#define SLAVE_END_INTERRUPT SLAVE_START_INTERRUPT + 7
-#define PIC_ACK 0x20
-
-#define IRQ_RTC 8
 #define OUT_RTC 0x70
 #define IN_RTC 0x71
 #define STATUS_REGISTER_A 0x8A

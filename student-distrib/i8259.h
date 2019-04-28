@@ -27,9 +27,11 @@
  * to declare the interrupt finished */
 #define EOI                 0x60
 
-/* slave PIC's IRQ num */
+/* define some IRQ nums */
 #define IRQ_SLAVE           2
 #define IRQ_KEYBOARD 	      1
+#define IRQ_RTC             8
+#define IRQ_PIT             0
 
 /* Externally-visible functions */
 

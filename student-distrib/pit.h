@@ -12,7 +12,6 @@
 #include "types.h"
 
 /* defines to improve readability */
-#define IRQ_PIT 0
 
 /**
  * init_pit()
