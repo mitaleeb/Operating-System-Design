@@ -9,6 +9,8 @@
 #include "bootinit/idt.h"
 #include "i8259.h"
 #include "lib.h"
+#include "constants.h"
+#include "sys/pcb.h"
 
 #define OUT_RTC 0x70
 #define IN_RTC 0x71
@@ -28,7 +30,7 @@
 #define RATE_1024 0x06
 
 // initialize flag to check if interrupt has occurred
-volatile int interrupt_flag = 0;
+volatile uint32_t ticks;
 
 
 /* void init_rtc()
@@ -39,6 +41,7 @@ volatile int interrupt_flag = 0;
 extern void init_rtc() {
   /* clear interrupts */
   disable_irq(IRQ_RTC);
+  ticks = 0;
   /* 0x70, 0x71 - I/O ports */
   outb(STATUS_REGISTER_A,
        OUT_RTC); /* write to status register A, disable non-maskable interrupts */
@@ -46,6 +49,16 @@ extern void init_rtc() {
   outb(STATUS_REGISTER_B, OUT_RTC);     /* write to status register B */
   outb(a | 0x40, IN_RTC); /* turn on 6th bit of status register */
                         /* RTC is IR0 on slave PIC - irq num is 8 */
+  
+  // @TODO: i just copied this in, look here first for bugs
+  /* write to status register A, disable non-maskable interrupts */
+  outb(STATUS_REGISTER_A, OUT_RTC);
+  /* read from status register A */
+  a = inb(IN_RTC);
+  /* write min rate (2 Hz) to status register A */
+  outb(STATUS_REGISTER_A, OUT_RTC);
+  outb((0xF0 & a) | RATE_2, IN_RTC);
+
   enable_irq(IRQ_RTC);
 }
 
@@ -55,24 +68,25 @@ extern void init_rtc() {
  * Function: Function to handle rtc interrupt
  */
 extern void handle_rtc_interrupt() {
-  /* clear interrupts */
+  // disable rtc interrupts while we handle one
   disable_irq(IRQ_RTC);
-  /* UNCOMMENT THIS FUNCTION call to do RTC TEST */
-  // test_interrupts();
-  // send End of Interrupt Signal
+
+  // let the PIC handle other interrupts
   send_eoi(IRQ_RTC);
 
   /* read from status register C */
   outb(0x0C, OUT_RTC);
   inb(IN_RTC);
-  /* set interrupts */
+
+  // increment the ticks (with overflow logic)
+  if (ticks == MAXUINT32) {
+    ticks = 0;
+  } else {
+    ticks++;
+  }
+
+  // done handling the rtc interrupt, allow more
   enable_irq(IRQ_RTC);
-
-  /* set interrupt flag */
-  interrupt_flag = 1;
-
-  /* do not return from handler in this checkpoint */
-  // while(1);
 }
 
 /*
@@ -83,16 +97,9 @@ extern void handle_rtc_interrupt() {
  * Function: Opens the RTC
  */
 int32_t rtc_open (const uint8_t* filename) {
-  /* define var for frequency and set to min frequency (2 Hz) */
-  char rate = RATE_2;
-
-  /* write to status register A, disable non-maskable interrupts */
-  outb(STATUS_REGISTER_A, OUT_RTC);
-  /* read from status register A */
-  unsigned char a = inb(IN_RTC);
-  /* write min rate (2 Hz) to status register A */
-  outb(STATUS_REGISTER_A, OUT_RTC);
-  outb((0xF0 & a) | rate, IN_RTC);
+  // set per-process rtc information
+  curr_pcb->rtc_opened = 1;
+  curr_pcb->rtc_freq = 2;
 
   return 0;
 }
@@ -105,17 +112,8 @@ int32_t rtc_open (const uint8_t* filename) {
  * Function: Closes the RTC
  */
 int32_t rtc_close (int32_t fd) {
-  /* define var for frequency and set to min frequency (2 Hz) */
-  char rate = RATE_2;
-
-  /* write to status register A, disable non-maskable interrupts */
-  outb(STATUS_REGISTER_A, OUT_RTC);
-  /* read from status register A */
-  unsigned char a = inb(IN_RTC);
-  /* write min rate (2 Hz) to status register A */
-  outb(STATUS_REGISTER_A, OUT_RTC);
-  outb((0xF0 & a) | rate, IN_RTC);
-
+  // set per-process rtc information
+  curr_pcb->rtc_opened = 0;
   return 0;
 }
 
@@ -127,11 +125,15 @@ int32_t rtc_close (int32_t fd) {
  * Function: Reads from RTC, waits for interrupt
  */
 int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes) {
-  /* wait until interrupt occurs */
-  while (interrupt_flag == 0) {}
+  uint32_t curr_ticks = ticks;
+  int proc_freq = curr_pcb->rtc_freq;
 
-  /* clear interrupt */
-  interrupt_flag = 0;
+  // TODO: this could fail in the case where curr_ticks is near MAXUINT32
+  uint32_t wanted_ticks = curr_ticks + global_rtc_freq / proc_freq;
+
+  while (ticks < wanted_ticks) {
+    ; // don't do anything
+  }
 
   return 0;
 }
@@ -144,63 +146,49 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes) {
  * Function: Writes to the RTC
  */
 int32_t rtc_write (int32_t fd, const void* buf, int32_t nbytes) {
-  /* declare vars for frequency */
-  char rate;
   int32_t freq;
-
-  /* check if writing 4 bytes */
-  if ((int32_t)buf == NULL || nbytes != 4) {
+  char rate;
+  // make sure we're writing 4 bytes
+  if((int32_t)buf == NULL || nbytes != 4) {
     return -1;
-  } else {
-    freq = *((int32_t*)buf);
   }
 
-  /* set rate (Hz) */
-  switch(freq) {
-    case 1024:
-      rate = RATE_1024;
-      break;
-    case 512: 
-      rate = RATE_512;
-      break;
-    case 256:
-      rate = RATE_256;
-      break;
-    case 128: 
-      rate = RATE_128;
-      break;
-    case 64: 
-      rate = RATE_64;
-      break;
-    case 32: 
-      rate = RATE_32;
-      break;
-    case 16: 
-      rate = RATE_16;
-      break;
-    case 8: 
-      rate = RATE_8;
-      break;
-    case 4: 
-      rate = RATE_4;
-      break;
-    case 2: 
-      rate = RATE_2;
-      break;
-    case 0: 
-      rate = RATE_0;
-      break;
-    default:
-      return -1;
+  freq = *((int32_t*)buf);
+
+  // @TODO: fix magic numbers
+  if (freq > 1024) {
+    return -1;
   }
 
-  /* write to status register A, disable non-maskable interrupts */
-  outb(STATUS_REGISTER_A, OUT_RTC);
-  /* read from status register A */
-  unsigned char a = inb(IN_RTC);
-  /* write to status register A */
-  outb(STATUS_REGISTER_A, OUT_RTC);
-  outb((0xF0 & a) | rate, IN_RTC);
+  // set the per-process frequency information
+  curr_pcb->rtc_freq = freq;
+
+  // set the global rtc frequency if necessary
+  if (freq > global_rtc_freq) {
+    global_rtc_freq = freq;
+    switch(freq) {
+      case 1024: rate = RATE_1024; break;
+      case 512: rate = RATE_512; break;
+      case 256: rate = RATE_256; break;
+      case 128: rate = RATE_128; break;
+      case 64: rate = RATE_64; break;
+      case 32: rate = RATE_32; break;
+      case 16: rate = RATE_16; break;
+      case 8: rate = RATE_8; break;
+      case 4: rate = RATE_4; break;
+      case 2: rate = RATE_2; break;
+      case 0: rate = RATE_0; break;
+      default: return -1;
+    }
+
+    /* write to status register A, disable non-maskable interrupts */
+    outb(STATUS_REGISTER_A, OUT_RTC);
+    /* read from status register A */
+    unsigned char a = inb(IN_RTC);
+    /* write to status register A */
+    outb(STATUS_REGISTER_A, OUT_RTC);
+    outb((0xF0 & a) | rate, IN_RTC);
+  }
 
   return 0;
 }

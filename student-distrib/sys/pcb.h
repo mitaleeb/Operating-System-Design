@@ -63,6 +63,8 @@ typedef struct _pcb {
   fd_entry_t file_descs[MAX_FDS];
   int pid; // the process id, 0 for first shell
   int term_index; // which terminal this process is executing in
+  int rtc_opened;
+  uint32_t rtc_freq;
   struct _pcb* parent_pcb;
   uint32_t parent_esp;
   uint32_t parent_ebp;

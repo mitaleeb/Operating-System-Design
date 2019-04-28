@@ -11,6 +11,9 @@
 #include "bootinit/idt.h"
 #include "linkage.h"
 
+/* variables to hold rtc information */
+int global_rtc_freq;
+
 /* function declarations */
 
 /* Function to initialize rtc */
