@@ -354,12 +354,14 @@ void putc(uint8_t c) {
 /* void term_putc(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
- *  Function: Output a character to the console */
+ *  Function: Output a character to the terminal
+ *            which is currently running a process */
 void term_putc(uint8_t c) {
   if(terminal[curr_pcb->term_index].term_screen_x >= NUM_COLS - 1 &&
      terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS - 1)
     term_scroll_up();
   if(c == '\n' || c == '\r') {
+    /* scroll up if output on current terminal exceeds the max rows */
     if(terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS - 1)
       term_scroll_up();
     (terminal[curr_pcb->term_index].term_screen_y)++;
