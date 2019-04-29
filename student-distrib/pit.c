@@ -10,7 +10,8 @@
 #define DATA_PORT 0x40
 #define MODE_REG  0x43
 #define MODE_HEX  0x36 // 0b00110110
-#define DATA_RATE 47720 // 1.193 MHz / 25 Hz = 47720
+#define DATA_RATE 15906 // 1.193 MHz / 75 Hz = 15906
+#define MAX_PIT_TICKS 3 // results in a 25 Hz scheduler (40 ms per process)
 
 
 /**
@@ -44,6 +45,9 @@ void init_pit() {
   outb((uint8_t)(DATA_RATE & LO_BYTE_MASK), DATA_PORT);
   outb((uint8_t)((DATA_RATE & HI_BYTE_MASK) >> BYTE_SIZE), DATA_PORT);
 
+  // set global variables
+  pit_ticks = 0;
+
   // enable pit interrupts
   enable_irq(IRQ_PIT);
 }
@@ -56,13 +60,18 @@ void init_pit() {
 void handle_pit_interrupt() {
   disable_irq(IRQ_PIT);
 
-  // putc('p');
-
   // send end of interrupt
   send_eoi(IRQ_PIT);
+  
+  // increment the pit ticks
+  pit_ticks++;
   enable_irq(IRQ_PIT);
 
-  // perform task switching
-  int next_pid = find_next_pid();
-  context_switch(curr_pcb->pid, next_pid);
+  if (pit_ticks >= MAX_PIT_TICKS || curr_pcb->is_yield) { 
+    curr_pcb->is_yield = 0;
+    // perform task switching
+    scheduler_pass();
+    // int next_pid = find_next_pid();
+    // context_switch(curr_pcb->pid, next_pid);
+  }
 }

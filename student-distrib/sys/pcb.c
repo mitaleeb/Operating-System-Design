@@ -31,6 +31,7 @@ void init_pcb() {
   root_pcb.term_index = -1;
   root_pcb.parent_esp = NULL;
   root_pcb.parent_ebp = NULL;
+  root_pcb.is_yield = 0;
 }
 
 /* define some garbage read/write/open/close functions */
