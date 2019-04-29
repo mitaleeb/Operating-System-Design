@@ -128,7 +128,9 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 
 	/* return unless buffer is ready to be read */
 	/* I'm pretty sure it doesnt matter which read_flag we read bc they technically should be the same */
-	while(!terminal[curr_pcb->term_index].read_ready) { }
+	while(!terminal[curr_pcb->term_index].read_ready) {
+		curr_pcb->is_yield = 1; // yield our time slice
+	}
 
 	/* read from input to old terminal buffer */
 	cli();

@@ -12,6 +12,15 @@
 #include "terminal.h"
 
 /**
+ * scheduler_pass()
+ * 
+ * DESCRIPTION: passes control from the current process to the next.
+ * INPUTS: none
+ * OUTPUTS: none
+ */
+void scheduler_pass();
+
+/**
  * find_next_pid()
  *
  * DESCRIPTION: finds the next process to switch to and and continue executing
@@ -24,7 +33,8 @@ int find_next_pid();
 /**
  * context_switch(int pid_from, int pid_to)
  *
- * DESCRIPTION: context switch from one pid to another via saving and restoring/ saving esp ebp
+ * DESCRIPTION: context switch from one pid to another via saving and restoring/
+ *              saving esp ebp
  * INPUTS: pid_from - pid we are switching from
  *         pid_to - pid to switch to
  * OUTPUTS: NONE

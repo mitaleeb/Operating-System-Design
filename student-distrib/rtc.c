@@ -143,14 +143,14 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes) {
     // What should we do in this case? We know the maximum frequency, so we can
     // hard code a loop like this until we overflow
     while (ticks > MAXUINT32 / 2) {
-      ; // do nothing
+      curr_pcb->is_yield = 1; // yield our time slice
     }
   } else {
     target_ticks = curr_ticks + wanted_ticks;
   }
 
   while (ticks < target_ticks) {
-      ; // don't do anything
+      curr_pcb->is_yield = 1; // yield our time slice
     }
 
   return 0;
