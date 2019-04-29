@@ -176,6 +176,11 @@ int32_t system_execute(const uint8_t* command) {
   // copy parsed argument to the buffer in current PCB
 	strcpy((int8_t*) (curr_pcb->arg_buf), arguments);
 
+  // set the pcb's other data
+  curr_pcb->is_yield = 0;
+  curr_pcb->rtc_freq = 0;
+  curr_pcb->is_yield = 0;
+
   /* set up the file descriptor tables */
 
   // first set the stdin/out fops

@@ -29,6 +29,10 @@
 #define NUM_ROWS    25
 #define ATTRIB      0x7
 
+#define FLAGS1      0x20
+#define FLAGS2      0x40
+#define FLAGS3      0x60
+
 /* definitions for some useful macros for indexing the page directory */
 #define PD_IDX(x) (x >> 22)
 #define PT_IDX(x) ((x >> 12) & 0x03FF)
@@ -300,23 +304,23 @@ int paging_tester() {
 
     // check the directory and table values
     if (page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags) &&
-        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x60) &&
-        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x40) &&
-        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | 0x20)) {
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | FLAGS3) &&
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | FLAGS2) &&
+        page_directory.page_directory_entries[0] != (((int)(&page_table_1)) | dir_ent_0_flags | FLAGS1)) {
         result++;
     }
 
     if (page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags) &&
-        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x60) &&
-        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x40) &&
-        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | 0x20)) {
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | FLAGS3) &&
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | FLAGS2) &&
+        page_directory.page_directory_entries[1] != (int)(KERNEL_ADDR | dir_ent_1_flags | FLAGS1)) {
         result++;
     }
 
     if (page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x60) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x40) &&
-        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | 0x20)) {
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | FLAGS3) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | FLAGS2) &&
+        page_table_1.page_table_entries[PT_IDX(VIDEO_ADDR1)] != (int)(VIDEO_ADDR1 | tab_ent_vid_flags | FLAGS1)) {
         result++;
     }
 
