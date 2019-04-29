@@ -4,6 +4,23 @@
 
 #include "constants.h"
 #include "scheduler.h"
+#include "pit.h"
+
+/**
+ * scheduler_pass()
+ * 
+ * DESCRIPTION: passes control from the current process to the next.
+ * INPUTS: none
+ * OUTPUTS: none
+ */
+void scheduler_pass() {
+  // reset the pit's counter
+  pit_ticks = 0;
+
+  // perform a context switch
+  int next_pid = find_next_pid();
+  context_switch(curr_pcb->pid, next_pid);
+}
 
 /**
  * find_next_pid()
@@ -43,7 +60,8 @@ int find_next_pid() {
 /**
  * context_switch(int pid_from, int pid_to)
  *
- * DESCRIPTION: context switch from one pid to another via saving and restoring/ saving esp ebp
+ * DESCRIPTION: context switch from one pid to another via saving and restoring/
+ *              saving esp ebp
  * INPUTS: pid_from - pid we are switching from
  *         pid_to - pid to switch to
  * OUTPUTS: NONE

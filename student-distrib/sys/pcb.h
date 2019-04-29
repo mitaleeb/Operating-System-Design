@@ -65,6 +65,7 @@ typedef struct _pcb {
   int term_index; // which terminal this process is executing in
   int rtc_opened;
   uint32_t rtc_freq;
+  volatile int is_yield;
   struct _pcb* parent_pcb;
   uint32_t parent_esp;
   uint32_t parent_ebp;
