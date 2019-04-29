@@ -1,6 +1,7 @@
 ISSUE BOARD
 -----
-##Issue: File System read dentry functions memcpy can't check if successful
+
+## Issue: File System read dentry functions memcpy can't check if successful
 
 Date Created: March 13, 2019
 
@@ -143,7 +144,7 @@ Description: Video memory is initialized to be black color, we need to change it
 
 Resolution Summary: The fix for this (since it only happens in the case where we're initializing one of the three initial shells) is to just handle the context switching when we launch the terminals themselves. Tried root pcb to connect all three shells to one "invisible" process but decided against this because they are separate terminals. We changed the colors of each terminal and were able to get fish to display correctly. 
 
-##Issue: Cannot type half a command and then switch terminals, switch back, and finish the command.
+## Issue: Cannot type half a command and then switch terminals, switch back, and finish the command.
 
 Date Created: April 22, 2019
 
