@@ -4,14 +4,17 @@
  * h file that holds definitions of functions, including all the
  * functions in rtc.c
  */
+#ifndef _RTC_H
+#define _RTC_H
 
 #include "x86_desc.h"
 #include "bootinit/idt.h"
 #include "linkage.h"
 
-/**
- * Function Declarations
- */
+/* variables to hold rtc information */
+int global_rtc_freq;
+
+/* function declarations */
 
 /* Function to initialize rtc */
 extern void init_rtc();
@@ -30,3 +33,5 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes);
 
 /* Function to write frequency to RTC */
 int32_t rtc_write (int32_t fd, const void* buf, int32_t nbytes);
+
+#endif // _RTC_H

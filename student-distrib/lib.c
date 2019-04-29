@@ -2,94 +2,153 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "constants.h"
+#include "scheduler.h"
+#include "sys/syscall.h"
+#include "terminal.h"
 
-#define VIDEO       0xB8000
-#define NUM_COLS    80
-#define NUM_ROWS    25
-#define ATTRIB      0x7
+#define VIDEO 0xB8000
+#define NUM_COLS 80
+#define NUM_ROWS 25
+#define ATTRIB 0x7
+
+#define CURSOR_REG1 0x3D4
+#define CURSOR_REG2 0x3D5
+#define CURSOR_DATA1 0x0F
+#define CURSOR_DATA2 0x0E
+#define DATA_PORT 0x40
+#define LOW_BYTE 0xFF
+#define HIGH_BYTE 8
 
 static int screen_x;
 static int screen_y;
-static char* video_mem = (char *)VIDEO;
+static char* video_mem = (char*)VIDEO;
 
 /* void clear(void);
  * Inputs: void
  * Return Value: none
  * Function: Clears video memory */
 void clear(void) {
-    int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
-        *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
-    }
+  int32_t i;
+  for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+    *(uint8_t*)(video_mem + (i << 1)) = ' ';
+    if (visible_terminal == FIRST_TERM)
+      *(uint8_t*)(video_mem + (i << 1) + 1) = CURSOR1;
+    if (visible_terminal == SECOND_TERM)
+      *(uint8_t*)(video_mem + (i << 1) + 1) = CURSOR2;
+    if (visible_terminal == THIRD_TERM)
+      *(uint8_t*)(video_mem + (i << 1) + 1) = CURSOR3;
+  }
 }
 
-/* void reset_cursor(void);
+/* void reset_position(void);
  * Inputs: void
  * Return Value: none
  * Function: resets screen_x and screen_y */
- void reset_position(void) {
-   screen_x = 0;
-   screen_y = 0;
- }
+void reset_position(void) {
+  screen_x = 0;
+  screen_y = 0;
+}
 
- /* void decrement_position(void);
-  * Inputs: void
-  * Return Value: none
-  * Function: decrements x position */
-  void decrement_position(void) {
-    if(screen_x > 0)
-      screen_x--;
+/* void decrement_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: decrements x position */
+void decrement_position(void) {
+  if (screen_x > 0) screen_x--;
+}
+
+/* void enter_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: increments y position */
+void enter_position(void) {
+  if (screen_y < NUM_ROWS - 1) {
+    screen_y++;
+    screen_x = 0;
+  } else {
+    scroll_up();
+    screen_y++;
+    screen_x = 0;
   }
+}
 
-  /* void enter_position(void);
-   * Inputs: void
-   * Return Value: none
-   * Function: increments y position */
-   void enter_position(void) {
-     if(screen_y < NUM_ROWS - 1) {
-       screen_y++;
-       screen_x = 0;
-     }
-     else {
-       scroll_up();
-       screen_y++;
-       screen_x = 0;
-     }
-   }
+/*
+ * void scroll_up(void)
+ * 	Inputs: none
+ * 	Return: none
+ * 	Function: shift all characters up by one line
+ */
+void scroll_up(void) {
+  memmove(video_mem, video_mem + ((NUM_COLS) << 1),
+          (NUM_COLS * (NUM_ROWS - 1)) << 1);
+  uint8_t i;
+  for (i = 0; i < NUM_COLS; i++) {
+    *(uint8_t*)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + i) << 1)) = ' ';
+  }
+  screen_y--;
+}
 
- /*
-  * void scroll_up(void)
-  * 	Inputs: none
-  * 	Return: none
-  * 	Function: shift all characters up by one line
+/*
+ * void term_scroll_up(void)
+ * 	Inputs: none
+ * 	Return: none
+ * 	Function: shift all characters up by one line
+ *            in terminal currently running process
+ */
+void term_scroll_up(void) {
+  memmove((char*)(VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)),
+          (char*)(VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)) +
+              ((NUM_COLS) << 1),
+          (NUM_COLS * (NUM_ROWS - 1)) << 1);
+
+  uint8_t i;
+  for (i = 0; i < NUM_COLS; i++) {
+    *(uint8_t*)((VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)) +
+                ((NUM_COLS * (NUM_ROWS - 1) + i) << 1)) = ' ';
+  }
+  (terminal[curr_pcb->term_index].term_screen_y)--;
+}
+
+/*
+  REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
+  * void update_cursor()
+  *   Inputs: none
+  *   Return Value: none
+  *	 Function: update the cursor position in screen
   */
-  void scroll_up(void) {
-    memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
-    uint8_t i;
-    for(i=0; i<NUM_COLS; i++) {
-      *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';
-    }
-    screen_y--;
-  }
+void update_cursor(void) {
+  unsigned short pos = (screen_y * NUM_COLS) + screen_x;
 
-  /*
-    REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
-    * void update_cursor()
-    *   Inputs: none
-    *   Return Value: none
-    *	 Function: update the cursor position in screen
-    */
-    void update_cursor(void) {
-    	unsigned short pos = (screen_y * 80) + screen_x;
+  outb(CURSOR_DATA1, CURSOR_REG1);
+  outb((unsigned char)(pos & LOW_BYTE), CURSOR_REG2);
 
-    	outb(0x0F, 0x3D4);
-    	outb((unsigned char)(pos & 0xFF), 0x3D5);
+  outb(CURSOR_DATA2, CURSOR_REG1);
+  outb((unsigned char)((pos >> HIGH_BYTE) & LOW_BYTE), CURSOR_REG2);
+}
 
-    	outb(0x0E, 0x3D4);
-    	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
-    }
+/*
+ * void set_terminal_position()
+ *   Inputs: current terminal number
+ *   Return Value: none
+ *	 Function: set x position, y position of terminal struct
+ */
+void set_terminal_position(uint8_t term_num) {
+  terminal[term_num].term_screen_x = screen_x;
+  terminal[term_num].term_screen_y = screen_y;
+}
 
+/*
+ * void update_screen()
+ *   Inputs: current terminal number
+ *   Return Value: none
+ *	 Function: Updates cursor on terminal window
+ */
+void update_screen(uint8_t term_num) {
+  screen_x = terminal[term_num].term_screen_x;
+  screen_y = terminal[term_num].term_screen_y;
+  update_cursor();
+}
 
 /* Standard printf().
  * Only supports the following format strings:
@@ -108,113 +167,104 @@ void clear(void) {
  *       the beginning), but I think it's more flexible this way.
  *       Also note: %x is the only conversion specifier that can use
  *       the "#" modifier to alter output. */
-int32_t printf(int8_t *format, ...) {
+int32_t printf(int8_t* format, ...) {
+  /* Pointer to the format string */
+  int8_t* buf = format;
 
-    /* Pointer to the format string */
-    int8_t* buf = format;
+  /* Stack pointer for the other parameters */
+  int32_t* esp = (void*)&format;
+  esp++;
 
-    /* Stack pointer for the other parameters */
-    int32_t* esp = (void *)&format;
-    esp++;
-
-    while (*buf != '\0') {
-        switch (*buf) {
-            case '%':
-                {
-                    int32_t alternate = 0;
-                    buf++;
-
-format_char_switch:
-                    /* Conversion specifiers */
-                    switch (*buf) {
-                        /* Print a literal '%' character */
-                        case '%':
-                            putc('%');
-                            break;
-
-                        /* Use alternate formatting */
-                        case '#':
-                            alternate = 1;
-                            buf++;
-                            /* Yes, I know gotos are bad.  This is the
-                             * most elegant and general way to do this,
-                             * IMHO. */
-                            goto format_char_switch;
-
-                        /* Print a number in hexadecimal form */
-                        case 'x':
-                            {
-                                int8_t conv_buf[64];
-                                if (alternate == 0) {
-                                    itoa(*((uint32_t *)esp), conv_buf, 16);
-                                    puts(conv_buf);
-                                } else {
-                                    int32_t starting_index;
-                                    int32_t i;
-                                    itoa(*((uint32_t *)esp), &conv_buf[8], 16);
-                                    i = starting_index = strlen(&conv_buf[8]);
-                                    while(i < 8) {
-                                        conv_buf[i] = '0';
-                                        i++;
-                                    }
-                                    puts(&conv_buf[starting_index]);
-                                }
-                                esp++;
-                            }
-                            break;
-
-                        /* Print a number in unsigned int form */
-                        case 'u':
-                            {
-                                int8_t conv_buf[36];
-                                itoa(*((uint32_t *)esp), conv_buf, 10);
-                                puts(conv_buf);
-                                esp++;
-                            }
-                            break;
-
-                        /* Print a number in signed int form */
-                        case 'd':
-                            {
-                                int8_t conv_buf[36];
-                                int32_t value = *((int32_t *)esp);
-                                if(value < 0) {
-                                    conv_buf[0] = '-';
-                                    itoa(-value, &conv_buf[1], 10);
-                                } else {
-                                    itoa(value, conv_buf, 10);
-                                }
-                                puts(conv_buf);
-                                esp++;
-                            }
-                            break;
-
-                        /* Print a single character */
-                        case 'c':
-                            putc((uint8_t) *((int32_t *)esp));
-                            esp++;
-                            break;
-
-                        /* Print a NULL-terminated string */
-                        case 's':
-                            puts(*((int8_t **)esp));
-                            esp++;
-                            break;
-
-                        default:
-                            break;
-                    }
-
-                }
-                break;
-
-            default:
-                putc(*buf);
-                break;
-        }
+  while (*buf != '\0') {
+    switch (*buf) {
+      case '%': {
+        int32_t alternate = 0;
         buf++;
+
+      format_char_switch:
+        /* Conversion specifiers */
+        switch (*buf) {
+          /* Print a literal '%' character */
+          case '%':
+            putc('%');
+            break;
+
+          /* Use alternate formatting */
+          case '#':
+            alternate = 1;
+            buf++;
+            /* Yes, I know gotos are bad.  This is the
+             * most elegant and general way to do this,
+             * IMHO. */
+            goto format_char_switch;
+
+          /* Print a number in hexadecimal form */
+          case 'x': {
+            int8_t conv_buf[64];
+            if (alternate == 0) {
+              itoa(*((uint32_t*)esp), conv_buf, 16);
+              puts(conv_buf);
+            } else {
+              int32_t starting_index;
+              int32_t i;
+              itoa(*((uint32_t*)esp), &conv_buf[8], 16);
+              i = starting_index = strlen(&conv_buf[8]);
+              while (i < 8) {
+                conv_buf[i] = '0';
+                i++;
+              }
+              puts(&conv_buf[starting_index]);
+            }
+            esp++;
+          } break;
+
+          /* Print a number in unsigned int form */
+          case 'u': {
+            int8_t conv_buf[36];
+            itoa(*((uint32_t*)esp), conv_buf, 10);
+            puts(conv_buf);
+            esp++;
+          } break;
+
+          /* Print a number in signed int form */
+          case 'd': {
+            int8_t conv_buf[36];
+            int32_t value = *((int32_t*)esp);
+            if (value < 0) {
+              conv_buf[0] = '-';
+              itoa(-value, &conv_buf[1], 10);
+            } else {
+              itoa(value, conv_buf, 10);
+            }
+            puts(conv_buf);
+            esp++;
+          } break;
+
+          /* Print a single character */
+          case 'c':
+            putc((uint8_t) * ((int32_t*)esp));
+            esp++;
+            break;
+
+          /* Print a NULL-terminated string */
+          case 's':
+            puts(*((int8_t**)esp));
+            esp++;
+            break;
+
+          default:
+            break;
+        }
+
+      } break;
+
+      default:
+        putc(*buf);
+        break;
     }
-    return (buf - format);
+    buf++;
+  }
+  return (buf - format);
 }
 
 /* int32_t puts(int8_t* s);
@@ -222,12 +272,12 @@ format_char_switch:
  *   Return Value: Number of bytes written
  *    Function: Output a string to the console */
 int32_t puts(int8_t* s) {
-    register int32_t index = 0;
-    while (s[index] != '\0') {
-        putc(s[index]);
-        index++;
-    }
-    return index;
+  register int32_t index = 0;
+  while (s[index] != '\0') {
+    putc(s[index]);
+    index++;
+  }
+  return index;
 }
 
 /* void putc(uint8_t c);
@@ -235,21 +285,73 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    if(screen_x >= NUM_COLS - 1 && screen_y >= NUM_ROWS - 1)
-      scroll_up();
-    if(c == '\n' || c == '\r') {
-      if(screen_y >= NUM_ROWS - 1)
-        scroll_up();
-      screen_y++;
-      screen_x = 0;
-    } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
-        screen_x %= NUM_COLS;
-    }
-    update_cursor();
+  if (screen_x >= NUM_COLS - 1 && screen_y >= NUM_ROWS - 1) scroll_up();
+  if (c == '\n' || c == '\r') {
+    if (screen_y >= NUM_ROWS - 1) scroll_up();
+    screen_y++;
+    screen_x = 0;
+  } else {
+    *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+    if (visible_terminal == FIRST_TERM)
+      *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) =
+          CURSOR1;
+    if (visible_terminal == SECOND_TERM)
+      *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) =
+          CURSOR2;
+    if (visible_terminal == THIRD_TERM)
+      *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) =
+          CURSOR3;
+    screen_x++;
+    screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+    screen_x %= NUM_COLS;
+  }
+  update_cursor();
+}
+
+/* void term_putc(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the terminal
+ *            which is currently running a process */
+void term_putc(uint8_t c) {
+  /* scroll up if output on current terminal exceeds the max rows */
+  if (terminal[curr_pcb->term_index].term_screen_x >= NUM_COLS - 1 &&
+      terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS - 1)
+    term_scroll_up();
+
+  if (c == '\n' || c == '\r') {
+    /* scroll up if output on current terminal is at the last row
+     * and enter is pressed */
+    if (terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS - 1)
+      term_scroll_up();
+    (terminal[curr_pcb->term_index].term_screen_y)++;
+    terminal[curr_pcb->term_index].term_screen_x = 0;
+  } else {
+    /* update video memory of terminal currently running a process
+     * by adding character c */
+    *(uint8_t*)((VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)) +
+                ((NUM_COLS * terminal[curr_pcb->term_index].term_screen_y +
+                  terminal[curr_pcb->term_index].term_screen_x)
+                 << 1)) = c;
+    /* update text color based on terminal currently visible */
+    if (visible_terminal == FIRST_TERM)
+      *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) =
+          CURSOR1;
+    if (visible_terminal == SECOND_TERM)
+      *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) =
+          CURSOR2;
+    if (visible_terminal == THIRD_TERM)
+      *(uint8_t*)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) =
+          CURSOR3;
+
+    /* update position of screen for terminal currently running a process */
+    terminal[curr_pcb->term_index].term_screen_x++;
+    terminal[curr_pcb->term_index].term_screen_y =
+        (terminal[curr_pcb->term_index].term_screen_y +
+         (terminal[curr_pcb->term_index].term_screen_x / NUM_COLS)) %
+        NUM_ROWS;
+    terminal[curr_pcb->term_index].term_screen_x %= NUM_COLS;
+  }
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
@@ -259,35 +361,35 @@ void putc(uint8_t c) {
  * Return Value: number of bytes written
  * Function: Convert a number to its ASCII representation, with base "radix" */
 int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix) {
-    static int8_t lookup[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int8_t *newbuf = buf;
-    int32_t i;
-    uint32_t newval = value;
+  static int8_t lookup[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  int8_t* newbuf = buf;
+  int32_t i;
+  uint32_t newval = value;
 
-    /* Special case for zero */
-    if (value == 0) {
-        buf[0] = '0';
-        buf[1] = '\0';
-        return buf;
-    }
+  /* Special case for zero */
+  if (value == 0) {
+    buf[0] = '0';
+    buf[1] = '\0';
+    return buf;
+  }
 
-    /* Go through the number one place value at a time, and add the
-     * correct digit to "newbuf".  We actually add characters to the
-     * ASCII string from lowest place value to highest, which is the
-     * opposite of how the number should be printed.  We'll reverse the
-     * characters later. */
-    while (newval > 0) {
-        i = newval % radix;
-        *newbuf = lookup[i];
-        newbuf++;
-        newval /= radix;
-    }
+  /* Go through the number one place value at a time, and add the
+   * correct digit to "newbuf".  We actually add characters to the
+   * ASCII string from lowest place value to highest, which is the
+   * opposite of how the number should be printed.  We'll reverse the
+   * characters later. */
+  while (newval > 0) {
+    i = newval % radix;
+    *newbuf = lookup[i];
+    newbuf++;
+    newval /= radix;
+  }
 
-    /* Add a terminating NULL */
-    *newbuf = '\0';
+  /* Add a terminating NULL */
+  *newbuf = '\0';
 
-    /* Reverse the string and return */
-    return strrev(buf);
+  /* Reverse the string and return */
+  return strrev(buf);
 }
 
 /* int8_t* strrev(int8_t* s);
@@ -295,18 +397,18 @@ int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix) {
  * Return Value: reversed string
  * Function: reverses a string s */
 int8_t* strrev(int8_t* s) {
-    register int8_t tmp;
-    register int32_t beg = 0;
-    register int32_t end = strlen(s) - 1;
+  register int8_t tmp;
+  register int32_t beg = 0;
+  register int32_t end = strlen(s) - 1;
 
-    while (beg < end) {
-        tmp = s[end];
-        s[end] = s[beg];
-        s[beg] = tmp;
-        beg++;
-        end--;
-    }
-    return s;
+  while (beg < end) {
+    tmp = s[end];
+    s[end] = s[beg];
+    s[beg] = tmp;
+    beg++;
+    end--;
+  }
+  return s;
 }
 
 /* uint32_t strlen(const int8_t* s);
@@ -314,10 +416,9 @@ int8_t* strrev(int8_t* s) {
  * Return Value: length of string s
  * Function: return length of string s */
 uint32_t strlen(const int8_t* s) {
-    register uint32_t len = 0;
-    while (s[len] != '\0')
-        len++;
-    return len;
+  register uint32_t len = 0;
+  while (s[len] != '\0') len++;
+  return len;
 }
 
 /* void* memset(void* s, int32_t c, uint32_t n);
@@ -327,8 +428,9 @@ uint32_t strlen(const int8_t* s) {
  * Return Value: new string
  * Function: set n consecutive bytes of pointer s to value c */
 void* memset(void* s, int32_t c, uint32_t n) {
-    c &= 0xFF;
-    asm volatile ("                 \n\
+  c &= 0xFF;
+  asm volatile(
+      "                 \n\
             .memset_top:            \n\
             testl   %%ecx, %%ecx    \n\
             jz      .memset_done    \n\
@@ -355,11 +457,10 @@ void* memset(void* s, int32_t c, uint32_t n) {
             jmp     .memset_bottom  \n\
             .memset_done:           \n\
             "
-            :
-            : "a"(c << 24 | c << 16 | c << 8 | c), "D"(s), "c"(n)
-            : "edx", "memory", "cc"
-    );
-    return s;
+      :
+      : "a"(c << 24 | c << 16 | c << 8 | c), "D"(s), "c"(n)
+      : "edx", "memory", "cc");
+  return s;
 }
 
 /* void* memset_word(void* s, int32_t c, uint32_t n);
@@ -368,19 +469,20 @@ void* memset(void* s, int32_t c, uint32_t n) {
  *          int32_t c = value to set memory to
  *         uint32_t n = number of bytes to set
  * Return Value: new string
- * Function: set lower 16 bits of n consecutive memory locations of pointer s to value c */
+ * Function: set lower 16 bits of n consecutive memory locations of pointer s to
+ * value c */
 void* memset_word(void* s, int32_t c, uint32_t n) {
-    asm volatile ("                 \n\
+  asm volatile(
+      "                 \n\
             movw    %%ds, %%dx      \n\
             movw    %%dx, %%es      \n\
             cld                     \n\
             rep     stosw           \n\
             "
-            :
-            : "a"(c), "D"(s), "c"(n)
-            : "edx", "memory", "cc"
-    );
-    return s;
+      :
+      : "a"(c), "D"(s), "c"(n)
+      : "edx", "memory", "cc");
+  return s;
 }
 
 /* void* memset_dword(void* s, int32_t c, uint32_t n);
@@ -390,17 +492,17 @@ void* memset_word(void* s, int32_t c, uint32_t n) {
  * Return Value: new string
  * Function: set n consecutive memory locations of pointer s to value c */
 void* memset_dword(void* s, int32_t c, uint32_t n) {
-    asm volatile ("                 \n\
+  asm volatile(
+      "                 \n\
             movw    %%ds, %%dx      \n\
             movw    %%dx, %%es      \n\
             cld                     \n\
             rep     stosl           \n\
             "
-            :
-            : "a"(c), "D"(s), "c"(n)
-            : "edx", "memory", "cc"
-    );
-    return s;
+      :
+      : "a"(c), "D"(s), "c"(n)
+      : "edx", "memory", "cc");
+  return s;
 }
 
 /* void* memcpy(void* dest, const void* src, uint32_t n);
@@ -410,7 +512,8 @@ void* memset_dword(void* s, int32_t c, uint32_t n) {
  * Return Value: pointer to dest
  * Function: copy n bytes of src to dest */
 void* memcpy(void* dest, const void* src, uint32_t n) {
-    asm volatile ("                 \n\
+  asm volatile(
+      "                 \n\
             .memcpy_top:            \n\
             testl   %%ecx, %%ecx    \n\
             jz      .memcpy_done    \n\
@@ -441,11 +544,10 @@ void* memcpy(void* dest, const void* src, uint32_t n) {
             jmp     .memcpy_bottom  \n\
             .memcpy_done:           \n\
             "
-            :
-            : "S"(src), "D"(dest), "c"(n)
-            : "eax", "edx", "memory", "cc"
-    );
-    return dest;
+      :
+      : "S"(src), "D"(dest), "c"(n)
+      : "eax", "edx", "memory", "cc");
+  return dest;
 }
 
 /* void* memmove(void* dest, const void* src, uint32_t n);
@@ -456,7 +558,8 @@ void* memcpy(void* dest, const void* src, uint32_t n) {
  * Return Value: pointer to dest
  * Function: move n bytes of src to dest */
 void* memmove(void* dest, const void* src, uint32_t n) {
-    asm volatile ("                             \n\
+  asm volatile(
+      "                             \n\
             movw    %%ds, %%dx                  \n\
             movw    %%dx, %%es                  \n\
             cld                                 \n\
@@ -468,11 +571,10 @@ void* memmove(void* dest, const void* src, uint32_t n) {
             .memmove_go:                        \n\
             rep     movsb                       \n\
             "
-            :
-            : "D"(dest), "S"(src), "c"(n)
-            : "edx", "memory", "cc"
-    );
-    return dest;
+      :
+      : "D"(dest), "S"(src), "c"(n)
+      : "edx", "memory", "cc");
+  return dest;
 }
 
 /* int32_t strncmp(const int8_t* s1, const int8_t* s2, uint32_t n)
@@ -487,19 +589,18 @@ void* memmove(void* dest, const void* src, uint32_t n) {
  *               indicates the opposite.
  * Function: compares string 1 and string 2 for equality */
 int32_t strncmp(const int8_t* s1, const int8_t* s2, uint32_t n) {
-    int32_t i;
-    for (i = 0; i < n; i++) {
-        if ((s1[i] != s2[i]) || (s1[i] == '\0') /* || s2[i] == '\0' */) {
-
-            /* The s2[i] == '\0' is unnecessary because of the short-circuit
-             * semantics of 'if' expressions in C.  If the first expression
-             * (s1[i] != s2[i]) evaluates to false, that is, if s1[i] ==
-             * s2[i], then we only need to test either s1[i] or s2[i] for
-             * '\0', since we know they are equal. */
-            return s1[i] - s2[i];
-        }
+  int32_t i;
+  for (i = 0; i < n; i++) {
+    if ((s1[i] != s2[i]) || (s1[i] == '\0') /* || s2[i] == '\0' */) {
+      /* The s2[i] == '\0' is unnecessary because of the short-circuit
+       * semantics of 'if' expressions in C.  If the first expression
+       * (s1[i] != s2[i]) evaluates to false, that is, if s1[i] ==
+       * s2[i], then we only need to test either s1[i] or s2[i] for
+       * '\0', since we know they are equal. */
+      return s1[i] - s2[i];
     }
-    return 0;
+  }
+  return 0;
 }
 
 /* int8_t* strcpy(int8_t* dest, const int8_t* src)
@@ -508,13 +609,13 @@ int32_t strncmp(const int8_t* s1, const int8_t* s2, uint32_t n) {
  * Return Value: pointer to dest
  * Function: copy the source string into the destination string */
 int8_t* strcpy(int8_t* dest, const int8_t* src) {
-    int32_t i = 0;
-    while (src[i] != '\0') {
-        dest[i] = src[i];
-        i++;
-    }
-    dest[i] = '\0';
-    return dest;
+  int32_t i = 0;
+  while (src[i] != '\0') {
+    dest[i] = src[i];
+    i++;
+  }
+  dest[i] = '\0';
+  return dest;
 }
 
 /* int8_t* strcpy(int8_t* dest, const int8_t* src, uint32_t n)
@@ -524,16 +625,16 @@ int8_t* strcpy(int8_t* dest, const int8_t* src) {
  * Return Value: pointer to dest
  * Function: copy n bytes of the source string into the destination string */
 int8_t* strncpy(int8_t* dest, const int8_t* src, uint32_t n) {
-    int32_t i = 0;
-    while (src[i] != '\0' && i < n) {
-        dest[i] = src[i];
-        i++;
-    }
-    while (i < n) {
-        dest[i] = '\0';
-        i++;
-    }
-    return dest;
+  int32_t i = 0;
+  while (src[i] != '\0' && i < n) {
+    dest[i] = src[i];
+    i++;
+  }
+  while (i < n) {
+    dest[i] = '\0';
+    i++;
+  }
+  return dest;
 }
 
 /* void test_interrupts(void)
@@ -541,8 +642,8 @@ int8_t* strncpy(int8_t* dest, const int8_t* src, uint32_t n) {
  * Return Value: void
  * Function: increments video memory. To be used to test rtc */
 void test_interrupts(void) {
-    int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
-        video_mem[i << 1]++;
-    }
+  int32_t i;
+  for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+    video_mem[i << 1]++;
+  }
 }

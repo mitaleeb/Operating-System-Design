@@ -13,12 +13,79 @@ int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
+
+/* void term_putc(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the terminal
+ *            which is currently running a process */
+void term_putc(uint8_t c);
+
+/* void clear(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: Clears video memory */
 void clear(void);
+
+/* void reset_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: resets screen_x and screen_y */
 void reset_position(void);
+
+/* void decrement_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: decrements x position */
 void decrement_position(void);
+
+/* void enter_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: increments y position */
 void enter_position(void);
+
+/*
+ * void scroll_up(void)
+ * 	Inputs: none
+ * 	Return: none
+ * 	Function: shift all characters up by one line
+ */
 void scroll_up(void);
+
+/*
+ * void term_scroll_up(void)
+ * 	Inputs: none
+ * 	Return: none
+ * 	Function: shift all characters up by one line
+ *            in terminal currently running process
+ */
+void term_scroll_up(void);
+
+/*
+  REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
+  * void update_cursor()
+  *   Inputs: none
+  *   Return Value: none
+  *	 Function: update the cursor position in screen
+  */
 void update_cursor(void);
+
+/*
+  * void set_terminal_position()
+  *   Inputs: current terminal number
+  *   Return Value: none
+  *	 Function: set x position, y position of terminal struct
+  */
+void set_terminal_position(uint8_t term_num);
+
+/*
+  * void update_screen()
+  *   Inputs: current terminal number
+  *   Return Value: none
+  *	 Function: Updates cursor on terminal window
+  */
+void update_screen(uint8_t term_num);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);
