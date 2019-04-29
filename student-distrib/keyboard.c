@@ -167,7 +167,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t length) {
 *
 */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
-	int i;
+	int i, j;
 
 	/* check if invalid buffer is passed in */
 	if(buf == NULL || length < 0)
@@ -186,6 +186,12 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 			term_putc(((uint8_t*)buf)[i]);
 		}
 		sti();
+		if(((uint8_t*)buf)[i] == '\n') {
+			for(j = 0; j < MAXBUFFER; j++) {
+				terminal[visible_terminal].new_term_buffer[j] = '\0';
+			}
+			terminal[visible_terminal].term_buffer_index = 0;
+		}
 	}
 
 	/*return the copied length, if successful */
