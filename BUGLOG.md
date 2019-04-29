@@ -189,5 +189,13 @@ Resolution Summary: The easiest way to do this while only modifying the RTC file
 3) make sure to have logic that resets the ticks if they ever overflow.
 
 
+## Issue: Can backspace through '391OS>' when one process is running and ends
+
+Date Created: April 28, 2019
+
+Description: Sometimes breaks when running counter, aggressively switching between terminals, and then counter ends and we are able to press backspace past 391OS>. This happens when one process is running, we type another command without hitting enter, and the characters are stored in the terminal buffer so we are able to backspace that many times through the OS buffer string. 
+
+
+Resolution Summary: Modified the terminal_write function to clear buffer on new line so that the characters typed during the process will not be stored so that 391OS cannot be backspaced. 
 
 
