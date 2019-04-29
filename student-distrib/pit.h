@@ -13,6 +13,9 @@
 
 /* defines to improve readability */
 
+/* global variables */
+int pit_ticks;
+
 /**
  * init_pit()
  * 
