@@ -5,6 +5,8 @@
  * functions in idt.c as well as declarations for all the interrupt handlers in
  * the first 32 IDT locations.
  */
+#ifndef _IDT_H
+#define _IDT_H
 
 #include "../x86_desc.h"
 
@@ -72,3 +74,5 @@ extern void idt_xf();
 
 /* General Exception */
 extern void idt_general_exception();
+
+#endif

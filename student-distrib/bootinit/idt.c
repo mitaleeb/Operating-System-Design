@@ -75,6 +75,8 @@ void populate_idt() {
     SET_IDT_ENTRY(idt[i], &idt_general_exception);
   }
 
+  /* vector for pit interrupt */
+  SET_IDT_ENTRY(idt[0x20], &pit_linkage);
   /* vector for keyboard interrupt */
   SET_IDT_ENTRY(idt[0x21], &keyboard_linkage);
   /* vector for rtc interrupt */

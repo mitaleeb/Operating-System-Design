@@ -1,6 +1,8 @@
 /**
  * syscall.h
  */
+#ifndef _SYSCALL_H
+#define _SYSCALL_H
 
 #include "../types.h"
 
@@ -9,6 +11,9 @@
 
 /* the number of system calls */
 #define NUM_SYSCALLS 6
+
+/* global variable to indicate that we are executing an initial shell */
+int executing_initial_shell;
 
 /* functions to help us set up the ability to receive a syscall */
 extern int32_t syscall_linker(); // prototype for assembly linkage
@@ -88,10 +93,27 @@ int32_t system_open(const uint8_t* filename);
  */
 int32_t system_close(int32_t fd);
 
+/**
+ * system_getargs
+ *
+ * DESCRIPTION: gets program arguments
+ * INPUTS: buf- buffer to copy arguments to
+ *         nbytes- bytes to copy
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
 int32_t system_getargs(uint8_t* buf, int32_t nbytes);
 
+/**
+ * system_vidmap
+ *
+ * DESCRIPTION: set virtual memory to video memory
+ * INPUTS: screen_start- pointer to starting location in video memorty
+ * OUTPUTS: 0 if successful, -1 otherwise
+ */
 int32_t system_vidmap(uint8_t** screen_start);
 
 int32_t system_sethandler(int32_t signum, void* handler_address);
 
 int32_t system_sigreturn(void);
+
+#endif

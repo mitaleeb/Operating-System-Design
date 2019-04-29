@@ -15,6 +15,8 @@
 #include "fsys/fs.h"
 #include "sys/syscall.h"
 #include "sys/pcb.h"
+#include "terminal.h"
+#include "pit.h"
 #define RUN_TESTS
 
 /* Macros. */
@@ -152,17 +154,23 @@ void entry(unsigned long magic, unsigned long addr) {
     /* turn on paging */
     page_init();
 
-    /* Init the PIC */
+    /* initialize the pic */
     i8259_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
 
+    /* initialize the hardware devices */
     init_keyboard();
     init_rtc();
+    init_pit();
 
-    // initialize the pcb global data
-    curr_pcb = NULL;
+    /* initialize the process data */
+    init_pcb();
+    executing_initial_shell = 1;
+
+    /* initialize the terminal structures */
+    init_terminal();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

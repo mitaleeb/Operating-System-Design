@@ -2,11 +2,24 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "terminal.h"
+#include "constants.h"
+#include "terminal.h"
+#include "scheduler.h"
+#include "sys/syscall.h"
 
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
 #define ATTRIB      0x7
+
+#define CURSOR_REG1     0x3D4
+#define CURSOR_REG2     0x3D5
+#define CURSOR_DATA1    0x0F
+#define CURSOR_DATA2    0x0E
+#define DATA_PORT       0x40
+#define LOW_BYTE        0xFF
+#define HIGH_BYTE       8
 
 static int screen_x;
 static int screen_y;
@@ -20,11 +33,16 @@ void clear(void) {
     int32_t i;
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        if (visible_terminal == FIRST_TERM)
+            *(uint8_t *)(video_mem + (i << 1) + 1) = CURSOR1;
+        if (visible_terminal == SECOND_TERM)
+            *(uint8_t *)(video_mem + (i << 1) + 1) = CURSOR2;
+        if (visible_terminal == THIRD_TERM)
+            *(uint8_t *)(video_mem + (i << 1) + 1) = CURSOR3;
     }
 }
 
-/* void reset_cursor(void);
+/* void reset_position(void);
  * Inputs: void
  * Return Value: none
  * Function: resets screen_x and screen_y */
@@ -33,63 +51,104 @@ void clear(void) {
    screen_y = 0;
  }
 
- /* void decrement_position(void);
-  * Inputs: void
-  * Return Value: none
-  * Function: decrements x position */
-  void decrement_position(void) {
-    if(screen_x > 0)
-      screen_x--;
-  }
+/* void decrement_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: decrements x position */
+void decrement_position(void) {
+  if(screen_x > 0)
+    screen_x--;
+}
 
-  /* void enter_position(void);
-   * Inputs: void
-   * Return Value: none
-   * Function: increments y position */
-   void enter_position(void) {
-     if(screen_y < NUM_ROWS - 1) {
-       screen_y++;
-       screen_x = 0;
-     }
-     else {
-       scroll_up();
-       screen_y++;
-       screen_x = 0;
-     }
+/* void enter_position(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: increments y position */
+ void enter_position(void) {
+   if(screen_y < NUM_ROWS - 1) {
+     screen_y++;
+     screen_x = 0;
    }
+   else {
+     scroll_up();
+     screen_y++;
+     screen_x = 0;
+   }
+ }
 
- /*
-  * void scroll_up(void)
-  * 	Inputs: none
-  * 	Return: none
-  * 	Function: shift all characters up by one line
+/*
+ * void scroll_up(void)
+ * 	Inputs: none
+ * 	Return: none
+ * 	Function: shift all characters up by one line
+ */
+void scroll_up(void) {
+  memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
+  uint8_t i;
+  for(i=0; i<NUM_COLS; i++) {
+    *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';
+  }
+  screen_y--;
+}
+
+/*
+ * void term_scroll_up(void)
+ * 	Inputs: none
+ * 	Return: none
+ * 	Function: shift all characters up by one line
+ *            in terminal currently running process
+ */
+ void term_scroll_up(void) {
+   memmove((char*)(VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)), (char*)(VIDEO + PAGE_4KB * (curr_pcb->term_index + 1))
+      + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
+
+   uint8_t i;
+   for(i=0; i<NUM_COLS; i++) {
+      *(uint8_t *)((VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)) + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';
+   }
+   (terminal[curr_pcb->term_index].term_screen_y)--;
+ }
+
+
+/*
+  REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
+  * void update_cursor()
+  *   Inputs: none
+  *   Return Value: none
+  *	 Function: update the cursor position in screen
   */
-  void scroll_up(void) {
-    memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1)) << 1);
-    uint8_t i;
-    for(i=0; i<NUM_COLS; i++) {
-      *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';
-    }
-    screen_y--;
+  void update_cursor(void) {
+  	unsigned short pos = (screen_y * NUM_COLS) + screen_x;
+
+    outb(CURSOR_DATA1, CURSOR_REG1);
+  	outb((unsigned char)(pos & LOW_BYTE), CURSOR_REG2);
+
+  	outb(CURSOR_DATA2, CURSOR_REG1);
+  	outb((unsigned char)((pos >> HIGH_BYTE) & LOW_BYTE), CURSOR_REG2);
   }
 
   /*
-    REFERENCE: https://wiki.osdev.org/Text_Mode_Cursor
-    * void update_cursor()
-    *   Inputs: none
+    * void set_terminal_position()
+    *   Inputs: current terminal number
     *   Return Value: none
-    *	 Function: update the cursor position in screen
+    *	 Function: set x position, y position of terminal struct
     */
-    void update_cursor(void) {
-    	unsigned short pos = (screen_y * 80) + screen_x;
+  void set_terminal_position(uint8_t term_num) {
+      terminal[term_num].term_screen_x = screen_x;
+    	terminal[term_num].term_screen_y = screen_y;
+  }
 
-    	outb(0x0F, 0x3D4);
-    	outb((unsigned char)(pos & 0xFF), 0x3D5);
-
-    	outb(0x0E, 0x3D4);
-    	outb((unsigned char)((pos>>8) & 0xFF), 0x3D5);
-    }
-
+  /*
+    * void update_screen()
+    *   Inputs: current terminal number
+    *   Return Value: none
+    *	 Function: Updates cursor on terminal window
+    */
+  void update_screen(uint8_t term_num) {
+    screen_x = terminal[term_num].term_screen_x;
+    screen_y = terminal[term_num].term_screen_y;
+    update_cursor();
+  }
 
 /* Standard printf().
  * Only supports the following format strings:
@@ -244,13 +303,59 @@ void putc(uint8_t c) {
       screen_x = 0;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        if (visible_terminal == FIRST_TERM)
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR1;
+        if (visible_terminal == SECOND_TERM)
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR2;
+        if (visible_terminal == THIRD_TERM)
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR3;
         screen_x++;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
         screen_x %= NUM_COLS;
     }
     update_cursor();
 }
+
+/* void term_putc(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the terminal
+ *            which is currently running a process */
+void term_putc(uint8_t c) {
+  /* scroll up if output on current terminal exceeds the max rows */
+  if(terminal[curr_pcb->term_index].term_screen_x >= NUM_COLS - 1 &&
+     terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS - 1)
+    term_scroll_up();
+
+  if(c == '\n' || c == '\r') {
+    /* scroll up if output on current terminal is at the last row
+     * and enter is pressed */
+    if(terminal[curr_pcb->term_index].term_screen_y >= NUM_ROWS - 1)
+      term_scroll_up();
+    (terminal[curr_pcb->term_index].term_screen_y)++;
+    terminal[curr_pcb->term_index].term_screen_x = 0;
+  } else {
+      /* update video memory of terminal currently running a process
+       * by adding character c */
+      *(uint8_t *)((VIDEO + PAGE_4KB * (curr_pcb->term_index + 1)) + ((NUM_COLS *
+         terminal[curr_pcb->term_index].term_screen_y +
+         terminal[curr_pcb->term_index].term_screen_x) << 1)) = c;
+      /* update text color based on terminal currently visible */
+      if (visible_terminal == FIRST_TERM)
+          *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR1;
+      if (visible_terminal == SECOND_TERM)
+          *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR2;
+      if (visible_terminal == THIRD_TERM)
+          *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = CURSOR3;
+
+      /* update position of screen for terminal currently running a process */
+      terminal[curr_pcb->term_index].term_screen_x++;
+      terminal[curr_pcb->term_index].term_screen_y = (terminal[curr_pcb->term_index].term_screen_y
+          + (terminal[curr_pcb->term_index].term_screen_x / NUM_COLS)) % NUM_ROWS;
+      terminal[curr_pcb->term_index].term_screen_x %= NUM_COLS;
+  }
+}
+
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert
