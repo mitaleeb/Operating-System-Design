@@ -188,9 +188,9 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t length) {
 		sti();
 		if(((uint8_t*)buf)[i] == '\n') {
 			for(j = 0; j < MAXBUFFER; j++) {
-				terminal[visible_terminal].new_term_buffer[j] = '\0';
+				terminal[curr_pcb->term_index].new_term_buffer[j] = '\0';
 			}
-			terminal[visible_terminal].term_buffer_index = 0;
+			terminal[curr_pcb->term_index].term_buffer_index = 0;
 		}
 	}
 
